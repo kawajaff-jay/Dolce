@@ -1,0 +1,2183 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>One Account. Three Brands. — Dolce · Polished · Core</title>
+<style>
+  :root{
+    --cream:#f4eee3;
+    --cream-2:#ece2d0;
+    --page:#f8f4ec;
+    --ink:#1c1a16;
+    --ink-soft:#5a5548;
+    --gold:#a9884f;
+    --gold-dark:#8a6d3a;
+    --line:#ddd0b8;
+    --card:#fffdf8;
+    --white:#ffffff;
+    --radius:18px;
+    /* dataviz validated categorical (light mode, first 3 slots) */
+    --series-1:#2a78d6; /* Dolce */
+    --series-2:#eb6834; /* Polished */
+    --series-3:#1baf7a; /* Core */
+    --chart-surface:#fcfcfb;
+    --text-primary:#0b0b0b;
+    --text-secondary:#52514e;
+    --muted:#898781;
+    --grid-line:#e1e0d9;
+    --border-hair:rgba(11,11,11,0.10);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--page);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5;}
+  h1,h2,h3,.serif{font-family:Georgia,"Times New Roman",serif;}
+  img,svg{display:block;}
+  a{color:inherit;}
+  button{font-family:inherit;cursor:pointer;}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 28px;}
+
+  /* ---------- Top nav ---------- */
+  .topnav{display:flex;align-items:center;justify-content:space-between;padding:20px 0;border-bottom:1px solid var(--line);}
+  .brandmark{display:flex;gap:14px;align-items:baseline;font-family:Georgia,serif;letter-spacing:.5px;}
+  .brandmark b{font-size:15px;}
+  .brandmark span{color:var(--muted);font-size:11px;}
+  .lang-switch{display:flex;gap:6px;background:var(--cream-2);padding:4px;border-radius:999px;}
+  .lang-switch button{border:none;background:transparent;padding:6px 14px;border-radius:999px;font-size:13px;font-weight:600;color:var(--ink-soft);}
+  .lang-switch button.active{background:var(--ink);color:var(--white);}
+  .nav-right{display:flex;align-items:center;gap:12px;}
+  .mode-switch{display:flex;gap:6px;background:var(--ink);padding:4px;border-radius:999px;}
+  .mode-switch button{border:none;background:transparent;padding:7px 16px;border-radius:999px;font-size:12.5px;font-weight:700;color:rgba(255,255,255,.6);}
+  .mode-switch button.active{background:var(--gold);color:#20180a;}
+  .sync-note{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);}
+  .sync-dot{width:7px;height:7px;border-radius:50%;background:var(--series-3);flex:none;box-shadow:0 0 0 3px rgba(27,175,122,.15);}
+
+  /* ---------- Admin app ---------- */
+  .admin-app{padding:44px 0 70px;}
+  .admin-app-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:20px;flex-wrap:wrap;gap:14px;}
+  .admin-app-head h2{font-size:26px;margin:0 0 4px;}
+  .admin-app-head p{color:var(--ink-soft);font-size:13.5px;margin:0;}
+  .admin-tabs{display:flex;gap:8px;margin-bottom:24px;border-bottom:1px solid var(--line);}
+  .admin-tabs button{border:none;background:none;padding:10px 4px;margin-right:20px;font-size:13.5px;font-weight:700;color:var(--muted);border-bottom:2px solid transparent;}
+  .admin-tabs button.active{color:var(--ink);border-bottom-color:var(--gold);}
+  .admin-panel{display:none;}
+  .admin-panel.active{display:block;}
+  .admin-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
+  .btn{border:none;border-radius:10px;padding:10px 16px;font-size:12.5px;font-weight:700;cursor:pointer;}
+  .btn-primary{background:var(--ink);color:#fff;}
+  .btn-ghost{background:var(--card);color:var(--ink);border:1px solid var(--line);}
+  .btn-danger{background:#fff;color:#b23b3b;border:1px solid #eecccc;}
+  .btn-sm{padding:6px 11px;font-size:11.5px;border-radius:8px;}
+  .admin-table-wrap{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+  .admin-table{width:100%;border-collapse:collapse;font-size:13px;}
+  .admin-table th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:12px 16px;background:var(--cream-2);}
+  .admin-table td{padding:11px 16px;border-top:1px solid var(--line);}
+  .admin-table .swdot{width:28px;height:28px;border-radius:8px;display:inline-block;vertical-align:middle;margin-right:10px;background-size:cover;background-position:center;}
+  .admin-table .rowbtns{display:flex;gap:6px;}
+  .brand-tag{display:inline-block;padding:3px 9px;border-radius:999px;font-size:10.5px;font-weight:700;color:#fff;}
+  .admin-form{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:16px;display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .admin-form.full{grid-template-columns:1fr;}
+  .admin-form label{font-size:11.5px;font-weight:700;color:var(--ink-soft);display:block;margin-bottom:5px;}
+  .admin-form input,.admin-form select,.admin-form textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-size:13px;font-family:inherit;background:#fff;}
+  .admin-form .field{display:flex;flex-direction:column;}
+  .admin-form .actions{grid-column:1/-1;display:flex;gap:10px;justify-content:flex-end;}
+  .admin-empty{text-align:center;padding:34px 10px;color:var(--muted);font-size:13px;}
+  .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:999px;font-size:13px;font-weight:600;box-shadow:0 14px 30px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:100;display:flex;align-items:center;gap:8px;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* ---------- Gallery (admin) ---------- */
+  .gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;}
+  .gcard{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+  .gcard .thumb{height:110px;background:#111 center/cover no-repeat;position:relative;display:flex;align-items:center;justify-content:center;}
+  .gcard .thumb.video::after{content:'▶';color:#fff;font-size:20px;background:rgba(0,0,0,.4);width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+  .gcard .meta{padding:9px 10px;}
+  .gcard .note{font-size:11.5px;font-weight:700;margin-bottom:4px;}
+  .gcard .badges{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;}
+  .gcard .tag{font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:999px;color:#fff;}
+  .tag.public{background:var(--series-3);}
+  .tag.private{background:#8a6d3a;}
+  .tag.video{background:#52514e;}
+  .upload-drop{border:1.5px dashed var(--line);border-radius:10px;padding:16px;text-align:center;font-size:12px;color:var(--ink-soft);background:#fff;}
+  .upload-drop input{width:100%;}
+  .admin-form .consent-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-soft);grid-column:1/-1;}
+
+  /* ---------- Gallery (client) ---------- */
+  .ba-strip{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;}
+  .ba-item{flex:none;width:84px;}
+  .ba-item .th{width:84px;height:84px;border-radius:10px;background:#111 center/cover no-repeat;position:relative;}
+  .ba-item .th.video::after{content:'▶';color:#fff;font-size:14px;background:rgba(0,0,0,.4);width:22px;height:22px;border-radius:50%;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;}
+  .ba-item .cap{font-size:9.5px;color:var(--muted);text-align:center;margin-top:4px;}
+  .progress-row{display:flex;gap:10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px;}
+  .progress-row .th{width:52px;height:52px;border-radius:10px;background:#111 center/cover no-repeat;flex:none;position:relative;}
+  .progress-row .th.video::after{content:'▶';color:#fff;font-size:12px;background:rgba(0,0,0,.4);width:20px;height:20px;border-radius:50%;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;}
+  .progress-row .n{font-size:12px;font-weight:700;}
+  .progress-row .m{font-size:10.5px;color:var(--muted);}
+
+  /* ---------- Lightbox ---------- */
+  .lightbox{position:absolute;inset:0;background:rgba(10,9,7,.94);z-index:30;display:none;flex-direction:column;border-radius:34px;}
+  .lightbox.open{display:flex;}
+  .lightbox .lb-head{display:flex;justify-content:flex-end;padding:16px;flex:none;}
+  .lightbox .lb-head button{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;border:none;}
+  .lightbox .lb-body{flex:1;display:flex;align-items:center;justify-content:center;padding:0 20px;}
+  .lightbox .lb-body img,.lightbox .lb-body video{max-width:100%;max-height:100%;border-radius:12px;}
+  .lightbox .lb-cap{color:#fff;text-align:center;font-size:12.5px;padding:14px 20px 26px;}
+
+  /* ---------- Admin login & roles ---------- */
+  .login-wrap{max-width:640px;margin:60px auto;text-align:center;}
+  .login-wrap h2{font-size:26px;margin:0 0 6px;}
+  .login-wrap p{color:var(--ink-soft);font-size:13.5px;margin:0 0 8px;}
+  .login-note{font-size:11.5px;color:var(--muted);background:var(--cream-2);border-radius:10px;padding:9px 14px;display:inline-block;margin-bottom:28px;}
+  .login-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;text-align:left;}
+  .login-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;}
+  .login-card .av{width:38px;height:38px;border-radius:50%;background:linear-gradient(140deg,#3a3630,#171512);color:#fff;display:flex;align-items:center;justify-content:center;font-family:Georgia,serif;font-weight:700;margin-bottom:10px;}
+  .login-card .nm{font-size:14px;font-weight:700;}
+  .role-pill{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:var(--cream-2);color:var(--ink-soft);margin:4px 0 12px;}
+  .login-card .cap{font-size:10.5px;color:var(--muted);margin-bottom:10px;}
+  .login-card input{width:100%;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:13px;margin-bottom:8px;text-align:center;letter-spacing:2px;}
+  .login-card button{width:100%;}
+  .user-badge{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 8px 6px 14px;font-size:12px;}
+  .user-badge b{font-weight:700;}
+  .user-badge .role-pill{margin:0;}
+  .user-badge button{border:none;background:var(--ink);color:#fff;border-radius:999px;padding:6px 12px;font-size:11px;font-weight:700;}
+  .status-badge{display:inline-block;font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px;color:#fff;}
+  .status-badge.Requested{background:var(--gold-dark);}
+  .status-badge.Confirmed{background:var(--series-1);}
+  .status-badge.Completed{background:var(--series-3);}
+  .status-badge.Cancelled{background:#b23b3b;}
+  @media (max-width:760px){ .login-cards{grid-template-columns:1fr;} }
+
+  /* ---------- Admin: Brand photos ---------- */
+  .bp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:26px;}
+  .bp-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;}
+  .bp-card .thumb{height:90px;border-radius:10px;margin-bottom:10px;background-size:cover;background-position:center;}
+  .bp-card .nm{font-size:13px;font-weight:700;margin-bottom:2px;}
+  .bp-card .nm span{font-weight:400;color:var(--muted);}
+  .bp-card .cap{font-size:10.5px;color:var(--muted);margin-bottom:9px;}
+  @media (max-width:760px){ .bp-grid{grid-template-columns:1fr;} }
+
+  /* ---------- Hero ---------- */
+  .hero{padding:64px 0 40px;display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;}
+  .hero h1{font-size:44px;line-height:1.08;margin:0 0 14px;}
+  .hero .tag{color:var(--gold-dark);font-style:italic;font-size:17px;margin:0 0 18px;}
+  .hero p.desc{color:var(--ink-soft);font-size:15.5px;max-width:460px;margin:0 0 26px;}
+  .brand-pills{display:flex;gap:22px;}
+  .brand-pills .pill{text-align:center;}
+  .brand-pills .ring{width:64px;height:64px;border-radius:50%;border:1.5px solid var(--gold);display:flex;align-items:center;justify-content:center;font-family:Georgia,serif;font-size:22px;margin:0 auto 8px;color:var(--gold-dark);background:var(--card);}
+  .brand-pills .name{font-size:12px;font-weight:700;letter-spacing:.4px;}
+  .brand-pills .sub{font-size:10px;color:var(--muted);}
+  .hero-cards{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:14px;height:380px;}
+  .hero-cards .hc{border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;justify-content:flex-end;color:#fff;font-family:Georgia,serif;position:relative;overflow:hidden;background-size:cover;background-position:center;}
+  .hero-cards .hc::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 45%,rgba(0,0,0,.6) 100%);}
+  .hero-cards .hc .name,.hero-cards .hc .sub{position:relative;z-index:1;}
+  .hero-cards .hc .name{font-size:19px;}
+  .hero-cards .hc .sub{font-size:10px;opacity:.9;font-family:system-ui,sans-serif;letter-spacing:.5px;text-transform:uppercase;}
+  .hc.dolce{background:linear-gradient(160deg,#3a3630,#171512);grid-row:1/3;}
+  .hc.polished{background:linear-gradient(160deg,#b98f5e,#8a6d3a);}
+  .hc.core{background:linear-gradient(160deg,#5c6b5a,#37413a);}
+
+  /* ---------- Features ---------- */
+  .features{padding:36px 0 8px;}
+  .features h3{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin:0 0 18px;}
+  .feature-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+  .fcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 16px;text-align:center;}
+  .fcard .ic{font-size:20px;margin-bottom:8px;}
+  .fcard .t{font-size:12.5px;font-weight:600;}
+
+  /* ---------- Demo section ---------- */
+  .demo-section{padding:64px 0;display:grid;grid-template-columns:.62fr 1.38fr;gap:48px;align-items:start;}
+  .demo-copy h2{font-size:30px;margin:0 0 12px;}
+  .demo-copy p{color:var(--ink-soft);font-size:14.5px;margin:0 0 16px;}
+  .demo-copy .stepper{display:flex;flex-direction:column;gap:12px;margin-top:22px;}
+  .demo-copy .step{display:flex;gap:12px;align-items:flex-start;font-size:13px;color:var(--ink-soft);}
+  .demo-copy .step b{color:var(--ink);display:block;font-size:13.5px;}
+  .demo-copy .stepnum{width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;flex:none;}
+
+  .phone-stage{display:flex;justify-content:center;gap:28px;flex-wrap:wrap;position:relative;}
+  .phone{width:320px;height:660px;background:#111;border-radius:44px;padding:12px;box-shadow:0 30px 60px -20px rgba(20,15,5,.35);position:relative;flex:none;}
+  .phone .screen{background:var(--cream);width:100%;height:100%;border-radius:34px;overflow:hidden;display:flex;flex-direction:column;position:relative;}
+  .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:22px;background:#111;border-radius:0 0 14px 14px;z-index:5;}
+  .fs-launch{background:var(--ink);color:#fff;border:none;border-radius:12px;padding:12px 20px;font-size:13px;font-weight:700;margin-top:22px;display:inline-flex;align-items:center;gap:8px;}
+  .fs-exit{display:none;position:absolute;top:14px;right:14px;z-index:600;width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,.4);color:#fff;border:none;font-size:14px;align-items:center;justify-content:center;}
+  .phone.fullscreen{position:fixed;inset:0;width:100vw;height:100vh;max-width:none;border-radius:0;padding:0;box-shadow:none;z-index:500;}
+  .phone.fullscreen .screen{border-radius:0;max-width:480px;margin:0 auto;}
+  .phone.fullscreen .notch{display:none;}
+  .phone.fullscreen .fs-exit{display:flex;}
+  html[dir="rtl"] .fs-exit{right:auto;left:14px;}
+  .screen-head{padding:22px 18px 10px;display:flex;align-items:center;gap:10px;background:var(--cream);flex:none;}
+  .screen-head .back{width:28px;height:28px;border-radius:50%;background:var(--card);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:14px;flex:none;}
+  .screen-head .title{font-family:Georgia,serif;font-size:16px;flex:1;}
+  .screen-head .title small{display:block;font-family:system-ui,sans-serif;font-size:10px;color:var(--muted);font-weight:400;letter-spacing:.5px;text-transform:uppercase;}
+  .screen-body{flex:1;overflow-y:auto;padding:6px 16px 90px;}
+  .screen-body::-webkit-scrollbar{width:0;}
+  .bottom-nav{position:absolute;left:12px;right:12px;bottom:12px;background:var(--card);border:1px solid var(--line);border-radius:20px;display:flex;justify-content:space-around;padding:10px 6px;box-shadow:0 8px 20px rgba(0,0,0,.08);}
+  .bottom-nav button{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9.5px;color:var(--muted);font-weight:600;}
+  .bottom-nav button.active{color:var(--ink);}
+  .bottom-nav .ic{font-size:16px;}
+  .fab-ai{position:absolute;right:22px;bottom:96px;width:52px;height:52px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;border:none;box-shadow:0 10px 20px rgba(0,0,0,.25);z-index:6;}
+
+  /* destination cards */
+  .dest-card{border-radius:16px;padding:20px;margin-bottom:12px;color:#fff;font-family:Georgia,serif;font-size:19px;position:relative;overflow:hidden;height:78px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:3px;background-size:cover;background-position:center;}
+  .dest-card::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(0,0,0,.55) 100%);}
+  .dest-card span,.dest-card small{position:relative;z-index:1;}
+  .dest-card small{display:block;font-family:system-ui,sans-serif;font-size:9.5px;letter-spacing:1px;text-transform:uppercase;font-weight:600;opacity:.9;}
+  .dest-card.dolce{background:linear-gradient(120deg,#3a3630,#171512);}
+  .dest-card.polished{background:linear-gradient(120deg,#b98f5e,#8a6d3a);}
+  .dest-card.core{background:linear-gradient(120deg,#5c6b5a,#37413a);}
+  .offers-strip{display:flex;gap:10px;overflow-x:auto;margin:14px 0 4px;padding-bottom:4px;}
+  .offer-chip{flex:none;width:118px;height:70px;border-radius:12px;background:var(--card);border:1px solid var(--line);padding:9px;font-size:10.5px;}
+  .offer-chip b{display:block;font-size:11.5px;margin-bottom:2px;}
+  .offer-chip span{color:var(--gold-dark);font-weight:700;}
+  .section-label{font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700;margin:16px 0 8px;}
+
+  /* services */
+  .cat-tabs{display:flex;gap:8px;overflow-x:auto;margin-bottom:10px;}
+  .cat-tabs button{flex:none;padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);font-size:11.5px;font-weight:600;color:var(--ink-soft);}
+  .cat-tabs button.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .svc-row{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);}
+  .svc-row .swatch{width:52px;height:52px;border-radius:12px;flex:none;background:linear-gradient(140deg,var(--sc1,#ccc),var(--sc2,#999));background-size:cover;background-position:center;}
+  .svc-row .info{flex:1;}
+  .svc-row .info .n{font-size:13.5px;font-weight:700;}
+  .svc-row .info .m{font-size:11px;color:var(--muted);}
+  .svc-row .price{font-size:13px;font-weight:700;}
+  .svc-row .chev{color:var(--muted);font-size:16px;}
+  .price-old{text-decoration:line-through;color:var(--muted);font-weight:400;font-size:11px;margin-right:4px;}
+  .price-new{color:var(--gold-dark);font-weight:700;}
+  .discount-badge{display:inline-block;background:var(--gold-dark);color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:999px;margin-left:5px;vertical-align:middle;white-space:nowrap;}
+
+  /* detail */
+  .detail-hero{height:170px;border-radius:16px;margin:8px 0 14px;background:linear-gradient(140deg,var(--sc1,#ccc),var(--sc2,#999));background-size:cover;background-position:center;}
+  .detail-title{font-family:Georgia,serif;font-size:20px;margin:0 0 2px;}
+  .detail-meta{font-size:12.5px;color:var(--muted);margin-bottom:10px;}
+  .detail-meta b{color:var(--ink);}
+  .detail-desc{font-size:13px;color:var(--ink-soft);margin-bottom:14px;}
+  .detail-points{font-size:12.5px;color:var(--ink-soft);margin:4px 0;display:flex;gap:8px;align-items:flex-start;}
+  .detail-points .chk{color:var(--series-3);flex:none;}
+  .primary-btn{width:100%;background:var(--ink);color:#fff;border:none;border-radius:12px;padding:13px;font-size:13.5px;font-weight:700;margin-top:16px;}
+  .ghost-btn{width:100%;background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:11px;font-size:12.5px;font-weight:600;margin-top:8px;}
+  .wa-btn{width:100%;background:#25D366;color:#08331c;border:none;border-radius:12px;padding:13px;font-size:13.5px;font-weight:700;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;box-sizing:border-box;}
+
+  /* booking */
+  .book-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:8px;}
+  .book-row{display:flex;justify-content:space-between;font-size:12.5px;padding:7px 0;border-bottom:1px solid var(--line);}
+  .book-row:last-child{border-bottom:none;}
+  .book-row .k{color:var(--muted);}
+  .book-row .v{font-weight:700;}
+  .date-chip-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;}
+  .date-chip{flex:none;width:50px;padding:8px 0;border-radius:12px;border:1px solid var(--line);background:var(--card);text-align:center;display:flex;flex-direction:column;gap:2px;}
+  .date-chip .dow{font-size:9px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:.3px;}
+  .date-chip .day{font-size:14px;font-weight:700;font-family:Georgia,serif;}
+  .date-chip.active{background:var(--ink);border-color:var(--ink);}
+  .date-chip.active .dow{color:rgba(255,255,255,.65);}
+  .date-chip.active .day{color:#fff;}
+  .time-chip-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .time-chip{padding:9px 4px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-size:11px;font-weight:600;color:var(--ink-soft);}
+  .time-chip.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .time-chip.taken{background:var(--cream-2);color:var(--muted);text-decoration:line-through;opacity:.55;cursor:not-allowed;}
+
+  /* loyalty */
+  .loyalty-card{background:linear-gradient(135deg,#1c1a16,#3a3630);color:#fff;border-radius:16px;padding:18px;margin-top:10px;}
+  .loyalty-card .pts{font-size:26px;font-family:Georgia,serif;}
+  .loyalty-card .bar{height:6px;background:rgba(255,255,255,.2);border-radius:99px;margin:12px 0 6px;overflow:hidden;}
+  .loyalty-card .bar i{display:block;height:100%;width:82%;background:var(--gold);}
+  .redeem-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px;}
+  .redeem-grid div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 8px;text-align:center;font-size:11px;font-weight:600;}
+
+  /* shop */
+  .shop-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;}
+  .prod{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;}
+  .prod .sw{height:64px;border-radius:10px;margin-bottom:8px;background:linear-gradient(140deg,var(--sc1,#ccc),var(--sc2,#999));background-size:cover;background-position:center;}
+  .prod .n{font-size:12px;font-weight:700;}
+  .prod .p{font-size:12px;color:var(--gold-dark);font-weight:700;margin-bottom:6px;}
+  .prod button{width:100%;background:var(--ink);color:#fff;border:none;border-radius:8px;padding:7px;font-size:10.5px;font-weight:700;}
+
+  /* AI overlay */
+  .ai-overlay{position:absolute;inset:0;background:var(--cream);z-index:20;display:none;flex-direction:column;border-radius:34px;}
+  .ai-overlay.open{display:flex;}
+  .ai-head{padding:22px 16px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);flex:none;}
+  .ai-head .close{margin-left:auto;width:28px;height:28px;border-radius:50%;background:var(--card);border:1px solid var(--line);}
+  .ai-chat{flex:1;overflow-y:auto;padding:14px 14px 8px;display:flex;flex-direction:column;gap:10px;}
+  .msg{max-width:82%;padding:10px 12px;border-radius:14px;font-size:12.5px;line-height:1.45;}
+  .msg.bot{background:var(--card);border:1px solid var(--line);align-self:flex-start;border-bottom-left-radius:4px;}
+  .msg.user{background:var(--ink);color:#fff;align-self:flex-end;border-bottom-right-radius:4px;}
+  .msg.bot ol{margin:6px 0 0;padding-left:16px;}
+  .msg .rec-btn{display:inline-block;margin-top:8px;font-size:11px;font-weight:700;color:var(--gold-dark);}
+  .ai-input{display:flex;gap:8px;padding:10px 14px 16px;flex:none;}
+  .ai-input input{flex:1;border:1px solid var(--line);border-radius:999px;padding:10px 14px;font-size:12.5px;background:var(--card);}
+  .ai-input button{background:var(--ink);color:#fff;border:none;border-radius:999px;width:38px;height:38px;font-size:14px;flex:none;}
+  .chip-row{display:flex;gap:6px;flex-wrap:wrap;padding:0 14px 10px;}
+  .chip-row button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 10px;font-size:10.5px;color:var(--ink-soft);}
+
+  /* ---------- Admin preview ---------- */
+  .admin{padding:56px 0 70px;}
+  .admin h2{font-size:26px;margin:0 0 4px;}
+  .admin p.sub{color:var(--ink-soft);font-size:13.5px;margin:0 0 22px;}
+  .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;}
+  .stat .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+  .stat .val{font-family:Georgia,serif;font-size:24px;margin-top:4px;}
+  .chart-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .chart-card{background:var(--chart-surface);border:1px solid var(--line);border-radius:14px;padding:18px;}
+  .chart-card h4{margin:0 0 4px;font-size:13px;}
+  .chart-card .cap{font-size:11px;color:var(--muted);margin-bottom:12px;}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;}
+  .legend .li{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-secondary);}
+  .legend .dot{width:9px;height:9px;border-radius:2px;}
+  .table-toggle{background:none;border:none;color:var(--muted);font-size:10.5px;text-decoration:underline;margin-top:10px;padding:0;}
+  .chart-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:11px;display:none;}
+  .chart-table.show{display:table;}
+  .chart-table th,.chart-table td{text-align:left;padding:5px 4px;border-bottom:1px solid var(--grid-line);color:var(--text-secondary);}
+  .bar-wrap{display:flex;align-items:flex-end;gap:10px;height:120px;padding:0 4px;}
+  .bar-wrap .bcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;justify-content:flex-end;height:100%;}
+  .bar-wrap .b{width:100%;max-width:26px;background:var(--series-1);border-radius:4px 4px 0 0;position:relative;}
+  .bar-wrap .m{font-size:9.5px;color:var(--muted);}
+  .bar-wrap .b[title]:hover::after{content:attr(title);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;font-size:10px;padding:3px 6px;border-radius:5px;white-space:nowrap;margin-bottom:4px;}
+
+  footer{border-top:1px solid var(--line);padding:26px 0;text-align:center;font-size:11.5px;color:var(--muted);}
+
+  @media (max-width:980px){
+    .hero{grid-template-columns:1fr;}
+    .feature-grid{grid-template-columns:repeat(2,1fr);}
+    .demo-section{grid-template-columns:1fr;}
+    .stat-row{grid-template-columns:1fr 1fr;}
+    .chart-row{grid-template-columns:1fr;}
+  }
+
+  /* RTL */
+  html[dir="rtl"] .screen-head .back{transform:scaleX(-1);}
+  html[dir="rtl"] .svc-row .chev{transform:scaleX(-1);}
+  html[dir="rtl"] .msg.user{align-self:flex-start;}
+  html[dir="rtl"] .msg.bot{align-self:flex-end;}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="topnav">
+    <div class="brandmark"><b>DOLCE</b><span>·</span><b>POLISHED</b><span>·</span><b>CORE</b></div>
+    <div class="nav-right">
+      <div class="mode-switch" role="group" aria-label="App">
+        <button data-mode-btn="client" class="active">Client App</button>
+        <button data-mode-btn="admin">Admin App</button>
+      </div>
+      <div class="lang-switch" id="langSwitch" role="group" aria-label="Language">
+        <button data-lang-btn="en" class="active">EN</button>
+        <button data-lang-btn="ku">کوردی</button>
+        <button data-lang-btn="ar">عربي</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="clientView">
+  <section class="hero">
+    <div>
+      <h1 data-i18n="heroTitle">One Account.<br>Three Brands.</h1>
+      <p class="tag" data-i18n="heroSubtitle">Beauty, Aesthetics &amp; Wellness — Connected.</p>
+      <p class="desc" data-i18n="heroDesc">A seamless digital ecosystem that connects Dolce Aesthetic Clinic, Polished by Dolce and Core Yoga &amp; Pilates Studio in one beautiful experience.</p>
+      <div class="brand-pills">
+        <div class="pill"><div class="ring">D</div><div class="name">DOLCE</div><div class="sub">Aesthetic Clinic</div></div>
+        <div class="pill"><div class="ring">P</div><div class="name">POLISHED</div><div class="sub">Salon</div></div>
+        <div class="pill"><div class="ring">C</div><div class="name">CORE</div><div class="sub">Yoga &amp; Pilates</div></div>
+      </div>
+    </div>
+    <div class="hero-cards">
+      <div class="hc dolce"><div class="sub">Aesthetic Clinic</div><div class="name serif">Dolce</div></div>
+      <div class="hc polished"><div class="sub">Salon</div><div class="name serif">Polished</div></div>
+      <div class="hc core"><div class="sub">Yoga &amp; Pilates</div><div class="name serif">Core</div></div>
+    </div>
+  </section>
+
+  <section class="features">
+    <h3 data-i18n="keyFeatures">Key Features</h3>
+    <div class="feature-grid">
+      <div class="fcard"><div class="ic">🏛️</div><div class="t" data-i18n="f1">Three Businesses, One App</div></div>
+      <div class="fcard"><div class="ic">📋</div><div class="t" data-i18n="f2">Full Service Info &amp; Pricing</div></div>
+      <div class="fcard"><div class="ic">💬</div><div class="t" data-i18n="f3">In-App &amp; WhatsApp Booking</div></div>
+      <div class="fcard"><div class="ic">⭐</div><div class="t" data-i18n="f4">Loyalty Points Across Brands</div></div>
+      <div class="fcard"><div class="ic">✨</div><div class="t" data-i18n="f5">AI Assistant Recommendations</div></div>
+      <div class="fcard"><div class="ic">🛍️</div><div class="t" data-i18n="f6">Products &amp; Retail Shop</div></div>
+      <div class="fcard"><div class="ic">📅</div><div class="t" data-i18n="f7">Upcoming Events &amp; Offers</div></div>
+      <div class="fcard"><div class="ic">🌐</div><div class="t" data-i18n="f8">English, Kurdish, Arabic</div></div>
+    </div>
+  </section>
+
+  <section class="demo-section">
+    <div class="demo-copy">
+      <h2 data-i18n="tryTitle">Try the client app</h2>
+      <p data-i18n="tryDesc">This is a working demo of the core client journey. Tap through it the way a client would — choose a brand, browse services, request a booking, and chat with the AI assistant.</p>
+      <div class="stepper">
+        <div class="step"><div class="stepnum">1</div><div><b data-i18n="s1t">Choose destination</b><span data-i18n="s1d">Dolce, Polished or Core</span></div></div>
+        <div class="step"><div class="stepnum">2</div><div><b data-i18n="s2t">Explore services &amp; pricing</b><span data-i18n="s2d">Browse by category</span></div></div>
+        <div class="step"><div class="stepnum">3</div><div><b data-i18n="s3t">View service details</b><span data-i18n="s3d">Duration, price, what's included</span></div></div>
+        <div class="step"><div class="stepnum">4</div><div><b data-i18n="s4t">Pick a time &amp; book</b><span data-i18n="s4d">In the app, or via WhatsApp</span></div></div>
+        <div class="step"><div class="stepnum">5</div><div><b data-i18n="s5t">Ask the AI Assistant</b><span data-i18n="s5d">Personalized recommendations</span></div></div>
+      </div>
+      <button class="fs-launch" id="launchFullApp">⛶ Open Full-Screen App</button>
+    </div>
+
+    <div class="phone-stage">
+      <div class="phone">
+        <div class="notch"></div>
+        <button class="fs-exit" id="fsExit" aria-label="Exit full screen">✕</button>
+        <div class="screen" id="screen"></div>
+      </div>
+    </div>
+  </section>
+  </div>
+
+  <div id="adminView" style="display:none;">
+  <section class="admin-app">
+
+    <div id="adminLogin"></div>
+
+    <div id="adminAuthed" style="display:none;">
+    <div class="admin-app-head">
+      <div>
+        <h2>Admin App</h2>
+        <p>Manage services, products, prices, bookings and promotions for Dolce, Polished and Core — from one place.</p>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+        <div class="sync-note"><span class="sync-dot"></span>Live-linked to the Client App — changes here appear there instantly</div>
+        <div class="user-badge" id="userBadge"></div>
+      </div>
+    </div>
+    <div class="admin-tabs" id="adminTabsRow">
+      <button data-admin-tab="overview" class="active">Overview</button>
+      <button data-admin-tab="bookings">Bookings</button>
+      <button data-admin-tab="products">Products</button>
+      <button data-admin-tab="services">Services</button>
+      <button data-admin-tab="offers">Offers</button>
+      <button data-admin-tab="gallery">Photos &amp; Video</button>
+      <button data-admin-tab="employees">Employees</button>
+    </div>
+
+    <div class="admin-panel active" id="adminOverview">
+      <div id="brandPhotosWrap"></div>
+      <div class="stat-row">
+        <div class="stat"><div class="lbl">Total Bookings</div><div class="val">1,256</div></div>
+        <div class="stat"><div class="lbl">Total Customers</div><div class="val">3,782</div></div>
+        <div class="stat"><div class="lbl">Points Issued</div><div class="val">125,650</div></div>
+        <div class="stat"><div class="lbl">Revenue</div><div class="val">$86,230</div></div>
+      </div>
+      <div class="chart-row">
+        <div class="chart-card">
+          <h4>Bookings by brand</h4>
+          <div class="cap">Share of total bookings, last 30 days</div>
+          <div style="display:flex;align-items:center;gap:18px;">
+            <svg id="donut" width="120" height="120" viewBox="0 0 42 42" role="img" aria-label="Bookings by brand: Dolce 40%, Polished 35%, Core 25%"></svg>
+            <div class="legend" id="donutLegend"></div>
+          </div>
+          <button class="table-toggle" data-toggle="donutTable">View data as table</button>
+          <table class="chart-table" id="donutTable">
+            <thead><tr><th>Brand</th><th>Share</th><th>Bookings</th></tr></thead>
+            <tbody>
+              <tr><td>Dolce</td><td>40%</td><td>502</td></tr>
+              <tr><td>Polished</td><td>35%</td><td>440</td></tr>
+              <tr><td>Core</td><td>25%</td><td>314</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="chart-card">
+          <h4>Revenue trend</h4>
+          <div class="cap">Last 6 months, all brands combined</div>
+          <div class="bar-wrap" id="revBars"></div>
+          <button class="table-toggle" data-toggle="revTable">View data as table</button>
+          <table class="chart-table" id="revTable">
+            <thead><tr><th>Month</th><th>Revenue</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-panel" id="adminProducts">
+      <div class="admin-toolbar">
+        <div style="font-size:12.5px;color:var(--ink-soft);"><span id="prodCount">0</span> products <span id="prodScopeLabel">across all brands</span></div>
+        <button class="btn btn-primary" id="addProductBtn">+ Add Product</button>
+      </div>
+      <div id="productFormWrap"></div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>Product</th><th>Brand</th><th>Price</th><th></th></tr></thead>
+          <tbody id="productRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="admin-panel" id="adminServices">
+      <div class="admin-toolbar">
+        <div class="cat-tabs" id="svcBrandTabs" style="margin-bottom:0;">
+          <button data-svc-brand-tab="dolce" class="active">Dolce</button>
+          <button data-svc-brand-tab="polished">Polished</button>
+          <button data-svc-brand-tab="core">Core</button>
+        </div>
+        <button class="btn btn-primary" id="addServiceBtn">+ Add Service</button>
+      </div>
+      <div id="serviceFormWrap"></div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>Service</th><th>Category</th><th>Duration</th><th>Price</th><th></th></tr></thead>
+          <tbody id="serviceRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="admin-panel" id="adminOffers">
+      <div class="admin-toolbar">
+        <div style="font-size:12.5px;color:var(--ink-soft);"><span id="offerCount">0</span> offers on the client app's welcome screen</div>
+        <button class="btn btn-primary" id="addOfferBtn">+ Add Offer</button>
+      </div>
+      <div id="offerFormWrap"></div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>Offer</th><th>Brand</th><th>Description</th><th></th></tr></thead>
+          <tbody id="offerRows"></tbody>
+        </table>
+      </div>
+      <div id="autoOffersWrap"></div>
+    </div>
+
+    <div class="admin-panel" id="adminGallery">
+      <div class="admin-toolbar">
+        <div style="font-size:12.5px;color:var(--ink-soft);"><span id="mediaCount">0</span> photos &amp; videos · <span id="mediaPublicCount">0</span> public, <span id="mediaPrivateCount">0</span> private</div>
+        <button class="btn btn-primary" id="addMediaBtn">+ Upload Photo / Video</button>
+      </div>
+      <div id="mediaFormWrap"></div>
+      <div class="gallery-grid" id="mediaGrid"></div>
+    </div>
+
+    <div class="admin-panel" id="adminBookings">
+      <div class="admin-toolbar">
+        <div style="font-size:12.5px;color:var(--ink-soft);"><span id="bookingCount">0</span> bookings <span id="bookingScopeLabel">across all brands</span></div>
+        <button class="btn btn-primary" id="addBookingBtn">+ Add Booking</button>
+      </div>
+      <div id="bookingFormWrap"></div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>Client</th><th>Brand</th><th>Service</th><th>Date / Time</th><th>Status</th><th></th></tr></thead>
+          <tbody id="bookingRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="admin-panel" id="adminEmployees">
+      <div class="admin-toolbar">
+        <div style="font-size:12.5px;color:var(--ink-soft);"><span id="employeeCount">0</span> employee accounts</div>
+        <button class="btn btn-primary" id="addEmployeeBtn">+ Add Employee</button>
+      </div>
+      <div id="employeeFormWrap"></div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>Name</th><th>Role</th><th>Department</th><th>PIN</th><th></th></tr></thead>
+          <tbody id="employeeRows"></tbody>
+        </table>
+      </div>
+    </div>
+    </div>
+  </section>
+  </div>
+
+  <footer>
+    <span data-i18n="footerNote">Prototype for demonstration — content, prices and translations are placeholders to be replaced with real data.</span>
+  </footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------------- Data ---------------- */
+// Brand metadata is fixed. Services & products live in STORE, which is the
+// shared "backend" both the Client App and Admin App read from — in a real
+// build this is one database (e.g. Supabase/Firebase); here it's simulated
+// with localStorage so edits in the Admin App show up live in the Client App.
+const BRANDS = {
+  dolce:{name:'Dolce',sub:'Aesthetic Clinic',c1:'#3a3630',c2:'#171512',cats:['Skincare','Injectables','Body']},
+  polished:{name:'Polished',sub:'Salon',c1:'#b98f5e',c2:'#8a6d3a',cats:['Hair','Nails','Spa']},
+  core:{name:'Core',sub:'Yoga & Pilates',c1:'#5c6b5a',c2:'#37413a',cats:['Yoga','Pilates','Recovery']},
+};
+
+// Generates a small placeholder "photo" so the demo gallery has content
+// without needing real uploads. Real uploads (via the Admin App form) use
+// actual selected files instead of this.
+function ph(label,c1,c2){
+  const cv=document.createElement('canvas'); cv.width=200; cv.height=200;
+  const ctx=cv.getContext('2d');
+  const g=ctx.createLinearGradient(0,0,200,200); g.addColorStop(0,c1); g.addColorStop(1,c2);
+  ctx.fillStyle=g; ctx.fillRect(0,0,200,200);
+  ctx.fillStyle='rgba(255,255,255,.94)'; ctx.font='bold 16px system-ui, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(label,100,100);
+  return cv.toDataURL('image/jpeg',0.82);
+}
+
+function defaultStore(){
+  return {
+    services:{
+      dolce:[
+        {id:'hydra',n:'Hydrafacial',cat:'Skincare',dur:'60 min',price:120,discount:20,desc:"Deep cleansing, exfoliation and hydration to reveal smooth, glowing skin.",points:['Cleanses & detoxifies','Improves hydration','Brightens complexion','Suitable for all skin types']},
+        {id:'fillers',n:'Dermal Fillers',cat:'Injectables',dur:'45 min',price:250,desc:"Restores volume and softens fine lines for a natural, refreshed look.",points:['Performed by licensed provider','Results visible immediately','Minimal downtime']},
+        {id:'laser',n:'Laser Hair Removal',cat:'Body',dur:'30 min',price:90,desc:"Long-term hair reduction using medical-grade laser technology.",points:['Suitable for most skin tones','Series recommended for best results']},
+        {id:'peel',n:'Chemical Peel',cat:'Skincare',dur:'45 min',price:110,desc:"Resurfaces skin to reduce texture, tone and pigmentation concerns.",points:['Improves skin texture','Reduces pigmentation','Customized strength']},
+        {id:'led',n:'LED Therapy',cat:'Skincare',dur:'30 min',price:70,desc:"Light-based therapy to calm inflammation and boost collagen.",points:['Calms acne-prone skin','Boosts collagen','No downtime']},
+        {id:'botox',n:'Botox',cat:'Injectables',dur:'30 min',price:220,desc:"Smooths expression lines for a refreshed, natural appearance.",points:['Quick in-clinic treatment','Results within 3-7 days']},
+      ],
+      polished:[
+        {id:'cut',n:'Haircut & Style',cat:'Hair',dur:'45 min',price:35,desc:"Precision cut and blow-dry styled to suit your face and lifestyle.",points:['Consultation included','Finished with styling']},
+        {id:'balayage',n:'Balayage Color',cat:'Hair',dur:'120 min',price:150,discount:15,desc:"Hand-painted, low-maintenance color for natural dimension.",points:['Custom color mapping','Includes toning & gloss']},
+        {id:'gelmani',n:'Gel Manicure',cat:'Nails',dur:'40 min',price:30,desc:"Long-lasting gel polish with full nail prep and shaping.",points:['Chip-resistant finish','Lasts up to 3 weeks']},
+        {id:'pedi',n:'Deluxe Pedicure',cat:'Nails',dur:'50 min',price:40,desc:"Soak, exfoliation, massage and polish for complete foot care.",points:['Includes callus treatment','Relaxing massage']},
+        {id:'keratin',n:'Keratin Treatment',cat:'Hair',dur:'90 min',price:130,desc:"Smoothing treatment that reduces frizz for up to 3 months.",points:['Reduces frizz','Cuts blow-dry time']},
+        {id:'nailart',n:'Nail Art Add-on',cat:'Nails',dur:'20 min',price:15,desc:"Custom nail art added to any manicure or pedicure.",points:['Fully customizable','Add to any service']},
+      ],
+      core:[
+        {id:'vinyasa',n:'Vinyasa Flow Class',cat:'Yoga',dur:'60 min',price:20,desc:"A dynamic, breath-linked flow suitable for most levels.",points:['All levels welcome','Mats provided']},
+        {id:'reformer',n:'Reformer Pilates',cat:'Pilates',dur:'50 min',price:35,desc:"Full-body strength and control training on the reformer machine.",points:['Small class sizes','Great for posture & core']},
+        {id:'prenatal',n:'Prenatal Yoga',cat:'Yoga',dur:'60 min',price:25,desc:"Gentle, supportive practice designed for expecting mothers.",points:['Certified prenatal instructor','Focus on breath & comfort']},
+        {id:'matpil',n:'Mat Pilates',cat:'Pilates',dur:'45 min',price:22,desc:"Bodyweight Pilates focused on core strength and alignment.",points:['No equipment needed','Beginner friendly']},
+        {id:'private',n:'Private Session',cat:'Recovery',dur:'60 min',price:60,desc:"One-on-one coaching tailored to your goals and recovery needs.",points:['Fully personalized','Choice of yoga or pilates focus']},
+        {id:'sound',n:'Sound Bath Recovery',cat:'Recovery',dur:'45 min',price:30,desc:"Guided relaxation using resonant sound for deep recovery.",points:['Deep relaxation','Great after intense training']},
+      ],
+    },
+    products:[
+      {id:'p1',n:'Skin Hydrating Serum',price:65,brand:'dolce'},
+      {id:'p2',n:'Hair Repair Mask',price:45,brand:'polished'},
+      {id:'p3',n:'Wellness Yoga Mat',price:55,discount:10,brand:'core'},
+      {id:'p4',n:'Vitamin C Booster',price:40,brand:'dolce'},
+      {id:'p5',n:'Nail Strengthener Kit',price:25,brand:'polished'},
+      {id:'p6',n:'Pilates Resistance Band',price:28,brand:'core'},
+    ],
+    media:[
+      {id:'m1',brand:'dolce',serviceId:'hydra',type:'photo',kind:'before-after',visibility:'public',consent:true,clientName:'',note:'Before',dataUrl:ph('BEFORE','#3a3630','#171512'),mime:'image/jpeg'},
+      {id:'m2',brand:'dolce',serviceId:'hydra',type:'photo',kind:'before-after',visibility:'public',consent:true,clientName:'',note:'After — 1 session',dataUrl:ph('AFTER','#caa46a','#8a6d3a'),mime:'image/jpeg'},
+      {id:'m3',brand:'polished',serviceId:'balayage',type:'photo',kind:'process',visibility:'public',consent:true,clientName:'',note:'Balayage in progress',dataUrl:ph('PROCESS','#b98f5e','#6d5228'),mime:'image/jpeg'},
+      {id:'m4',brand:'core',serviceId:'',type:'photo',kind:'process',visibility:'private',consent:false,clientName:'Demo Client',note:'Progress — Week 4',dataUrl:ph('WEEK 4','#5c6b5a','#2c342b'),mime:'image/jpeg'},
+    ],
+    bookings:[
+      {id:'b1',brand:'dolce',serviceId:'hydra',serviceName:'Hydrafacial',date:'Aug 29, 2026',time:'11:00 AM',status:'Confirmed',clientName:'Zhino A.'},
+      {id:'b2',brand:'polished',serviceId:'balayage',serviceName:'Balayage Color',date:'Aug 30, 2026',time:'2:30 PM',status:'Requested',clientName:'Rawa S.'},
+      {id:'b3',brand:'core',serviceId:'reformer',serviceName:'Reformer Pilates',date:'Aug 28, 2026',time:'6:00 PM',status:'Completed',clientName:'Diyar K.'},
+    ],
+    offers:[
+      {id:'o1',t:'Glow Season',s:'20% off all facials',brand:'dolce'},
+      {id:'o2',t:'Bridal Package',s:'Complete beauty for your big day',brand:'polished'},
+      {id:'o3',t:'Pilates Workshop',s:'Core strength, better you',brand:'core'},
+    ],
+    // Client accounts (Client App login) — separate from `users`, which are
+    // the employee/Admin App accounts. Empty by default; created the first
+    // time someone signs up with a phone number in the demo.
+    clients:[],
+    brandImages:{dolce:'',polished:'',core:''},
+    // `brands` scopes an account to one or more departments (Dolce / Polished
+    // / Core). Bookings, Products, Services, Offers and Photos & Video are
+    // all filtered to only these brands for that account; Overview and
+    // Employees stay account-wide. Owner-style accounts get all three.
+    users:[
+      {id:'u1',name:'Kawa',tabs:['overview','bookings','products','services','offers','gallery','employees'],brands:['dolce','polished','core'],pin:'1234'},
+      {id:'u2',name:'Sara',tabs:['bookings'],brands:['dolce'],pin:'1111'},
+      {id:'u3',name:'Aya',tabs:['bookings','gallery'],brands:['polished'],pin:'2222'},
+      {id:'u4',name:'Diyar',tabs:['bookings','gallery'],brands:['core'],pin:'3333'},
+    ],
+  };
+}
+
+const STORE_KEY='odc_store_v1';
+function loadStore(){
+  try{
+    const raw=localStorage.getItem(STORE_KEY);
+    if(raw){
+      const parsed=JSON.parse(raw);
+      if(parsed && parsed.services && parsed.products){
+        if(!parsed.media) parsed.media=defaultStore().media;
+        if(!parsed.bookings) parsed.bookings=defaultStore().bookings;
+        if(!parsed.offers) parsed.offers=defaultStore().offers;
+        if(!parsed.clients) parsed.clients=defaultStore().clients;
+        if(!parsed.brandImages) parsed.brandImages=defaultStore().brandImages;
+        if(!parsed.users) parsed.users=defaultStore().users;
+        // Migrate any older saved accounts that still used a single `role`
+        // string instead of a `tabs` checkbox array (PRESETS isn't defined
+        // yet at this point in the script, so the mapping is inlined here).
+        const legacyTabs={owner:['overview','bookings','products','services','offers','gallery','employees'],reception:['bookings'],staff:['bookings','gallery']};
+        parsed.users=parsed.users.map(u=>u.tabs?u:{...u,tabs:legacyTabs[u.role]||['bookings']});
+        // Offers is a newer section — any account that already manages
+        // Employees (the account-management tier) gets it automatically so
+        // existing saved sessions don't lose access to something new.
+        parsed.users=parsed.users.map(u=>(u.tabs.includes('employees')&&!u.tabs.includes('offers'))?{...u,tabs:[...u.tabs,'offers']}:u);
+        // Brand/department scoping is newer — any saved account without a
+        // `brands` list gets all three, matching its previous unscoped access.
+        parsed.users=parsed.users.map(u=>(u.brands&&u.brands.length)?u:{...u,brands:Object.keys(BRANDS)});
+        return parsed;
+      }
+    }
+  }catch(e){}
+  return defaultStore();
+}
+function saveStore(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(STORE)); return true; }catch(e){ return false; }
+}
+let STORE = loadStore();
+function svcList(brand){ return STORE.services[brand]; }
+function swStyle(item,brand){
+  const img=(item&&item.image)||STORE.brandImages[brand];
+  return img
+    ? `background-image:url('${img}')`
+    : `--sc1:${BRANDS[brand].c1};--sc2:${BRANDS[brand].c2}`;
+}
+function brandPhotoStyle(brand){
+  const img=STORE.brandImages[brand];
+  return img ? `background-image:url('${img}')` : '';
+}
+function nextId(prefix,arr){ return prefix + (arr.length ? Math.max(...arr.map(x=>parseInt((x.id||'0').replace(/\D/g,''))||0))+1 : 1); }
+
+/* ---------------- Discounts (on products & services) ----------------
+   A discount is just a percentage on the item itself — there's no separate
+   record to manage. Any product or service with an active discount shows a
+   struck-through original price + the discounted price wherever its price
+   appears, and is automatically added to the welcome screen's "Upcoming
+   Events & Offers" strip alongside whatever the Owner has added manually
+   there. Clear the discount (back to 0) and it drops off the offers strip
+   on its own — nothing to remember to delete separately. */
+function hasDiscount(item){ return !!(item && item.discount && item.discount>0); }
+function discountedPrice(item){ return Math.round(item.price*(1-(item.discount||0)/100)); }
+function effectivePrice(item){ return hasDiscount(item)?discountedPrice(item):item.price; }
+function priceHtml(item){
+  if(!hasDiscount(item)) return `$${item.price}`;
+  return `<span class="price-old">$${item.price}</span><span class="price-new">$${discountedPrice(item)}</span><span class="discount-badge">-${item.discount}%</span>`;
+}
+// Every currently-discounted product/service across all three brands,
+// shaped like an offer chip — merged with STORE.offers on the welcome
+// screen so a discount shows up there the moment it's set.
+function activeDiscountOffers(){
+  const out=[];
+  Object.keys(BRANDS).forEach(brand=>{
+    svcList(brand).forEach(s=>{ if(hasDiscount(s)) out.push({t:s.n,s:`${s.discount}% off`,brand}); });
+  });
+  STORE.products.forEach(p=>{ if(hasDiscount(p)) out.push({t:p.n,s:`${p.discount}% off`,brand:p.brand}); });
+  return out;
+}
+
+/* ---------------- Client App login (phone number + demo code) ----------------
+   Separate from `users` (the employee/Admin App accounts). One account per
+   phone number, shared across Dolce, Polished and Core — browsing is open to
+   anyone, but confirming a booking, My Bookings and Profile all require this.
+   Same caveat as the Admin App login: this is a demo of the flow, not real
+   verification — there's no SMS gateway behind it, so the code is shown on
+   screen rather than actually texted. */
+const CLIENT_KEY='odc_current_client';
+const DEMO_OTP='1234';
+function normalizedPhone(p){ return (p||'').replace(/\D/g,''); }
+function findClientByPhone(p){ return STORE.clients.find(c=>c.phone===normalizedPhone(p)); }
+let loggedInClient=null;
+try{
+  const savedClientId=localStorage.getItem(CLIENT_KEY);
+  if(savedClientId) loggedInClient=STORE.clients.find(c=>c.id===savedClientId)||null;
+}catch(e){}
+let authStep='phone', authPhone='', pendingScreen=null;
+
+const I18N = {
+  en:{heroTitle:'One Account.<br>Three Brands.',heroSubtitle:'Beauty, Aesthetics &amp; Wellness — Connected.',heroDesc:"A seamless digital ecosystem that connects Dolce Aesthetic Clinic, Polished by Dolce and Core Yoga &amp; Pilates Studio in one beautiful experience.",keyFeatures:'Key Features',f1:'Three Businesses, One App',f2:'Full Service Info &amp; Pricing',f3:'In-App &amp; WhatsApp Booking',f4:'Loyalty Points Across Brands',f5:'AI Assistant Recommendations',f6:'Products &amp; Retail Shop',f7:'Upcoming Events &amp; Offers',f8:'English, Kurdish, Arabic',tryTitle:'Try the client app',tryDesc:'This is a working demo of the core client journey. Tap through it the way a client would — choose a brand, browse services, request a booking, and chat with the AI assistant.',s1t:'Choose destination',s1d:'Dolce, Polished or Core',s2t:'Explore services &amp; pricing',s2d:'Browse by category',s3t:'View service details',s3d:"Duration, price, what's included",s4t:'Pick a time &amp; book',s4d:'In the app, or via WhatsApp',s5t:'Ask the AI Assistant',s5d:'Personalized recommendations',adminTitle:'Admin dashboard (overview)',adminSub:'One dashboard for all three businesses — bookings, customers, revenue and promotions in a single view.',statBookings:'Total Bookings',statCustomers:'Total Customers',statPoints:'Points Issued',statRevenue:'Revenue',chartBookingsTitle:'Bookings by brand',chartBookingsCap:'Share of total bookings, last 30 days',chartRevenueTitle:'Revenue trend',chartRevenueCap:'Last 6 months, all brands combined',viewAsTable:'View data as table',brand:'Brand',share:'Share',bookings:'Bookings',month:'Month',revenue:'Revenue',footerNote:'Prototype for demonstration — content, prices and translations are placeholders to be replaced with real data.',
+    chooseDestination:'Choose your destination',welcomeSub:'Experience our Beauty & Wellness ecosystem',navHome:'Home',navBookings:'Bookings',navShop:'Shop',navProfile:'Profile',allServices:'All',requestBooking:'Request Booking',requestViaWhatsapp:'Also Message via WhatsApp',confirmBookingBtn:'Confirm Booking',bookedNote:"Booked! You'll see it under My Bookings, and we'll confirm shortly.",bookedTag:'Booked',whatsInc:"What's included",bookingSummary:'Booking summary',preferredDate:'Preferred Date',preferredTime:'Preferred Time',location:'Location',confirmNote:"Pick an available date and time — the same availability shown here is what WhatsApp sees too.",waSent:'Opening WhatsApp in a new tab with your booking pre-filled — a staff member confirms it there.',aiAssistant:'AI Assistant',aiSub:'Always here to help',aiGreeting:'Hello! How can I help you today?',yourPoints:'Your Points',toNextReward:'to next reward',redeem:'Redeem your points',r1:'Free Treatment',r2:'Exclusive Discount',r3:'Special Gift',r4:'Priority Booking',addToCart:'Add to Cart',added:'Added ✓',myBookings:'My Bookings',upcoming:'Upcoming',noBookings:'No upcoming bookings yet — book a service to see it here.',past:'Past',profile:'Profile & Loyalty',language:'Language',askPlaceholder:'Ask about a treatment, class or product…',beforeAfter:'Before & After',myProgress:'My Progress'},
+  ar:{heroTitle:'حساب واحد.<br>ثلاث علامات تجارية.',heroSubtitle:'الجمال والتجميل والعافية — متصلون.',heroDesc:'نظام رقمي متكامل يربط بين عيادة دولتشي للتجميل، وصالون بوليشد باي دولتشي، واستوديو كور لليوغا والبيلاتس في تجربة واحدة متكاملة.',keyFeatures:'أبرز المزايا',f1:'ثلاث أعمال في تطبيق واحد',f2:'معلومات كاملة عن الخدمات والأسعار',f3:'الحجز داخل التطبيق وعبر واتساب',f4:'نقاط ولاء عبر جميع العلامات',f5:'توصيات المساعد الذكي',f6:'منتجات ومتجر بيع بالتجزئة',f7:'فعاليات وعروض قادمة',f8:'الإنجليزية والكردية والعربية',tryTitle:'جرّب تطبيق العميل',tryDesc:'هذا عرض تجريبي فعلي لتجربة العميل الأساسية. تنقّل فيه كما يفعل العميل تماماً — اختر علامة تجارية، تصفح الخدمات، اطلب حجزاً، وتحدث مع المساعد الذكي.',s1t:'اختر وجهتك',s1d:'دولتشي، بوليشد أو كور',s2t:'تصفح الخدمات والأسعار',s2d:'تصفح حسب الفئة',s3t:'عرض تفاصيل الخدمة',s3d:'المدة والسعر وما يشمله',s4t:'اختر وقتاً واحجز',s4d:'داخل التطبيق أو عبر واتساب',s5t:'اسأل المساعد الذكي',s5d:'توصيات مخصصة لك',adminTitle:'لوحة تحكم الإدارة (نظرة عامة)',adminSub:'لوحة واحدة للأعمال الثلاثة — الحجوزات والعملاء والإيرادات والعروض في مكان واحد.',statBookings:'إجمالي الحجوزات',statCustomers:'إجمالي العملاء',statPoints:'النقاط الممنوحة',statRevenue:'الإيرادات',chartBookingsTitle:'الحجوزات حسب العلامة',chartBookingsCap:'نسبة الحجوزات خلال آخر 30 يوماً',chartRevenueTitle:'اتجاه الإيرادات',chartRevenueCap:'آخر 6 أشهر لجميع العلامات',viewAsTable:'عرض البيانات كجدول',brand:'العلامة',share:'النسبة',bookings:'الحجوزات',month:'الشهر',revenue:'الإيرادات',footerNote:'نموذج تجريبي للعرض فقط — المحتوى والأسعار والترجمات مؤقتة ويجب استبدالها ببيانات حقيقية.',
+    chooseDestination:'اختر وجهتك',welcomeSub:'اكتشف عالمنا للجمال والعافية',navHome:'الرئيسية',navBookings:'الحجوزات',navShop:'المتجر',navProfile:'الملف الشخصي',allServices:'الكل',requestBooking:'طلب حجز',requestViaWhatsapp:'راسلنا أيضاً عبر واتساب',confirmBookingBtn:'تأكيد الحجز',bookedNote:'تم الحجز! ستراه ضمن حجوزاتي، وسنؤكده قريباً.',bookedTag:'محجوز',whatsInc:'ما يشمله',bookingSummary:'ملخص الحجز',preferredDate:'التاريخ المفضل',preferredTime:'الوقت المفضل',location:'الموقع',confirmNote:'اختر تاريخاً ووقتاً متاحَين — نفس التوفر الظاهر هنا يظهر في واتساب أيضاً.',waSent:'سيتم فتح واتساب في تبويب جديد مع تفاصيل حجزك جاهزة — يؤكدها الموظف هناك.',aiAssistant:'المساعد الذكي',aiSub:'هنا دائماً لمساعدتك',aiGreeting:'مرحباً! كيف يمكنني مساعدتك اليوم؟',yourPoints:'نقاطك',toNextReward:'حتى المكافأة التالية',redeem:'استبدل نقاطك',r1:'علاج مجاني',r2:'خصم حصري',r3:'هدية خاصة',r4:'أولوية الحجز',addToCart:'أضف إلى السلة',added:'أُضيف ✓',myBookings:'حجوزاتي',upcoming:'القادمة',noBookings:'لا توجد حجوزات قادمة بعد — احجز خدمة لتظهر هنا.',past:'السابقة',profile:'الملف الشخصي والولاء',language:'اللغة',askPlaceholder:'اسأل عن علاج أو حصة أو منتج…',beforeAfter:'قبل وبعد',myProgress:'تقدمي'},
+  ku:{heroTitle:'یەک هەژمار.<br>سێ براند.',heroSubtitle:'جوانی، ڕازاندنەوە و تەندروستی — پەیوەستکراو.',heroDesc:'سیستەمێکی دیجیتاڵی یەکگرتوو کە کلینیکی ڕازاندنەوەی دۆلچێ، سالۆنی پۆلیشد بای دۆلچێ و ستۆدیۆی یۆگا و پیلاتێسی کۆر بە یەک ئەزموونی جوان دەبەستێتەوە.',keyFeatures:'تایبەتمەندییە سەرەکییەکان',f1:'سێ بزنس لە یەک ئەپدا',f2:'زانیاری تەواوی خزمەتگوزاری و نرخ',f3:'حجزکردن لەناو ئەپ و لە ڕێگەی واتساپ',f4:'خاڵی بەداخوازی لەسەر هەموو براندەکان',f5:'پێشنیاری یاریدەدەری AI',f6:'بەرهەم و فرۆشگای مەبەستی',f7:'ڕووداو و داشکاندنە داهاتووەکان',f8:'ئینگلیزی، کوردی و عەرەبی',tryTitle:'ئەپی کڕیار تاقی بکەوە',tryDesc:'ئەمە نموونەیەکی کارا لە ئەزموونی سەرەکی کڕیارە. وەک کڕیارێک بەردەوام بە لەسەری — براندێک هەڵبژێرە، خزمەتگوزارییەکان ببینە، داوای حجز بکە و لەگەڵ یاریدەدەری AI قسە بکە.',s1t:'ئامانجەکەت هەڵبژێرە',s1d:'دۆلچێ، پۆلیشد یان کۆر',s2t:'خزمەتگوزاری و نرخەکان ببینە',s2d:'بەپێی جۆر بگەڕێ',s3t:'وردەکاری خزمەتگوزاری ببینە',s3d:'کات، نرخ و ئەوەی تێدایە',s4t:'کاتێک هەڵبژێرە و حجز بکە',s4d:'لەناو ئەپ یان لە ڕێگەی واتساپ',s5t:'لە یاریدەدەری AI بپرسە',s5d:'پێشنیاری تایبەت بە تۆ',adminTitle:'داشبۆردی بەڕێوەبردن (گشتی)',adminSub:'یەک داشبۆرد بۆ هەر سێ بزنسەکە — حجزکردن، کڕیار، داهات و کەمپینەکان لە یەک شوێن.',statBookings:'کۆی حجزەکان',statCustomers:'کۆی کڕیارەکان',statPoints:'خاڵی دراو',statRevenue:'داهات',chartBookingsTitle:'حجزەکان بەپێی براند',chartBookingsCap:'ڕێژەی حجزەکان لە ٣٠ ڕۆژی ڕابردوودا',chartRevenueTitle:'ئاڕاستەی داهات',chartRevenueCap:'٦ مانگی ڕابردوو، هەموو براندەکان پێکەوە',viewAsTable:'وەک خشتە ببینە',brand:'براند',share:'ڕێژە',bookings:'حجزەکان',month:'مانگ',revenue:'داهات',footerNote:'نموونەیەکی نیشاندان — ناوەڕۆک، نرخ و وەرگێڕانەکان کاتین و دەبێت بە داتای ڕاستەقینە بگۆڕدرێن.',
+    chooseDestination:'ئامانجەکەت هەڵبژێرە',welcomeSub:'ئەزموونی سیستەمی جوانی و تەندروستیمان بکە',navHome:'ماڵەوە',navBookings:'حجزەکان',navShop:'فرۆشگا',navProfile:'پرۆفایل',allServices:'هەموو',requestBooking:'داواکردنی حجز',requestViaWhatsapp:'هەروەها لە ڕێگەی واتساپ پەیوەندیمان پێوە بکە',confirmBookingBtn:'حجزەکە پشتڕاست بکە',bookedNote:'حجزکرا! لەژێر بەشی «حجزەکانم» دەیبینیت، بەم زووانە پشتڕاستی دەکەینەوە.',bookedTag:'حجزکراوە',whatsInc:'ئەوەی تێدایە',bookingSummary:'پوختەی حجز',preferredDate:'بەرواری دڵخواز',preferredTime:'کاتی دڵخواز',location:'شوێن',confirmNote:'بەروار و کاتێکی بەردەست هەڵبژێرە — هەمان بەردەستی کە لێرە دەیبینیت لە واتساپیشدا دەردەکەوێت.',waSent:'واتساپ لە تابێکی نوێدا دەکرێتەوە لەگەڵ وردەکاری حجزەکەت — کارمەندێک لەوێ پشتڕاستی دەکاتەوە.',aiAssistant:'یاریدەدەری AI',aiSub:'هەمیشە ئامادەیە بۆ یارمەتیدان',aiGreeting:'سڵاو! چۆن دەتوانم یارمەتیت بدەم ئەمڕۆ؟',yourPoints:'خاڵەکانت',toNextReward:'بۆ خەڵاتی داهاتوو',redeem:'خاڵەکانت بگۆڕەوە',r1:'چاککردنەوەی خۆڕایی',r2:'داشکاندنی تایبەت',r3:'دیاری تایبەت',r4:'پێشینەیی حجزکردن',addToCart:'زیادکردن بۆ سەبەتە',added:'زیادکرا ✓',myBookings:'حجزەکانم',upcoming:'داهاتوو',noBookings:'هێشتا هیچ حجزێکی داهاتوو نییە — خزمەتگوزارییەک حجز بکە تا لێرە دەربکەوێت.',past:'ڕابردوو',profile:'پرۆفایل و بەداخوازی',language:'زمان',askPlaceholder:'دەربارەی چارەسەرێک، پۆلێک یان بەرهەمێک بپرسە…',beforeAfter:'پێش و پاش',myProgress:'پێشکەوتنم'},
+};
+
+let lang='en', currentBrand=null, currentScreen='welcome', currentCat='All', currentService=null, cart=0;
+let selectedDateObj=null, selectedTime=null;
+const screenEl=document.getElementById('screen');
+
+// Business hours used to build the date/time picker in the booking flow.
+// Both the in-app "Confirm Booking" button and the WhatsApp message pull
+// from this same list, so a client sees the same availability either way.
+const BUSINESS_HOURS=['10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM'];
+// Placeholder WhatsApp numbers — replace with each brand's real business line.
+const BRAND_WHATSAPP={dolce:'9647501112233',polished:'9647502223344',core:'9647503334455'};
+
+function upcomingDates(n){
+  const out=[]; const base=new Date(); base.setHours(0,0,0,0);
+  for(let i=1;i<=n;i++){ const d=new Date(base); d.setDate(base.getDate()+i); out.push(d); }
+  return out;
+}
+function sameDay(a,b){ return a && b && a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+function fmtDate(d){ return d.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}); }
+function fmtDow(d){ return d.toLocaleDateString(undefined,{weekday:'short'}); }
+function availableTimesForDate(brand,dateStr){
+  const taken=new Set(STORE.bookings.filter(bk=>bk.brand===brand&&bk.date===dateStr&&bk.status!=='Cancelled').map(bk=>bk.time));
+  return BUSINESS_HOURS.map(time=>({time,taken:taken.has(time)}));
+}
+// Keeps the current date/time selection valid — defaults to the earliest
+// open slot the first time you land here, and reassigns if the previously
+// selected slot has since been taken (e.g. by a WhatsApp booking).
+function ensureBookingSelection(){
+  const dates=upcomingDates(7);
+  if(!selectedDateObj || !dates.some(d=>sameDay(d,selectedDateObj))) selectedDateObj=dates[0];
+  const dateStr=fmtDate(selectedDateObj);
+  const slots=availableTimesForDate(currentBrand,dateStr);
+  const stillOpen=selectedTime && slots.find(s=>s.time===selectedTime && !s.taken);
+  if(!stillOpen){
+    const free=slots.find(s=>!s.taken);
+    selectedTime=free?free.time:null;
+  }
+  return dates;
+}
+
+function t(k){return (I18N[lang] && I18N[lang][k]) || I18N.en[k] || k;}
+
+/* ---------------- i18n apply (static text outside phone) ---------------- */
+function applyI18n(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const key=el.getAttribute('data-i18n');
+    if(I18N[lang] && I18N[lang][key]!==undefined) el.innerHTML=I18N[lang][key];
+  });
+  document.documentElement.lang=lang;
+  document.documentElement.dir=(lang==='ar'||lang==='ku')?'rtl':'ltr';
+}
+document.querySelectorAll('[data-lang-btn]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    lang=b.getAttribute('data-lang-btn');
+    document.querySelectorAll('[data-lang-btn]').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    applyI18n();
+    render();
+  });
+});
+
+/* ---------------- Phone screens ---------------- */
+function goto(screen){currentScreen=screen;render();}
+
+function renderWelcome(){
+  const allOffers=[...STORE.offers,...activeDiscountOffers()];
+  const offers=allOffers.map(o=>`<div class="offer-chip"><b>${o.t}</b>${o.s}<br><span>${BRANDS[o.brand].name}</span></div>`).join('');
+  const offersHtml=allOffers.length?`
+    <div class="section-label">Upcoming Events &amp; Offers</div>
+    <div class="offers-strip">${offers}</div>` : '';
+  return `
+    <div class="section-label">${t('chooseDestination')}</div>
+    <div style="font-size:11.5px;color:var(--ink-soft);margin:-4px 0 12px;">${t('welcomeSub')}</div>
+    <div class="dest-card dolce" data-brand="dolce" style="${brandPhotoStyle('dolce')}"><span>Dolce</span><small>Aesthetic Clinic</small></div>
+    <div class="dest-card polished" data-brand="polished" style="${brandPhotoStyle('polished')}"><span>Polished</span><small>Salon</small></div>
+    <div class="dest-card core" data-brand="core" style="${brandPhotoStyle('core')}"><span>Core</span><small>Yoga &amp; Pilates</small></div>
+    ${offersHtml}
+  `;
+}
+
+function renderServices(){
+  const b=BRANDS[currentBrand];
+  const cats=['All',...b.cats];
+  const tabs=cats.map(c=>`<button data-cat="${c}" class="${c===currentCat?'active':''}">${c==='All'?t('allServices'):c}</button>`).join('');
+  const list=svcList(currentBrand).filter(s=>currentCat==='All'||s.cat===currentCat).map(s=>`
+    <div class="svc-row" data-svc="${s.id}">
+      <div class="swatch" style="${swStyle(s,currentBrand)}"></div>
+      <div class="info"><div class="n">${s.n}</div><div class="m">${s.dur} · ${s.cat}</div></div>
+      <div class="price">${priceHtml(s)}</div><div class="chev">›</div>
+    </div>`).join('');
+  return `
+    <div class="cat-tabs">${tabs}</div>
+    <div>${list}</div>
+  `;
+}
+
+function renderDetail(){
+  const b=BRANDS[currentBrand];
+  const s=svcList(currentBrand).find(x=>x.id===currentService);
+  const pts=s.points.map(p=>`<div class="detail-points"><span class="chk">✓</span><span>${p}</span></div>`).join('');
+  const gallery=STORE.media.filter(m=>m.visibility==='public'&&m.brand===currentBrand&&(m.serviceId===currentService||m.serviceId===''));
+  const galleryHtml=gallery.length?`
+    <div class="section-label">${t('beforeAfter')}</div>
+    <div class="ba-strip">${gallery.map(m=>`
+      <div class="ba-item">
+        <div class="th ${m.type==='video'?'video':''}" style="background-image:url('${m.dataUrl}')" data-media="${m.id}"></div>
+        <div class="cap">${m.note||''}</div>
+      </div>`).join('')}</div>` : '';
+  return `
+    <div class="detail-hero" style="${swStyle(s,currentBrand)}"></div>
+    <div class="detail-title">${s.n}</div>
+    <div class="detail-meta"><b>${s.dur}</b> &nbsp;|&nbsp; <b>${priceHtml(s)}</b></div>
+    <div class="detail-desc">${s.desc}</div>
+    <div class="section-label" style="margin-top:0;">${t('whatsInc')}</div>
+    ${pts}
+    ${galleryHtml}
+    <button class="primary-btn" id="toBooking">${t('requestBooking')}</button>
+  `;
+}
+
+function renderBooking(){
+  const b=BRANDS[currentBrand];
+  const s=svcList(currentBrand).find(x=>x.id===currentService);
+  const dates=ensureBookingSelection();
+  const dateStr=fmtDate(selectedDateObj);
+  const slots=availableTimesForDate(currentBrand,dateStr);
+  const dateChips=dates.map(d=>`
+    <button class="date-chip ${sameDay(d,selectedDateObj)?'active':''}" data-date="${d.toISOString()}">
+      <span class="dow">${fmtDow(d)}</span><span class="day">${d.getDate()}</span>
+    </button>`).join('');
+  const timeChips=slots.map(sl=>`
+    <button class="time-chip ${sl.time===selectedTime?'active':''} ${sl.taken?'taken':''}" ${sl.taken?'disabled':''} data-time="${sl.time}">${sl.time}${sl.taken?` · ${t('bookedTag')||'Booked'}`:''}</button>`).join('');
+  const canBook=!!selectedTime;
+  const waText=encodeURIComponent(`Hi! I'd like to book ${s.n} at ${b.name} — $${effectivePrice(s)}, ${s.dur}. Preferred: ${dateStr}${selectedTime?' at '+selectedTime:''}.`);
+  const waHref=`https://wa.me/${BRAND_WHATSAPP[currentBrand]}?text=${waText}`;
+  return `
+    <div class="section-label" style="margin-top:0;">${t('bookingSummary')}</div>
+    <div class="book-card">
+      <div class="book-row"><span class="k">${b.name}</span><span class="v">${s.n}</span></div>
+      <div class="book-row"><span class="k">Price</span><span class="v">${priceHtml(s)}</span></div>
+      <div class="book-row"><span class="k">${t('location')}</span><span class="v">${b.name} — Erbil</span></div>
+    </div>
+    <div class="section-label">${t('preferredDate')}</div>
+    <div class="date-chip-row">${dateChips}</div>
+    <div class="section-label">${t('preferredTime')}</div>
+    <div class="time-chip-grid">${timeChips}</div>
+    ${!canBook?`<div style="font-size:11px;color:#b23b3b;margin-top:8px;">No open times that day — try another date.</div>`:''}
+    <div style="font-size:11px;color:var(--muted);margin-top:10px;">${t('confirmNote')}</div>
+    <button class="primary-btn" id="confirmBooking" ${canBook?'':'disabled style="opacity:.5;"'}>${t('confirmBookingBtn')}</button>
+    <a class="wa-btn" id="sendWA" href="${waHref}" target="_blank" rel="noopener">💬 ${t('requestViaWhatsapp')}</a>
+    <div style="font-size:9.5px;color:var(--muted);margin-top:6px;text-align:center;">Demo WhatsApp number — replace with your real business line.</div>
+    <div id="waNote" style="display:none;font-size:11px;color:var(--ink-soft);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:10px;"></div>
+  `;
+}
+
+function renderClientAuth(){
+  if(authStep==='phone'){
+    return `
+      <div class="section-label" style="margin-top:0;">Log in or create an account</div>
+      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:14px;">One account works across Dolce, Polished and Core. Enter your phone number to continue.</div>
+      <div class="book-card">
+        <label style="font-size:11px;font-weight:700;color:var(--ink-soft);display:block;margin-bottom:6px;">Phone number</label>
+        <input id="authPhoneInput" type="tel" inputmode="tel" placeholder="+964 750 123 4567" style="width:100%;border:1px solid var(--line);border-radius:9px;padding:10px 12px;font-size:14px;box-sizing:border-box;">
+      </div>
+      <button class="primary-btn" id="authSendCode">Send Code</button>
+    `;
+  }
+  const existing=findClientByPhone(authPhone);
+  return `
+    <div class="section-label" style="margin-top:0;">Enter the code</div>
+    <div style="font-size:12px;color:var(--ink-soft);margin-bottom:8px;">We sent a code to <b>${authPhone}</b>.</div>
+    <div class="login-note" style="display:block;margin-bottom:14px;">Demo login — no real SMS is sent. Your code is <b>${DEMO_OTP}</b>.</div>
+    <div class="book-card">
+      <label style="font-size:11px;font-weight:700;color:var(--ink-soft);display:block;margin-bottom:6px;">Verification code</label>
+      <input id="authCodeInput" type="text" inputmode="numeric" maxlength="4" placeholder="4-digit code" style="width:100%;border:1px solid var(--line);border-radius:9px;padding:10px 12px;font-size:14px;letter-spacing:4px;text-align:center;box-sizing:border-box;">
+      ${existing?`<div style="font-size:11.5px;color:var(--ink-soft);margin-top:10px;">Welcome back, <b>${existing.name}</b>.</div>`:`
+      <label style="font-size:11px;font-weight:700;color:var(--ink-soft);display:block;margin:12px 0 6px;">Your name</label>
+      <input id="authNameInput" type="text" placeholder="e.g. Lana H." style="width:100%;border:1px solid var(--line);border-radius:9px;padding:10px 12px;font-size:14px;box-sizing:border-box;">`}
+    </div>
+    <button class="primary-btn" id="authVerify">${existing?'Log In':'Create Account'}</button>
+    <button class="ghost-btn" id="authBack">‹ Use a different number</button>
+  `;
+}
+
+function renderBookings(){
+  const mine=loggedInClient?STORE.bookings.filter(b=>b.clientId===loggedInClient.id):[];
+  if(!mine.length){
+    return `
+      <div class="section-label" style="margin-top:0;">${t('upcoming')}</div>
+      <div style="font-size:12px;color:var(--muted);padding:20px 0;text-align:center;">${t('noBookings')}</div>
+    `;
+  }
+  const rows=mine.slice().reverse().map(b=>`
+    <div class="book-card" style="margin-top:8px;">
+      <div class="book-row"><span class="k">${BRANDS[b.brand].name}</span><span class="v">${b.serviceName}</span></div>
+      <div class="book-row"><span class="k">${t('preferredDate')}</span><span class="v">${b.date}, ${b.time}</span></div>
+      <div class="book-row"><span class="k">Status</span><span class="v"><span class="status-badge ${b.status}">${b.status}</span></span></div>
+    </div>`).join('');
+  return `<div class="section-label" style="margin-top:0;">${t('upcoming')}</div>${rows}`;
+}
+
+function renderShop(){
+  const items=STORE.products.map((p,i)=>{
+    const b=BRANDS[p.brand];
+    return `<div class="prod">
+      <div class="sw" style="${swStyle(p,p.brand)}"></div>
+      <div class="n">${p.n}</div><div class="p">${priceHtml(p)}</div>
+      <button data-add="${i}">${t('addToCart')}</button>
+    </div>`;
+  }).join('');
+  const empty=`<div style="font-size:12px;color:var(--muted);text-align:center;padding:20px 0;">No products yet.</div>`;
+  return `<div class="section-label" style="margin-top:0;">${t('navShop')} ${cart?`(${cart})`:''}</div><div class="shop-grid">${items}</div>${STORE.products.length?'':empty}`;
+}
+
+function renderProfile(){
+  const redeem=[t('r1'),t('r2'),t('r3'),t('r4')];
+  const progress=STORE.media.filter(m=>m.visibility==='private');
+  const progressHtml=progress.length?`
+    <div class="section-label">${t('myProgress')}</div>
+    ${progress.map(m=>`
+      <div class="progress-row" data-media="${m.id}">
+        <div class="th ${m.type==='video'?'video':''}" style="background-image:url('${m.dataUrl}')"></div>
+        <div><div class="n">${BRANDS[m.brand].name} — ${m.note||''}</div><div class="m">${m.clientName||'You'}</div></div>
+      </div>`).join('')}` : '';
+  const pts=loggedInClient?loggedInClient.points:0;
+  const REWARD_GOAL=3000;
+  const toGo=Math.max(0,REWARD_GOAL-pts);
+  return `
+    <div class="section-label" style="margin-top:0;">${t('profile')}</div>
+    <div class="book-card" style="display:flex;justify-content:space-between;align-items:center;">
+      <div><div style="font-weight:700;font-size:13px;">${loggedInClient?loggedInClient.name:''}</div><div style="font-size:11px;color:var(--muted);">${loggedInClient?loggedInClient.phone:''}</div></div>
+      <button id="clientLogout" style="border:none;background:var(--ink);color:#fff;border-radius:999px;padding:6px 12px;font-size:11px;font-weight:700;">Log out</button>
+    </div>
+    <div class="loyalty-card">
+      <div style="font-size:11px;opacity:.8;">${t('yourPoints')}</div>
+      <div class="pts">${pts.toLocaleString()} <span style="font-size:13px;">pts</span></div>
+      <div class="bar"><i style="width:${Math.min(100,pts/REWARD_GOAL*100)}%;"></i></div>
+      <div style="font-size:10.5px;opacity:.8;">${toGo.toLocaleString()} pts ${t('toNextReward')}</div>
+    </div>
+    <div class="section-label">${t('redeem')}</div>
+    <div class="redeem-grid">${redeem.map(r=>`<div>${r}</div>`).join('')}</div>
+    ${progressHtml}
+    <div class="section-label">${t('language')}</div>
+    <div class="cat-tabs">
+      <button data-proflang="en" class="${lang==='en'?'active':''}">EN</button>
+      <button data-proflang="ku" class="${lang==='ku'?'active':''}">کوردی</button>
+      <button data-proflang="ar" class="${lang==='ar'?'active':''}">عربي</button>
+    </div>
+  `;
+}
+
+function screenTitle(){
+  if(currentScreen==='welcome') return {title:'Welcome',small:''};
+  if(currentScreen==='services') return {title:BRANDS[currentBrand].name,small:BRANDS[currentBrand].sub};
+  if(currentScreen==='detail') return {title:svcList(currentBrand).find(s=>s.id===currentService).n,small:BRANDS[currentBrand].name};
+  if(currentScreen==='booking') return {title:t('bookingSummary'),small:BRANDS[currentBrand].name};
+  if(currentScreen==='bookings') return {title:t('myBookings'),small:''};
+  if(currentScreen==='shop') return {title:t('navShop'),small:''};
+  if(currentScreen==='profile') return {title:t('profile'),small:''};
+  if(currentScreen==='auth') return {title:'Account',small:''};
+  return {title:'',small:''};
+}
+
+function showBack(){return ['services','detail','booking','auth'].includes(currentScreen);}
+
+function backTarget(){
+  if(currentScreen==='services') return 'welcome';
+  if(currentScreen==='detail') return 'services';
+  if(currentScreen==='booking') return 'detail';
+  if(currentScreen==='auth') return 'welcome';
+  return 'welcome';
+}
+
+function bodyHtml(){
+  switch(currentScreen){
+    case 'welcome': return renderWelcome();
+    case 'services': return renderServices();
+    case 'detail': return renderDetail();
+    case 'booking': return renderBooking();
+    case 'bookings': return loggedInClient?renderBookings():renderClientAuth();
+    case 'shop': return renderShop();
+    case 'profile': return loggedInClient?renderProfile():renderClientAuth();
+    case 'auth': return renderClientAuth();
+    default: return '';
+  }
+}
+
+function render(){
+  const {title,small}=screenTitle();
+  screenEl.innerHTML=`
+    <div class="screen-head">
+      ${showBack()?`<button class="back" id="backBtn">‹</button>`:''}
+      <div class="title">${title}${small?`<small>${small}</small>`:''}</div>
+    </div>
+    <div class="screen-body">${bodyHtml()}</div>
+    <div class="bottom-nav">
+      <button data-nav="welcome" class="${currentScreen==='welcome'?'active':''}"><span class="ic">⌂</span>${t('navHome')}</button>
+      <button data-nav="bookings" class="${currentScreen==='bookings'?'active':''}"><span class="ic">🗓</span>${t('navBookings')}</button>
+      <button data-nav="shop" class="${currentScreen==='shop'?'active':''}"><span class="ic">🛍</span>${t('navShop')}</button>
+      <button data-nav="profile" class="${currentScreen==='profile'?'active':''}"><span class="ic">◎</span>${t('navProfile')}</button>
+    </div>
+    <button class="fab-ai" id="fabAI" aria-label="${t('aiAssistant')}">✨</button>
+    <div class="ai-overlay" id="aiOverlay">
+      <div class="ai-head">
+        <div>
+          <div style="font-weight:700;font-size:13.5px;">${t('aiAssistant')}</div>
+          <div style="font-size:10.5px;color:var(--muted);">${t('aiSub')}</div>
+        </div>
+        <button class="close" id="aiClose">✕</button>
+      </div>
+      <div class="ai-chat" id="aiChat"></div>
+      <div class="chip-row">
+        <button data-ask="I want to improve my skin and prepare for a wedding">💍 Wedding prep</button>
+        <button data-ask="what's the best treatment for acne scars">Acne scars</button>
+        <button data-ask="I feel stressed and want to relax">Relax / stress</button>
+      </div>
+      <div class="ai-input">
+        <input id="aiInput" type="text" placeholder="${t('askPlaceholder')}">
+        <button id="aiSend">➤</button>
+      </div>
+    </div>
+    <div class="lightbox" id="lightbox">
+      <div class="lb-head"><button id="lbClose">✕</button></div>
+      <div class="lb-body" id="lbBody"></div>
+      <div class="lb-cap" id="lbCap"></div>
+    </div>
+  `;
+  bindScreen();
+  if(!aiSeeded){seedAI();}
+}
+
+function bindScreen(){
+  screenEl.querySelectorAll('[data-brand]').forEach(el=>el.addEventListener('click',()=>{currentBrand=el.dataset.brand;currentCat='All';goto('services');}));
+  screenEl.querySelectorAll('[data-cat]').forEach(el=>el.addEventListener('click',()=>{currentCat=el.dataset.cat;render();}));
+  screenEl.querySelectorAll('[data-svc]').forEach(el=>el.addEventListener('click',()=>{currentService=el.dataset.svc;goto('detail');}));
+  const toBooking=document.getElementById('toBooking'); if(toBooking) toBooking.addEventListener('click',()=>{selectedDateObj=null;selectedTime=null;goto('booking');});
+  const backBtn=document.getElementById('backBtn'); if(backBtn) backBtn.addEventListener('click',()=>goto(backTarget()));
+
+  screenEl.querySelectorAll('[data-date]').forEach(el=>el.addEventListener('click',()=>{
+    selectedDateObj=new Date(el.dataset.date); selectedTime=null; render();
+  }));
+  screenEl.querySelectorAll('.time-chip:not(.taken)').forEach(el=>el.addEventListener('click',()=>{
+    selectedTime=el.dataset.time; render();
+  }));
+
+  // Books the appointment directly in the app — no WhatsApp required. The
+  // slot is re-checked against STORE.bookings first in case someone (e.g.
+  // via the WhatsApp button, or an admin) grabbed it in the meantime.
+  const confirmBtn=document.getElementById('confirmBooking');
+  if(confirmBtn) confirmBtn.addEventListener('click',()=>{
+    if(!selectedTime) return;
+    if(!loggedInClient){ pendingScreen='booking'; authStep='phone'; authPhone=''; goto('auth'); return; }
+    const b=BRANDS[currentBrand]; const s=svcList(currentBrand).find(x=>x.id===currentService);
+    const dateStr=fmtDate(selectedDateObj);
+    const taken=STORE.bookings.some(bk=>bk.brand===currentBrand&&bk.date===dateStr&&bk.time===selectedTime&&bk.status!=='Cancelled');
+    if(taken){ toast('That time was just taken — pick another slot.'); render(); return; }
+    STORE.bookings.push({id:nextId('b',STORE.bookings),brand:currentBrand,serviceId:currentService,serviceName:s.n,date:dateStr,time:selectedTime,status:'Requested',clientName:loggedInClient.name,clientId:loggedInClient.id});
+    const ok=saveStore();
+    if(!ok){ STORE.bookings.pop(); toast("This browser's demo storage is full."); return; }
+    const note=document.getElementById('waNote');
+    note.style.display='block';
+    note.innerHTML=`<b>${t('bookedNote')}</b><br><br>${s.n} — ${b.name}<br>${dateStr} at ${selectedTime}`;
+    toast(`Booked — ${dateStr} at ${selectedTime}.`);
+  });
+
+  // The WhatsApp link opens a real wa.me chat pre-filled with the same
+  // date/time shown above, and also logs the request in-app (if it hasn't
+  // been booked already) so reception sees it either way.
+  const sendWA=document.getElementById('sendWA');
+  if(sendWA) sendWA.addEventListener('click',(e)=>{
+    if(!selectedTime){ e.preventDefault(); return; }
+    if(!loggedInClient){ e.preventDefault(); pendingScreen='booking'; authStep='phone'; authPhone=''; goto('auth'); return; }
+    const b=BRANDS[currentBrand]; const s=svcList(currentBrand).find(x=>x.id===currentService);
+    const dateStr=fmtDate(selectedDateObj);
+    const already=STORE.bookings.some(bk=>bk.brand===currentBrand&&bk.date===dateStr&&bk.time===selectedTime&&bk.clientId===loggedInClient.id&&bk.status!=='Cancelled');
+    if(!already){
+      STORE.bookings.push({id:nextId('b',STORE.bookings),brand:currentBrand,serviceId:currentService,serviceName:s.n,date:dateStr,time:selectedTime,status:'Requested',clientName:loggedInClient.name,clientId:loggedInClient.id});
+      saveStore();
+    }
+    const note=document.getElementById('waNote');
+    note.style.display='block';
+    note.innerHTML=`<b>${t('waSent')}</b><br><br>"Hi! I'd like to book <b>${s.n}</b> at <b>${b.name}</b> — $${effectivePrice(s)}, ${s.dur}. Preferred: ${dateStr} at ${selectedTime}."`;
+  });
+  screenEl.querySelectorAll('[data-add]').forEach(el=>el.addEventListener('click',()=>{cart++;el.textContent=t('added');setTimeout(render,600);}));
+  screenEl.querySelectorAll('[data-proflang]').forEach(el=>el.addEventListener('click',()=>{
+    lang=el.dataset.proflang;
+    document.querySelectorAll('[data-lang-btn]').forEach(x=>x.classList.toggle('active',x.dataset.langBtn===lang));
+    applyI18n(); render();
+  }));
+  screenEl.querySelectorAll('[data-nav]').forEach(el=>el.addEventListener('click',()=>{
+    const n=el.dataset.nav;
+    if(n==='welcome') currentBrand=null;
+    if((n==='bookings'||n==='profile') && !loggedInClient){ pendingScreen=n; authStep='phone'; authPhone=''; goto('auth'); return; }
+    goto(n);
+  }));
+
+  // ---- Client login / signup (phone number + demo code) ----
+  const authSendCode=document.getElementById('authSendCode');
+  if(authSendCode) authSendCode.addEventListener('click',()=>{
+    const val=document.getElementById('authPhoneInput').value.trim();
+    if(normalizedPhone(val).length<7){ toast('Enter a valid phone number.'); return; }
+    authPhone=val; authStep='code'; render();
+  });
+  const authBackBtn=document.getElementById('authBack');
+  if(authBackBtn) authBackBtn.addEventListener('click',()=>{ authStep='phone'; authPhone=''; render(); });
+  const authVerify=document.getElementById('authVerify');
+  if(authVerify) authVerify.addEventListener('click',()=>{
+    const code=document.getElementById('authCodeInput').value.trim();
+    if(code!==DEMO_OTP){ toast(`Incorrect code — try ${DEMO_OTP} for this demo.`); return; }
+    let client=findClientByPhone(authPhone);
+    if(!client){
+      const nameInput=document.getElementById('authNameInput');
+      const name=nameInput?nameInput.value.trim():'';
+      if(!name){ toast('Enter your name to create an account.'); return; }
+      client={id:nextId('c',STORE.clients),phone:normalizedPhone(authPhone),name,points:100};
+      STORE.clients.push(client);
+      const ok=saveStore();
+      if(!ok){ STORE.clients.pop(); toast("This browser's demo storage is full."); return; }
+      toast(`Account created — ${name}, welcome! 100 pts added.`);
+    } else {
+      toast(`Logged in as ${client.name}.`);
+    }
+    loggedInClient=client;
+    try{ localStorage.setItem(CLIENT_KEY, client.id); }catch(e){}
+    authStep='phone'; authPhone='';
+    const next=pendingScreen; pendingScreen=null;
+    goto(next||'profile');
+  });
+  const clientLogout=document.getElementById('clientLogout');
+  if(clientLogout) clientLogout.addEventListener('click',()=>{
+    loggedInClient=null;
+    try{ localStorage.removeItem(CLIENT_KEY); }catch(e){}
+    toast('Logged out.');
+    goto('welcome');
+  });
+  document.getElementById('lbClose').addEventListener('click',()=>document.getElementById('lightbox').classList.remove('open'));
+  screenEl.querySelectorAll('[data-media]').forEach(el=>el.addEventListener('click',()=>openLightbox(el.dataset.media)));
+  document.getElementById('fabAI').addEventListener('click',()=>document.getElementById('aiOverlay').classList.add('open'));
+  document.getElementById('aiClose').addEventListener('click',()=>document.getElementById('aiOverlay').classList.remove('open'));
+  document.getElementById('aiSend').addEventListener('click',handleAISend);
+  document.getElementById('aiInput').addEventListener('keydown',e=>{if(e.key==='Enter')handleAISend();});
+  screenEl.querySelectorAll('[data-ask]').forEach(el=>el.addEventListener('click',()=>{
+    document.getElementById('aiOverlay').classList.add('open');
+    aiRespond(el.dataset.ask);
+  }));
+}
+
+/* ---------------- AI assistant (rule-based demo) ---------------- */
+let aiSeeded=false;
+function seedAI(){
+  aiSeeded=true;
+}
+function aiBubble(role,html){
+  const chat=document.getElementById('aiChat'); if(!chat) return;
+  const div=document.createElement('div');
+  div.className='msg '+role;
+  div.innerHTML=html;
+  chat.appendChild(div);
+  chat.scrollTop=chat.scrollHeight;
+}
+function ensureGreeting(){
+  const chat=document.getElementById('aiChat');
+  if(chat && !chat.dataset.greeted){
+    aiBubble('bot',t('aiGreeting'));
+    chat.dataset.greeted='1';
+  }
+}
+function handleAISend(){
+  const input=document.getElementById('aiInput');
+  const val=input.value.trim();
+  if(!val) return;
+  input.value='';
+  aiRespond(val);
+}
+function aiRespond(text){
+  ensureGreeting();
+  aiBubble('user',text);
+  const lower=text.toLowerCase();
+  let recs=[]; let reply='';
+  if(/wedding|bridal/.test(lower)){
+    reply='Congratulations! 🎉 Here\'s a personalized plan across all three brands for you.';
+    recs=[{b:'dolce',id:'hydra'},{b:'dolce',id:'led'},{b:'polished',id:'balayage'},{b:'core',id:'private'}];
+  } else if(/acne|scar|skin/.test(lower)){
+    reply='Here\'s what tends to work well for skin concerns like this — best discussed further with a Dolce provider.';
+    recs=[{b:'dolce',id:'hydra'},{b:'dolce',id:'led'},{b:'dolce',id:'peel'}];
+  } else if(/hair|color|frizz/.test(lower)){
+    reply='For hair goals like that, these Polished services are a great starting point.';
+    recs=[{b:'polished',id:'keratin'},{b:'polished',id:'balayage'},{b:'polished',id:'cut'}];
+  } else if(/nail/.test(lower)){
+    reply='Here are some popular nail options at Polished.';
+    recs=[{b:'polished',id:'gelmani'},{b:'polished',id:'pedi'}];
+  } else if(/stress|relax|calm|anxious|tired/.test(lower)){
+    reply='Sounds like a good time to slow down — these Core sessions are great for that.';
+    recs=[{b:'core',id:'sound'},{b:'core',id:'vinyasa'},{b:'core',id:'private'}];
+  } else if(/pregnan|prenatal/.test(lower)){
+    reply='Congratulations! This class is designed exactly for that.';
+    recs=[{b:'core',id:'prenatal'}];
+  } else {
+    reply='I can help with skincare & clinic treatments (Dolce), hair & nails (Polished), or yoga & pilates (Core). What are you hoping to achieve?';
+  }
+  aiBubble('bot',reply);
+  if(recs.length){
+    const list=recs.map((r,i)=>{
+      const b=BRANDS[r.b]; const s=svcList(r.b).find(x=>x.id===r.id);
+      if(!s) return '';
+      return `<li>${s.n} <span style="color:var(--muted);">— ${b.name}, $${effectivePrice(s)}${hasDiscount(s)?' 🏷️':''}</span></li>`;
+    }).join('');
+    aiBubble('bot',`<b>Recommended for you</b><ol>${list}</ol><span class="rec-btn" data-goto="${recs[0].b}|${recs[0].id}">View details →</span>`);
+    const btn=document.querySelector('.ai-chat .rec-btn:last-of-type');
+    if(btn) btn.addEventListener('click',()=>{
+      const [b,id]=btn.dataset.goto.split('|');
+      currentBrand=b; currentService=id;
+      document.getElementById('aiOverlay').classList.remove('open');
+      goto('detail');
+    });
+  }
+}
+
+/* ---------------- Admin charts ---------------- */
+function buildDonut(){
+  const data=[{l:'Dolce',v:40,c:'var(--series-1)'},{l:'Polished',v:35,c:'var(--series-2)'},{l:'Core',v:25,c:'var(--series-3)'}];
+  const svg=document.getElementById('donut');
+  let cum=0; const r=15.9155, cx=21, cy=21;
+  let circles='';
+  data.forEach(d=>{
+    const dash=`${d.v} ${100-d.v}`;
+    circles+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="transparent" stroke="${d.c}" stroke-width="6" stroke-dasharray="${dash}" stroke-dashoffset="${25-cum}"><title>${d.l}: ${d.v}%</title></circle>`;
+    cum+=d.v;
+  });
+  svg.innerHTML=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="transparent" stroke="var(--grid-line)" stroke-width="6"></circle>${circles}`;
+  document.getElementById('donutLegend').innerHTML=data.map(d=>`<div class="li"><span class="dot" style="background:${d.c}"></span>${d.l} — ${d.v}%</div>`).join('');
+}
+function buildBars(){
+  const months=[{m:'Mar',v:62},{m:'Apr',v:68},{m:'May',v:74},{m:'Jun',v:79},{m:'Jul',v:83},{m:'Aug',v:86}];
+  const max=Math.max(...months.map(x=>x.v));
+  const wrap=document.getElementById('revBars');
+  wrap.innerHTML=months.map(x=>`<div class="bcol"><div class="b" style="height:${(x.v/max*100)}%" title="$${x.v}k"></div><div class="m">${x.m}</div></div>`).join('');
+  const tbody=document.querySelector('#revTable tbody');
+  tbody.innerHTML=months.map(x=>`<tr><td>${x.m}</td><td>$${x.v}k</td></tr>`).join('');
+}
+document.querySelectorAll('[data-toggle]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.getElementById(btn.dataset.toggle).classList.toggle('show');
+  });
+});
+
+/* ---------------- Toast ---------------- */
+let toastTimer=null;
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent='✓ '+msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),2600);
+}
+
+/* ---------------- Permissions & demo user accounts ----------------
+   Real security has to be verified by a server (e.g. Supabase/Firebase Auth
+   with hashed passwords and session tokens) — a static prototype can only
+   demo the PERMISSION MODEL (who sees which tabs), not real authentication.
+   The PIN is shown openly on each card for that reason: it's a UI demo, not
+   an actual lock. Each person still gets their own named account, exactly
+   like the real app would have one login per employee.
+
+   Access is granted per section by checkbox (Owner shares whichever tabs an
+   employee needs) rather than being locked into one of a few fixed roles.
+   PRESETS are just a quick-fill shortcut in the Employees form — the real
+   source of truth for what an account can see is its own `tabs` array. */
+const TAB_DEFS=[
+  {key:'overview',label:'Overview'},
+  {key:'bookings',label:'Bookings'},
+  {key:'products',label:'Products'},
+  {key:'services',label:'Services'},
+  {key:'offers',label:'Offers'},
+  {key:'gallery',label:'Photos & Video'},
+  {key:'employees',label:'Employees'},
+];
+const PRESETS={
+  owner:{label:'Owner / Admin',tabs:TAB_DEFS.map(t=>t.key)},
+  reception:{label:'Reception',tabs:['bookings']},
+  staff:{label:'Staff / Provider',tabs:['bookings','gallery']},
+};
+function tabLabel(key){ const d=TAB_DEFS.find(t=>t.key===key); return d?d.label:key; }
+function accessLabel(tabs){
+  const sorted=[...tabs].sort().join(',');
+  const match=Object.values(PRESETS).find(p=>[...p.tabs].sort().join(',')===sorted);
+  if(match) return match.label;
+  if(!tabs.length) return 'No access';
+  return tabs.map(tabLabel).join(', ');
+}
+// Which admin sections are per-brand data an employee's department should
+// filter — Overview and Employees are account-wide and stay unfiltered.
+const BRAND_SCOPED_TABS=['bookings','products','services','offers','gallery'];
+function userBrands(u){ return (u&&u.brands&&u.brands.length) ? u.brands : Object.keys(BRANDS); }
+function canSeeBrand(u,brand){ return userBrands(u).includes(brand); }
+function brandsLabel(brands){
+  const list=(brands&&brands.length)?brands:Object.keys(BRANDS);
+  if(list.length>=Object.keys(BRANDS).length) return 'All brands';
+  return list.map(b=>BRANDS[b].name).join(', ');
+}
+function brandOptionsHtml(selectedBrand){
+  return userBrands(currentUser).map(b=>`<option value="${b}" ${b===selectedBrand?'selected':''}>${BRANDS[b].name}</option>`).join('');
+}
+const CUR_USER_KEY='odc_current_user';
+let currentUser=null;
+try{
+  const savedId=localStorage.getItem(CUR_USER_KEY);
+  if(savedId) currentUser=STORE.users.find(u=>u.id===savedId)||null;
+}catch(e){}
+
+function renderLogin(){
+  document.getElementById('adminLogin').innerHTML=`
+    <div class="login-wrap">
+      <h2>Admin App login</h2>
+      <p>Pick your account. Each employee has their own login and only sees the sections shared with them.</p>
+      <div class="login-note">Demo login only — PINs are shown for convenience. The real app uses secure, server-verified accounts.</div>
+      <div class="login-cards">
+        ${STORE.users.map(u=>`
+          <div class="login-card">
+            <div class="av">${u.name[0]}</div>
+            <div class="nm">${u.name}</div>
+            <div class="role-pill">${accessLabel(u.tabs)}</div>
+            <div class="role-pill" style="margin-top:4px;">${brandsLabel(u.brands)}</div>
+            <div class="cap">Demo PIN: ${u.pin}</div>
+            <input type="password" maxlength="4" inputmode="numeric" placeholder="Enter PIN" id="pin_${u.id}">
+            <button class="btn btn-primary" data-login="${u.id}">Log in</button>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  document.querySelectorAll('[data-login]').forEach(b=>b.addEventListener('click',()=>{
+    const u=STORE.users.find(x=>x.id===b.dataset.login);
+    const entered=document.getElementById('pin_'+u.id).value;
+    if(entered!==u.pin){ toast('Incorrect PIN for that account.'); return; }
+    currentUser=u;
+    try{ localStorage.setItem(CUR_USER_KEY,u.id); }catch(e){}
+    showAdminForRole();
+    toast(`Logged in as ${u.name} (${accessLabel(u.tabs)}).`);
+  }));
+}
+
+function showAdminForRole(){
+  document.getElementById('adminLogin').style.display='none';
+  document.getElementById('adminAuthed').style.display='';
+  document.getElementById('userBadge').innerHTML=`
+    <span class="av" style="width:24px;height:24px;font-size:11px;background:linear-gradient(140deg,#3a3630,#171512);color:#fff;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;">${currentUser.name[0]}</span>
+    <b>${currentUser.name}</b> <span class="role-pill">${accessLabel(currentUser.tabs)}</span> <span class="role-pill">${brandsLabel(currentUser.brands)}</span>
+    <button id="logoutBtn">Log out</button>`;
+  document.getElementById('logoutBtn').addEventListener('click',()=>{
+    currentUser=null;
+    try{ localStorage.removeItem(CUR_USER_KEY); }catch(e){}
+    document.getElementById('adminAuthed').style.display='none';
+    document.getElementById('adminLogin').style.display='';
+    renderLogin();
+  });
+  const allowed=currentUser.tabs;
+  document.querySelectorAll('#adminTabsRow [data-admin-tab]').forEach(btn=>{
+    const ok=allowed.includes(btn.dataset.adminTab);
+    btn.style.display=ok?'':'none';
+  });
+  if(!allowed.includes(adminTab)) adminTab=allowed[0]||'bookings';
+  document.querySelectorAll('#adminTabsRow [data-admin-tab]').forEach(x=>x.classList.toggle('active',x.dataset.adminTab===adminTab));
+  ['overview','bookings','products','services','offers','gallery','employees'].forEach(p=>{
+    document.getElementById('admin'+p[0].toUpperCase()+p.slice(1)).classList.toggle('active',adminTab===p);
+  });
+  // Services has its own brand sub-tabs — hide any brand this account isn't
+  // scoped to, and fall back to one it can actually see.
+  document.querySelectorAll('#svcBrandTabs [data-svc-brand-tab]').forEach(btn=>{
+    btn.style.display=canSeeBrand(currentUser,btn.dataset.svcBrandTab)?'':'none';
+  });
+  if(!canSeeBrand(currentUser,svcBrandTab)) svcBrandTab=userBrands(currentUser)[0];
+  document.querySelectorAll('#svcBrandTabs [data-svc-brand-tab]').forEach(x=>x.classList.toggle('active',x.dataset.svcBrandTab===svcBrandTab));
+  renderAdminProducts(); renderAdminServices(); renderAdminOffers(); renderAdminGallery(); renderAdminBookings(); renderBrandPhotos(); renderAdminEmployees();
+}
+
+/* ---------------- Full-screen client app ---------------- */
+// Lets the demo phone expand to fill the whole browser window, so it feels
+// like an installed app rather than a small widget on the marketing page.
+const phoneEl=document.querySelector('.phone');
+function openFullScreen(){
+  phoneEl.classList.add('fullscreen');
+  document.body.style.overflow='hidden';
+}
+function closeFullScreen(){
+  phoneEl.classList.remove('fullscreen');
+  document.body.style.overflow='';
+}
+document.getElementById('launchFullApp').addEventListener('click',openFullScreen);
+document.getElementById('fsExit').addEventListener('click',closeFullScreen);
+document.addEventListener('keydown',(e)=>{ if(e.key==='Escape' && phoneEl.classList.contains('fullscreen')) closeFullScreen(); });
+
+/* ---------------- Client / Admin mode switch ---------------- */
+let appMode='client';
+document.querySelectorAll('[data-mode-btn]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    appMode=b.dataset.modeBtn;
+    document.querySelectorAll('[data-mode-btn]').forEach(x=>x.classList.toggle('active',x===b));
+    document.getElementById('clientView').style.display=appMode==='client'?'':'none';
+    document.getElementById('adminView').style.display=appMode==='admin'?'':'none';
+    document.getElementById('langSwitch').style.display=appMode==='client'?'':'none';
+    if(appMode==='admin'){
+      if(currentUser){
+        document.getElementById('adminLogin').style.display='none';
+        document.getElementById('adminAuthed').style.display='';
+        showAdminForRole();
+      } else {
+        document.getElementById('adminAuthed').style.display='none';
+        document.getElementById('adminLogin').style.display='';
+        renderLogin();
+      }
+    }
+  });
+});
+
+/* ---------------- Admin tabs ---------------- */
+let adminTab='overview', svcBrandTab='dolce';
+document.querySelectorAll('[data-admin-tab]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    if(b.style.display==='none') return;
+    adminTab=b.dataset.adminTab;
+    document.querySelectorAll('[data-admin-tab]').forEach(x=>x.classList.toggle('active',x===b));
+    document.getElementById('adminOverview').classList.toggle('active',adminTab==='overview');
+    document.getElementById('adminBookings').classList.toggle('active',adminTab==='bookings');
+    document.getElementById('adminProducts').classList.toggle('active',adminTab==='products');
+    document.getElementById('adminServices').classList.toggle('active',adminTab==='services');
+    document.getElementById('adminOffers').classList.toggle('active',adminTab==='offers');
+    document.getElementById('adminGallery').classList.toggle('active',adminTab==='gallery');
+    document.getElementById('adminEmployees').classList.toggle('active',adminTab==='employees');
+  });
+});
+document.querySelectorAll('[data-svc-brand-tab]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    if(b.style.display==='none') return;
+    svcBrandTab=b.dataset.svcBrandTab;
+    document.querySelectorAll('[data-svc-brand-tab]').forEach(x=>x.classList.toggle('active',x===b));
+    document.getElementById('serviceFormWrap').innerHTML='';
+    renderAdminServices();
+  });
+});
+
+/* ---------------- Admin: Products ---------------- */
+const brandColor={dolce:'#171512',polished:'#8a6d3a',core:'#37413a'};
+function renderAdminProducts(){
+  const scoped=STORE.products.filter(p=>canSeeBrand(currentUser,p.brand));
+  document.getElementById('prodCount').textContent=scoped.length;
+  const scopeLabel=document.getElementById('prodScopeLabel');
+  if(scopeLabel) scopeLabel.textContent = userBrands(currentUser).length>=Object.keys(BRANDS).length ? 'across all brands' : `for ${brandsLabel(currentUser&&currentUser.brands)}`;
+  const rows=document.getElementById('productRows');
+  if(!scoped.length){
+    rows.innerHTML=`<tr><td colspan="4"><div class="admin-empty">No products yet — click "Add Product" to create the first one.</div></td></tr>`;
+    return;
+  }
+  rows.innerHTML=scoped.map((p)=>{
+    const i=STORE.products.indexOf(p);
+    return `
+    <tr>
+      <td><span class="swdot" style="${p.image?`background-image:url('${p.image}')`:`background:linear-gradient(140deg,${BRANDS[p.brand].c1},${BRANDS[p.brand].c2})`}"></span>${p.n}</td>
+      <td><span class="brand-tag" style="background:${brandColor[p.brand]}">${BRANDS[p.brand].name}</span></td>
+      <td>${priceHtml(p)}</td>
+      <td><div class="rowbtns">
+        <button class="btn btn-ghost btn-sm" data-edit-prod="${i}">Edit</button>
+        <button class="btn btn-danger btn-sm" data-del-prod="${i}">Delete</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+  rows.querySelectorAll('[data-edit-prod]').forEach(b=>b.addEventListener('click',()=>openProductForm(parseInt(b.dataset.editProd))));
+  rows.querySelectorAll('[data-del-prod]').forEach(b=>b.addEventListener('click',()=>{
+    const p=STORE.products[parseInt(b.dataset.delProd)];
+    STORE.products.splice(parseInt(b.dataset.delProd),1);
+    saveStore(); renderAdminProducts(); renderAdminOffers();
+    toast(`${p.n} deleted — removed from the Client App shop too.`);
+    if(currentScreen==='shop'||currentScreen==='welcome') render();
+  }));
+}
+function openProductForm(editIndex){
+  const editing=editIndex!==undefined;
+  const p=editing?STORE.products[editIndex]:{n:'',price:'',discount:0,brand:userBrands(currentUser)[0],image:''};
+  document.getElementById('productFormWrap').innerHTML=`
+    <div class="admin-form">
+      <div class="field"><label>Product name</label><input id="pf_name" type="text" value="${p.n}" placeholder="e.g. Rosehip Face Oil"></div>
+      <div class="field"><label>Brand</label>
+        <select id="pf_brand">${brandOptionsHtml(p.brand)}</select>
+      </div>
+      <div class="field"><label>Price ($)</label><input id="pf_price" type="number" min="0" step="1" value="${p.price}"></div>
+      <div class="field"><label>Discount % (optional)</label><input id="pf_discount" type="number" min="0" max="99" step="1" placeholder="0 — no discount" value="${p.discount||''}"></div>
+      <div class="field" style="grid-column:1/-1;"><label>Photo ${p.image?'(uploaded — choose a file to replace it)':'(optional — falls back to a colour swatch)'}</label>
+        <div class="upload-drop"><input id="pf_image" type="file" accept="image/*"></div>
+      </div>
+      <div style="grid-column:1/-1;font-size:11px;color:var(--muted);margin-top:-6px;">A discount above 0% shows the old price crossed out next to the new one, and adds this product to the welcome screen's "Upcoming Events &amp; Offers" automatically — no need to also create an Offer for it.</div>
+      <div class="actions">
+        <button class="btn btn-ghost" id="pf_cancel">Cancel</button>
+        <button class="btn btn-primary" id="pf_save">${editing?'Save changes':'Add product'}</button>
+      </div>
+    </div>`;
+  document.getElementById('pf_cancel').addEventListener('click',()=>{document.getElementById('productFormWrap').innerHTML='';});
+  document.getElementById('pf_save').addEventListener('click',async()=>{
+    const n=document.getElementById('pf_name').value.trim();
+    const brand=document.getElementById('pf_brand').value;
+    const price=parseFloat(document.getElementById('pf_price').value)||0;
+    const discount=Math.min(99,Math.max(0,parseInt(document.getElementById('pf_discount').value)||0));
+    if(!n){ document.getElementById('pf_name').focus(); return; }
+    const saveBtn=document.getElementById('pf_save'); saveBtn.disabled=true; saveBtn.textContent='Saving…';
+    try{
+      const file=document.getElementById('pf_image').files[0];
+      const image = file ? await resizeImageFile(file) : (p.image||'');
+      const base = editing ? STORE.products[editIndex] : {id:nextId('p',STORE.products)};
+      const updated={...base,n,brand,price,discount,image};
+      if(editing) STORE.products[editIndex]=updated; else STORE.products.push(updated);
+      const ok=saveStore();
+      if(!ok){
+        if(editing) STORE.products[editIndex]=base; else STORE.products.pop();
+        toast("This browser's demo storage is full — try a smaller photo.");
+        saveBtn.disabled=false; saveBtn.textContent=editing?'Save changes':'Add product';
+        return;
+      }
+      document.getElementById('productFormWrap').innerHTML='';
+      renderAdminProducts();
+      renderAdminOffers();
+      toast(`${n} ${editing?'updated':'added'} — now live in the Client App → Shop.${discount>0?' Also showing in Upcoming Events & Offers.':''}`);
+      if(currentScreen==='shop'||currentScreen==='welcome') render();
+    }catch(e){
+      toast('Could not read that photo — try a different file.');
+      saveBtn.disabled=false; saveBtn.textContent=editing?'Save changes':'Add product';
+    }
+  });
+}
+document.getElementById('addProductBtn').addEventListener('click',()=>openProductForm());
+
+/* ---------------- Admin: Offers (welcome-screen promos) ---------------- */
+function renderAdminOffers(){
+  const scoped=STORE.offers.filter(o=>canSeeBrand(currentUser,o.brand));
+  document.getElementById('offerCount').textContent=scoped.length;
+  const rows=document.getElementById('offerRows');
+  rows.innerHTML = scoped.length ? scoped.map((o)=>{
+    const i=STORE.offers.indexOf(o);
+    return `
+    <tr>
+      <td>${o.t}</td>
+      <td><span class="brand-tag" style="background:${brandColor[o.brand]}">${BRANDS[o.brand].name}</span></td>
+      <td>${o.s}</td>
+      <td><div class="rowbtns">
+        <button class="btn btn-ghost btn-sm" data-edit-offer="${i}">Edit</button>
+        <button class="btn btn-danger btn-sm" data-del-offer="${i}">Delete</button>
+      </div></td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="4"><div class="admin-empty">No offers yet — click "Add Offer" to put one on the welcome screen.</div></td></tr>`;
+  rows.querySelectorAll('[data-edit-offer]').forEach(b=>b.addEventListener('click',()=>openOfferForm(parseInt(b.dataset.editOffer))));
+  rows.querySelectorAll('[data-del-offer]').forEach(b=>b.addEventListener('click',()=>{
+    const o=STORE.offers[parseInt(b.dataset.delOffer)];
+    STORE.offers.splice(parseInt(b.dataset.delOffer),1);
+    saveStore(); renderAdminOffers();
+    toast(`${o.t} deleted — removed from the Client App welcome screen too.`);
+    if(currentScreen==='welcome') render();
+  }));
+  // Discounted products/services show up on the welcome screen too, without
+  // being a separate Offer someone has to remember to create — listed here
+  // read-only so it's clear at a glance where they're coming from.
+  const autoWrap=document.getElementById('autoOffersWrap');
+  const autoList=activeDiscountOffers().filter(o=>canSeeBrand(currentUser,o.brand));
+  autoWrap.innerHTML = autoList.length ? `
+    <div style="font-size:11px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.5px;margin:22px 0 8px;">Also showing automatically, from discounts</div>
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr><th>Item</th><th>Brand</th><th>Discount</th></tr></thead>
+        <tbody>${autoList.map(o=>`
+          <tr><td>${o.t}</td><td><span class="brand-tag" style="background:${brandColor[o.brand]}">${BRANDS[o.brand].name}</span></td><td>${o.s}</td></tr>`).join('')}</tbody>
+      </table>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px;">To remove one of these, clear its discount back to 0 from the Products or Services tab.</div>
+  ` : '';
+}
+function openOfferForm(editIndex){
+  const editing=editIndex!==undefined;
+  const o=editing?STORE.offers[editIndex]:{t:'',s:'',brand:userBrands(currentUser)[0]};
+  document.getElementById('offerFormWrap').innerHTML=`
+    <div class="admin-form">
+      <div class="field"><label>Title</label><input id="of_title" type="text" value="${o.t}" placeholder="e.g. Glow Season"></div>
+      <div class="field"><label>Brand</label>
+        <select id="of_brand">${brandOptionsHtml(o.brand)}</select>
+      </div>
+      <div class="field" style="grid-column:1/-1;"><label>Description</label><input id="of_desc" type="text" value="${o.s}" placeholder="e.g. 20% off all facials"></div>
+      <div class="actions">
+        <button class="btn btn-ghost" id="of_cancel">Cancel</button>
+        <button class="btn btn-primary" id="of_save">${editing?'Save changes':'Add offer'}</button>
+      </div>
+    </div>`;
+  document.getElementById('of_cancel').addEventListener('click',()=>{document.getElementById('offerFormWrap').innerHTML='';});
+  document.getElementById('of_save').addEventListener('click',()=>{
+    const title=document.getElementById('of_title').value.trim();
+    const brand=document.getElementById('of_brand').value;
+    const desc=document.getElementById('of_desc').value.trim();
+    if(!title){ document.getElementById('of_title').focus(); return; }
+    const base=editing?STORE.offers[editIndex]:{id:nextId('o',STORE.offers)};
+    const updated={...base,t:title,s:desc,brand};
+    if(editing) STORE.offers[editIndex]=updated; else STORE.offers.push(updated);
+    const ok=saveStore();
+    if(!ok){
+      if(editing) STORE.offers[editIndex]=base; else STORE.offers.pop();
+      toast("This browser's demo storage is full.");
+      return;
+    }
+    document.getElementById('offerFormWrap').innerHTML='';
+    renderAdminOffers();
+    toast(`${title} ${editing?'updated':'added'} — now live on the Client App welcome screen.`);
+    if(currentScreen==='welcome') render();
+  });
+}
+document.getElementById('addOfferBtn').addEventListener('click',()=>openOfferForm());
+
+/* ---------------- Admin: Services ---------------- */
+function renderAdminServices(){
+  const list=svcList(svcBrandTab);
+  const rows=document.getElementById('serviceRows');
+  if(!list.length){
+    rows.innerHTML=`<tr><td colspan="5"><div class="admin-empty">No services yet for ${BRANDS[svcBrandTab].name} — add one below.</div></td></tr>`;
+    return;
+  }
+  rows.innerHTML=list.map((s,i)=>`
+    <tr>
+      <td><span class="swdot" style="${s.image?`background-image:url('${s.image}')`:`background:linear-gradient(140deg,${BRANDS[svcBrandTab].c1},${BRANDS[svcBrandTab].c2})`}"></span>${s.n}</td>
+      <td>${s.cat}</td>
+      <td>${s.dur}</td>
+      <td>${priceHtml(s)}</td>
+      <td><div class="rowbtns">
+        <button class="btn btn-ghost btn-sm" data-edit-svc="${i}">Edit</button>
+        <button class="btn btn-danger btn-sm" data-del-svc="${i}">Delete</button>
+      </div></td>
+    </tr>`).join('');
+  rows.querySelectorAll('[data-edit-svc]').forEach(b=>b.addEventListener('click',()=>openServiceForm(parseInt(b.dataset.editSvc))));
+  rows.querySelectorAll('[data-del-svc]').forEach(b=>b.addEventListener('click',()=>{
+    const i=parseInt(b.dataset.delSvc); const s=list[i];
+    list.splice(i,1);
+    saveStore(); renderAdminServices(); renderAdminOffers();
+    toast(`${s.n} deleted from ${BRANDS[svcBrandTab].name} — removed from the Client App too.`);
+    if(currentScreen==='services'||currentScreen==='detail'||currentScreen==='welcome') render();
+  }));
+}
+function openServiceForm(editIndex){
+  const editing=editIndex!==undefined;
+  const list=svcList(svcBrandTab);
+  const s=editing?list[editIndex]:{n:'',cat:BRANDS[svcBrandTab].cats[0],dur:'',price:'',desc:'',image:''};
+  const catOpts=BRANDS[svcBrandTab].cats.map(c=>`<option value="${c}" ${s.cat===c?'selected':''}>${c}</option>`).join('');
+  document.getElementById('serviceFormWrap').innerHTML=`
+    <div class="admin-form">
+      <div class="field"><label>Service name</label><input id="sf_name" type="text" value="${s.n}" placeholder="e.g. Microneedling"></div>
+      <div class="field"><label>Category</label><select id="sf_cat">${catOpts}</select></div>
+      <div class="field"><label>Duration</label><input id="sf_dur" type="text" value="${s.dur}" placeholder="e.g. 45 min"></div>
+      <div class="field"><label>Price ($)</label><input id="sf_price" type="number" min="0" step="1" value="${s.price}"></div>
+      <div class="field"><label>Discount % (optional)</label><input id="sf_discount" type="number" min="0" max="99" step="1" placeholder="0 — no discount" value="${s.discount||''}"></div>
+      <div class="field full" style="grid-column:1/-1;"><label>Description</label><textarea id="sf_desc" rows="2" placeholder="Short client-facing description">${s.desc||''}</textarea></div>
+      <div class="field full" style="grid-column:1/-1;"><label>Photo ${s.image?'(uploaded — choose a file to replace it)':'(optional — falls back to a colour swatch)'}</label>
+        <div class="upload-drop"><input id="sf_image" type="file" accept="image/*"></div>
+      </div>
+      <div style="grid-column:1/-1;font-size:11px;color:var(--muted);margin-top:-6px;">A discount above 0% shows the old price crossed out next to the new one, and adds this service to the welcome screen's "Upcoming Events &amp; Offers" automatically — no need to also create an Offer for it.</div>
+      <div class="actions">
+        <button class="btn btn-ghost" id="sf_cancel">Cancel</button>
+        <button class="btn btn-primary" id="sf_save">${editing?'Save changes':'Add service'}</button>
+      </div>
+    </div>`;
+  document.getElementById('sf_cancel').addEventListener('click',()=>{document.getElementById('serviceFormWrap').innerHTML='';});
+  document.getElementById('sf_save').addEventListener('click',async()=>{
+    const n=document.getElementById('sf_name').value.trim();
+    const cat=document.getElementById('sf_cat').value;
+    const dur=document.getElementById('sf_dur').value.trim();
+    const price=parseFloat(document.getElementById('sf_price').value)||0;
+    const discount=Math.min(99,Math.max(0,parseInt(document.getElementById('sf_discount').value)||0));
+    const desc=document.getElementById('sf_desc').value.trim();
+    if(!n){ document.getElementById('sf_name').focus(); return; }
+    const saveBtn=document.getElementById('sf_save'); saveBtn.disabled=true; saveBtn.textContent='Saving…';
+    let image=s.image||'';
+    try{
+      const file=document.getElementById('sf_image').files[0];
+      if(file) image=await resizeImageFile(file);
+    }catch(e){
+      toast('Could not read that photo — try a different file.');
+      saveBtn.disabled=false; saveBtn.textContent=editing?'Save changes':'Add service';
+      return;
+    }
+    const prevItem = editing ? {...list[editIndex]} : null;
+    if(editing){
+      list[editIndex]={...list[editIndex],n,cat,dur,price,discount,desc,image};
+    } else {
+      list.push({id:nextId('svc_'+svcBrandTab+'_',list),n,cat,dur,price,discount,desc,image,points:[]});
+    }
+    const ok=saveStore();
+    if(!ok){
+      if(editing) list[editIndex]=prevItem; else list.pop();
+      toast("This browser's demo storage is full — try a smaller photo.");
+      saveBtn.disabled=false; saveBtn.textContent=editing?'Save changes':'Add service';
+      return;
+    }
+    document.getElementById('serviceFormWrap').innerHTML='';
+    renderAdminServices();
+    renderAdminOffers();
+    toast(`${n} ${editing?'updated':'added'} — now live in the Client App → ${BRANDS[svcBrandTab].name}.${discount>0?' Also showing in Upcoming Events & Offers.':''}`);
+    if(currentScreen==='services'||currentScreen==='detail'||currentScreen==='welcome') render();
+  });
+}
+document.getElementById('addServiceBtn').addEventListener('click',()=>openServiceForm());
+
+/* ---------------- Lightbox (client) ---------------- */
+function openLightbox(mediaId){
+  const m=STORE.media.find(x=>x.id===mediaId); if(!m) return;
+  const body=document.getElementById('lbBody');
+  body.innerHTML = m.type==='video'
+    ? `<video src="${m.dataUrl}" controls autoplay playsinline></video>`
+    : `<img src="${m.dataUrl}" alt="${m.note||''}">`;
+  document.getElementById('lbCap').textContent = `${BRANDS[m.brand].name}${m.note?' — '+m.note:''}`;
+  document.getElementById('lightbox').classList.add('open');
+}
+
+/* ---------------- Admin: Photos & Video ---------------- */
+function resizeImageFile(file,maxW=480,quality=0.72){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onerror=()=>reject(reader.error);
+    reader.onload=()=>{
+      const img=new Image();
+      img.onerror=()=>reject(new Error('bad image'));
+      img.onload=()=>{
+        const scale=Math.min(1,maxW/img.width);
+        const w=Math.round(img.width*scale), h=Math.round(img.height*scale);
+        const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+        cv.getContext('2d').drawImage(img,0,0,w,h);
+        resolve(cv.toDataURL('image/jpeg',quality));
+      };
+      img.src=reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function readFileAsDataUrl(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onerror=()=>reject(reader.error);
+    reader.onload=()=>resolve(reader.result);
+    reader.readAsDataURL(file);
+  });
+}
+function mediaCounts(list){
+  list=list||STORE.media;
+  return {
+    total:list.length,
+    pub:list.filter(m=>m.visibility==='public').length,
+    priv:list.filter(m=>m.visibility==='private').length,
+  };
+}
+function renderAdminGallery(){
+  const scoped=STORE.media.filter(m=>canSeeBrand(currentUser,m.brand));
+  const c=mediaCounts(scoped);
+  document.getElementById('mediaCount').textContent=c.total;
+  document.getElementById('mediaPublicCount').textContent=c.pub;
+  document.getElementById('mediaPrivateCount').textContent=c.priv;
+  const grid=document.getElementById('mediaGrid');
+  if(!scoped.length){
+    grid.innerHTML=`<div class="admin-empty" style="grid-column:1/-1;">No photos or videos yet — click "Upload Photo / Video" to add the first one.</div>`;
+    return;
+  }
+  grid.innerHTML=scoped.map((m)=>{
+    const i=STORE.media.indexOf(m);
+    const svcName=m.serviceId ? (svcList(m.brand).find(s=>s.id===m.serviceId)||{}).n : 'General';
+    return `<div class="gcard">
+      <div class="thumb ${m.type==='video'?'video':''}" style="background-image:url('${m.dataUrl}')"></div>
+      <div class="meta">
+        <div class="note">${m.note||'(no caption)'}</div>
+        <div class="badges">
+          <span class="tag ${m.visibility}">${m.visibility}</span>
+          ${m.type==='video'?'<span class="tag video">video</span>':''}
+        </div>
+        <div style="font-size:10.5px;color:var(--muted);margin-bottom:8px;">${BRANDS[m.brand].name} · ${svcName||'General'}${m.clientName?' · '+m.clientName:''}</div>
+        <button class="btn btn-danger btn-sm" style="width:100%;" data-del-media="${i}">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+  grid.querySelectorAll('[data-del-media]').forEach(b=>b.addEventListener('click',()=>{
+    const i=parseInt(b.dataset.delMedia); const m=STORE.media[i];
+    STORE.media.splice(i,1); saveStore(); renderAdminGallery();
+    toast(`Removed "${m.note||'item'}" from the gallery.`);
+    if(currentScreen==='detail'||currentScreen==='profile') render();
+  }));
+}
+function openMediaForm(){
+  const brands=userBrands(currentUser);
+  document.getElementById('mediaFormWrap').innerHTML=`
+    <div class="admin-form">
+      <div class="field" style="grid-column:1/-1;">
+        <label>Photo or video file</label>
+        <div class="upload-drop"><input id="mf_file" type="file" accept="image/*,video/*"></div>
+      </div>
+      <div class="field"><label>Brand</label>
+        <select id="mf_brand">${brands.map(b=>`<option value="${b}">${BRANDS[b].name}</option>`).join('')}</select>
+      </div>
+      <div class="field"><label>Service (optional)</label><select id="mf_service"></select></div>
+      <div class="field"><label>Type</label>
+        <select id="mf_kind"><option value="before-after">Before &amp; After</option><option value="process">Process</option></select>
+      </div>
+      <div class="field"><label>Visibility</label>
+        <select id="mf_visibility"><option value="public">Public gallery (service page)</option><option value="private">Private client record</option></select>
+      </div>
+      <div class="field" id="mf_clientWrap" style="display:none;"><label>Client name / initials</label><input id="mf_client" type="text" placeholder="e.g. R.K."></div>
+      <div class="field"><label>Caption</label><input id="mf_note" type="text" placeholder="e.g. After 3 sessions"></div>
+      <div class="consent-row" id="mf_consentRow">
+        <input type="checkbox" id="mf_consent"> <label for="mf_consent" style="margin:0;font-weight:400;">Client has consented to this being shown in the public gallery</label>
+      </div>
+      <div class="actions">
+        <button class="btn btn-ghost" id="mf_cancel">Cancel</button>
+        <button class="btn btn-primary" id="mf_save">Save</button>
+      </div>
+    </div>`;
+  function fillServices(){
+    const brand=document.getElementById('mf_brand').value;
+    const sel=document.getElementById('mf_service');
+    sel.innerHTML=`<option value="">General (not tied to one service)</option>`+svcList(brand).map(s=>`<option value="${s.id}">${s.n}</option>`).join('');
+  }
+  fillServices();
+  document.getElementById('mf_brand').addEventListener('change',fillServices);
+  function toggleVisibilityFields(){
+    const vis=document.getElementById('mf_visibility').value;
+    document.getElementById('mf_clientWrap').style.display=vis==='private'?'':'none';
+    document.getElementById('mf_consentRow').style.display=vis==='public'?'flex':'none';
+  }
+  toggleVisibilityFields();
+  document.getElementById('mf_visibility').addEventListener('change',toggleVisibilityFields);
+  document.getElementById('mf_cancel').addEventListener('click',()=>{document.getElementById('mediaFormWrap').innerHTML='';});
+  document.getElementById('mf_save').addEventListener('click',async()=>{
+    const fileInput=document.getElementById('mf_file');
+    const file=fileInput.files[0];
+    if(!file){ toast('Choose a photo or video file first.'); return; }
+    const visibility=document.getElementById('mf_visibility').value;
+    const consent=document.getElementById('mf_consent').checked;
+    if(visibility==='public' && !consent){ toast('Public gallery items need client consent checked.'); return; }
+    const saveBtn=document.getElementById('mf_save'); saveBtn.disabled=true; saveBtn.textContent='Saving…';
+    try{
+      const isVideo=file.type.startsWith('video/');
+      const dataUrl = isVideo ? await readFileAsDataUrl(file) : await resizeImageFile(file);
+      const item={
+        id:nextId('m',STORE.media),
+        brand:document.getElementById('mf_brand').value,
+        serviceId:document.getElementById('mf_service').value,
+        type:isVideo?'video':'photo',
+        kind:document.getElementById('mf_kind').value,
+        visibility, consent,
+        clientName:document.getElementById('mf_client').value.trim(),
+        note:document.getElementById('mf_note').value.trim(),
+        dataUrl, mime:file.type,
+      };
+      STORE.media.push(item);
+      const ok=saveStore();
+      if(!ok){
+        STORE.media.pop();
+        toast("This browser's demo storage is full — try a smaller photo or a shorter clip.");
+        saveBtn.disabled=false; saveBtn.textContent='Save';
+        return;
+      }
+      document.getElementById('mediaFormWrap').innerHTML='';
+      renderAdminGallery();
+      toast(`Uploaded — now live in the Client App${visibility==='public'?' → service page':' → client profile'}.`);
+      if(currentScreen==='detail'||currentScreen==='profile') render();
+    }catch(e){
+      toast('Could not read that file — try a different photo or clip.');
+      saveBtn.disabled=false; saveBtn.textContent='Save';
+    }
+  });
+}
+document.getElementById('addMediaBtn').addEventListener('click',openMediaForm);
+
+/* ---------------- Admin: Bookings ---------------- */
+function renderAdminBookings(){
+  // Anyone the Bookings section is shared with can manage it fully — access
+  // is granted per section (see Employees tab), not split into finer
+  // view-vs-edit permissions within a section.
+  const canEdit = true;
+  document.getElementById('addBookingBtn').style.display = canEdit ? '' : 'none';
+  const scoped=STORE.bookings.filter(bk=>canSeeBrand(currentUser,bk.brand));
+  document.getElementById('bookingCount').textContent=scoped.length;
+  const scopeLabel=document.getElementById('bookingScopeLabel');
+  if(scopeLabel) scopeLabel.textContent = userBrands(currentUser).length>=Object.keys(BRANDS).length ? 'across all brands' : `for ${brandsLabel(currentUser&&currentUser.brands)}`;
+  const rows=document.getElementById('bookingRows');
+  if(!scoped.length){
+    rows.innerHTML=`<tr><td colspan="6"><div class="admin-empty">No bookings yet.</div></td></tr>`;
+    return;
+  }
+  const nextStatus={Requested:'Confirmed',Confirmed:'Completed'};
+  rows.innerHTML=scoped.slice().reverse().map((bk)=>{
+    const i=STORE.bookings.indexOf(bk);
+    const advance=nextStatus[bk.status];
+    const actions = canEdit ? `<div class="rowbtns">
+        ${advance?`<button class="btn btn-ghost btn-sm" data-advance-booking="${i}">Mark ${advance}</button>`:''}
+        ${(bk.status==='Requested'||bk.status==='Confirmed')?`<button class="btn btn-danger btn-sm" data-cancel-booking="${i}">Cancel</button>`:''}
+      </div>` : '';
+    return `<tr>
+      <td>${bk.clientName}</td>
+      <td><span class="brand-tag" style="background:${brandColor[bk.brand]}">${BRANDS[bk.brand].name}</span></td>
+      <td>${bk.serviceName}</td>
+      <td>${bk.date}<br><span style="color:var(--muted);font-size:11px;">${bk.time}</span></td>
+      <td><span class="status-badge ${bk.status}">${bk.status}</span></td>
+      <td>${actions}</td>
+    </tr>`;
+  }).join('');
+  rows.querySelectorAll('[data-advance-booking]').forEach(b=>b.addEventListener('click',()=>{
+    const i=parseInt(b.dataset.advanceBooking); const bk=STORE.bookings[i];
+    bk.status=nextStatus[bk.status]; saveStore(); renderAdminBookings();
+    toast(`${bk.clientName}'s booking marked ${bk.status}.`);
+    if(currentScreen==='bookings') render();
+  }));
+  rows.querySelectorAll('[data-cancel-booking]').forEach(b=>b.addEventListener('click',()=>{
+    const i=parseInt(b.dataset.cancelBooking); const bk=STORE.bookings[i];
+    bk.status='Cancelled'; saveStore(); renderAdminBookings();
+    toast(`${bk.clientName}'s booking cancelled.`);
+    if(currentScreen==='bookings') render();
+  }));
+}
+function openBookingForm(){
+  const brands=userBrands(currentUser);
+  document.getElementById('bookingFormWrap').innerHTML=`
+    <div class="admin-form">
+      <div class="field"><label>Client name</label><input id="bf_client" type="text" placeholder="e.g. Lana H."></div>
+      <div class="field"><label>Brand</label><select id="bf_brand">${brands.map(b=>`<option value="${b}">${BRANDS[b].name}</option>`).join('')}</select></div>
+      <div class="field"><label>Service</label><select id="bf_service"></select></div>
+      <div class="field"><label>Date</label><input id="bf_date" type="text" placeholder="e.g. Sep 2, 2026"></div>
+      <div class="field"><label>Time</label><input id="bf_time" type="text" placeholder="e.g. 5:00 PM"></div>
+      <div class="actions">
+        <button class="btn btn-ghost" id="bf_cancel">Cancel</button>
+        <button class="btn btn-primary" id="bf_save">Add booking</button>
+      </div>
+    </div>`;
+  function fillServices(){
+    const brand=document.getElementById('bf_brand').value;
+    document.getElementById('bf_service').innerHTML=svcList(brand).map(s=>`<option value="${s.id}">${s.n}</option>`).join('');
+  }
+  fillServices();
+  document.getElementById('bf_brand').addEventListener('change',fillServices);
+  document.getElementById('bf_cancel').addEventListener('click',()=>{document.getElementById('bookingFormWrap').innerHTML='';});
+  document.getElementById('bf_save').addEventListener('click',()=>{
+    const clientName=document.getElementById('bf_client').value.trim()||'Walk-in';
+    const brand=document.getElementById('bf_brand').value;
+    const serviceId=document.getElementById('bf_service').value;
+    const serviceName=svcList(brand).find(s=>s.id===serviceId).n;
+    const date=document.getElementById('bf_date').value.trim()||'TBD';
+    const time=document.getElementById('bf_time').value.trim()||'TBD';
+    STORE.bookings.push({id:nextId('b',STORE.bookings),brand,serviceId,serviceName,date,time,status:'Confirmed',clientName});
+    saveStore();
+    document.getElementById('bookingFormWrap').innerHTML='';
+    renderAdminBookings();
+    toast(`Booking added for ${clientName}.`);
+  });
+}
+document.getElementById('addBookingBtn').addEventListener('click',openBookingForm);
+
+/* ---------------- Admin: Employees (Owner only) ----------------
+   Same caveat as the login screen: this manages the DEMO permission model,
+   not real accounts. PINs are plain 4-digit codes stored in the browser's
+   local demo data, not hashed/secured — fine for showing how account
+   management should work, not for protecting anything real. */
+function renderAdminEmployees(){
+  document.getElementById('employeeCount').textContent=STORE.users.length;
+  const rows=document.getElementById('employeeRows');
+  rows.innerHTML=STORE.users.map((u,i)=>`
+    <tr>
+      <td><span class="swdot" style="background:linear-gradient(140deg,#3a3630,#171512);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-family:Georgia,serif;font-size:12px;">${u.name[0]}</span>${u.name}${currentUser&&currentUser.id===u.id?' <span style="color:var(--muted);font-size:10.5px;">(you)</span>':''}</td>
+      <td><span class="role-pill">${accessLabel(u.tabs)}</span></td>
+      <td>${brandsLabel(u.brands)}</td>
+      <td>${u.pin}</td>
+      <td><div class="rowbtns">
+        <button class="btn btn-ghost btn-sm" data-edit-emp="${i}">Edit</button>
+        <button class="btn btn-danger btn-sm" data-del-emp="${i}">Delete</button>
+      </div></td>
+    </tr>`).join('');
+  rows.querySelectorAll('[data-edit-emp]').forEach(b=>b.addEventListener('click',()=>openEmployeeForm(parseInt(b.dataset.editEmp))));
+  rows.querySelectorAll('[data-del-emp]').forEach(b=>b.addEventListener('click',()=>{
+    const i=parseInt(b.dataset.delEmp); const u=STORE.users[i];
+    if(currentUser && currentUser.id===u.id){ toast("You can't delete the account you're currently logged in as."); return; }
+    const otherEmployeeAdmins=STORE.users.filter((x,xi)=>xi!==i && x.tabs.includes('employees'));
+    if(u.tabs.includes('employees') && !otherEmployeeAdmins.length){ toast('At least one account needs Employees access, so someone can always manage accounts.'); return; }
+    STORE.users.splice(i,1); saveStore(); renderAdminEmployees();
+    toast(`${u.name}'s account was deleted.`);
+  }));
+}
+function openEmployeeForm(editIndex){
+  const editing=editIndex!==undefined;
+  const u=editing?STORE.users[editIndex]:{name:'',tabs:['bookings'],pin:'',brands:[]};
+  const checkboxes=TAB_DEFS.map(t=>`
+    <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:400;color:var(--ink-soft);padding:6px 0;">
+      <input type="checkbox" value="${t.key}" ${u.tabs.includes(t.key)?'checked':''} class="ef-tab-cb"> ${t.label}
+    </label>`).join('');
+  const brandBoxes=Object.keys(BRANDS).map(b=>`
+    <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:400;color:var(--ink-soft);padding:6px 0;">
+      <input type="checkbox" value="${b}" ${(u.brands||[]).includes(b)?'checked':''} class="ef-brand-cb"> ${BRANDS[b].name}
+    </label>`).join('');
+  document.getElementById('employeeFormWrap').innerHTML=`
+    <div class="admin-form">
+      <div class="field"><label>Name</label><input id="ef_name" type="text" value="${u.name}" placeholder="e.g. Lana H."></div>
+      <div class="field"><label>PIN (4 digits)</label><input id="ef_pin" type="text" maxlength="4" inputmode="numeric" value="${u.pin}" placeholder="e.g. 4321"></div>
+      <div class="field full" style="grid-column:1/-1;">
+        <label>Quick presets</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+          ${Object.keys(PRESETS).map(k=>`<button type="button" class="btn btn-ghost btn-sm" data-apply-preset="${k}">${PRESETS[k].label}</button>`).join('')}
+        </div>
+      </div>
+      <div class="field full" style="grid-column:1/-1;">
+        <label>Share these sections</label>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0 14px;background:#fff;border:1px solid var(--line);border-radius:9px;padding:4px 12px;">
+          ${checkboxes}
+        </div>
+      </div>
+      <div class="field full" style="grid-column:1/-1;">
+        <label>Department (which brand's data they can see)</label>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0 14px;background:#fff;border:1px solid var(--line);border-radius:9px;padding:4px 12px;">
+          ${brandBoxes}
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px;">Limits Bookings, Products, Services, Offers and Photos &amp; Video to only this brand's data — a Dolce-only employee never sees Polished or Core records. Overview and Employees always stay account-wide.</div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-ghost" id="ef_cancel">Cancel</button>
+        <button class="btn btn-primary" id="ef_save">${editing?'Save changes':'Add employee'}</button>
+      </div>
+    </div>`;
+  document.getElementById('employeeFormWrap').querySelectorAll('[data-apply-preset]').forEach(btn=>btn.addEventListener('click',()=>{
+    const tabs=PRESETS[btn.dataset.applyPreset].tabs;
+    document.querySelectorAll('.ef-tab-cb').forEach(cb=>{ cb.checked=tabs.includes(cb.value); });
+  }));
+  document.getElementById('ef_cancel').addEventListener('click',()=>{document.getElementById('employeeFormWrap').innerHTML='';});
+  document.getElementById('ef_save').addEventListener('click',()=>{
+    const name=document.getElementById('ef_name').value.trim();
+    const pin=document.getElementById('ef_pin').value.trim();
+    const tabs=Array.from(document.querySelectorAll('.ef-tab-cb:checked')).map(cb=>cb.value);
+    const brands=Array.from(document.querySelectorAll('.ef-brand-cb:checked')).map(cb=>cb.value);
+    if(!name){ document.getElementById('ef_name').focus(); return; }
+    if(!/^\d{4}$/.test(pin)){ toast('PIN must be exactly 4 digits.'); document.getElementById('ef_pin').focus(); return; }
+    if(!tabs.length){ toast('Share at least one section with this employee.'); return; }
+    if(!brands.length){ toast('Select at least one department — Dolce, Polished, or Core.'); return; }
+    if(editing && u.tabs.includes('employees') && !tabs.includes('employees')){
+      const otherEmployeeAdmins=STORE.users.filter((x,xi)=>xi!==editIndex && x.tabs.includes('employees'));
+      if(!otherEmployeeAdmins.length){ toast('At least one account needs Employees access, so someone can always manage accounts.'); return; }
+    }
+    if(editing){
+      STORE.users[editIndex]={...STORE.users[editIndex],name,tabs,pin,brands};
+      if(currentUser && currentUser.id===STORE.users[editIndex].id){
+        currentUser=STORE.users[editIndex];
+        showAdminForRole();
+      }
+    } else {
+      STORE.users.push({id:nextId('u',STORE.users),name,tabs,pin,brands});
+    }
+    saveStore();
+    document.getElementById('employeeFormWrap').innerHTML='';
+    renderAdminEmployees();
+    toast(`${name} ${editing?'updated':'added'} — access: ${accessLabel(tabs)} · ${brandsLabel(brands)}.`);
+  });
+}
+document.getElementById('addEmployeeBtn').addEventListener('click',()=>openEmployeeForm());
+
+/* ---------------- Admin: Brand photos ---------------- */
+function renderBrandPhotos(){
+  const wrap=document.getElementById('brandPhotosWrap'); if(!wrap) return;
+  wrap.innerHTML=`
+    <div class="section-label" style="margin:0 0 10px;">Brand Photos</div>
+    <div class="bp-grid">
+      ${Object.keys(BRANDS).map(b=>`
+        <div class="bp-card">
+          <div class="thumb" style="${STORE.brandImages[b]?`background-image:url('${STORE.brandImages[b]}')`:`background:linear-gradient(140deg,${BRANDS[b].c1},${BRANDS[b].c2})`}"></div>
+          <div class="nm">${BRANDS[b].name} <span>— ${BRANDS[b].sub}</span></div>
+          <div class="cap">Shows on the welcome screen and homepage — no photo yet falls back to a colour card.</div>
+          <div class="upload-drop"><input type="file" accept="image/*" data-brand-photo="${b}"></div>
+        </div>`).join('')}
+    </div>`;
+  wrap.querySelectorAll('[data-brand-photo]').forEach(inp=>inp.addEventListener('change',async()=>{
+    const brand=inp.dataset.brandPhoto;
+    const file=inp.files[0]; if(!file) return;
+    try{
+      const image=await resizeImageFile(file,640,0.75);
+      const prev=STORE.brandImages[brand];
+      STORE.brandImages[brand]=image;
+      const ok=saveStore();
+      if(!ok){
+        STORE.brandImages[brand]=prev;
+        toast("This browser's demo storage is full — try a smaller photo.");
+        return;
+      }
+      renderBrandPhotos();
+      applyBrandImages();
+      toast(`${BRANDS[brand].name} photo updated — now live across the Client App.`);
+      if(currentScreen==='welcome'||currentScreen==='services'||currentScreen==='detail'||currentScreen==='shop') render();
+    }catch(e){
+      toast('Could not read that photo — try a different file.');
+    }
+  }));
+}
+function applyBrandImages(){
+  Object.keys(BRANDS).forEach(b=>{
+    const img=STORE.brandImages[b];
+    document.querySelectorAll('.hero-cards .hc.'+b).forEach(el=>{
+      el.style.backgroundImage = img ? `url('${img}')` : '';
+    });
+  });
+}
+
+/* ---------------- init ---------------- */
+buildDonut();
+buildBars();
+applyBrandImages();
+render();
+</script>
+</body>
+</html>
