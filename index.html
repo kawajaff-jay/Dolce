@@ -190,6 +190,14 @@
   .demo-copy .step{display:flex;gap:12px;align-items:flex-start;font-size:13px;color:var(--ink-soft);}
   .demo-copy .step b{color:var(--ink);display:block;font-size:13.5px;}
   .demo-copy .stepnum{width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;flex:none;}
+  /* Client page trimmed down to just the app demo — the marketing headline,
+     feature grid, and "Try the client app" copy are hidden so the page shows
+     only the phone screen itself. */
+  .hero,.features{display:none;}
+  .demo-section{grid-template-columns:1fr;justify-items:center;text-align:center;padding:40px 0;}
+  .demo-copy{display:flex;flex-direction:column;align-items:center;}
+  .demo-copy h2,.demo-copy p,.demo-copy .stepper{display:none;}
+  .demo-copy .fs-launch{margin-top:0;}
 
   .phone-stage{display:flex;justify-content:center;gap:28px;flex-wrap:wrap;position:relative;}
   .phone{width:320px;height:660px;background:#111;border-radius:44px;padding:12px;box-shadow:0 30px 60px -20px rgba(20,15,5,.35);position:relative;flex:none;}
@@ -346,6 +354,21 @@
   html[dir="rtl"] .svc-row .chev{transform:scaleX(-1);}
   html[dir="rtl"] .msg.user{align-self:flex-start;}
   html[dir="rtl"] .msg.bot{align-self:flex-end;}
+
+  /* Reports: printable output for "Export PDF" — the browser's own print
+     dialog (Save as PDF) generates the file, so no PDF library is needed and
+     it works fully offline. #printArea is hidden on screen; on print, every
+     other top-level element is hidden and only the report shows. */
+  #printArea{display:none;}
+  #printArea h1{font-size:19px;margin:0 0 6px;}
+  #printArea h3{font-size:13.5px;margin:22px 0 6px;}
+  #printArea table{width:100%;border-collapse:collapse;margin-top:6px;}
+  #printArea th,#printArea td{border:1px solid #ccc;padding:5px 8px;text-align:left;font-size:11.5px;}
+  #printArea th{background:#f2ede4;}
+  @media print{
+    body>*:not(#printArea){display:none!important;}
+    #printArea{display:block!important;}
+  }
 </style>
 </head>
 <body>
@@ -447,6 +470,7 @@
       <button data-admin-tab="offers">Offers</button>
       <button data-admin-tab="gallery">Photos &amp; Video</button>
       <button data-admin-tab="employees">Employees</button>
+      <button data-admin-tab="reports">Reports</button>
     </div>
 
     <div class="admin-panel active" id="adminOverview">
@@ -571,9 +595,39 @@
         </table>
       </div>
     </div>
+
+    <div class="admin-panel" id="adminReports">
+      <div class="admin-toolbar">
+        <div style="font-size:12.5px;color:var(--ink-soft);">Daily accounting report <span id="reportScopeLabel"></span></div>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
+        <div class="field" style="margin:0;"><label>Date</label><input id="repDate" type="date"></div>
+        <button class="btn btn-ghost btn-sm" id="repToday">Today</button>
+        <div style="flex:1;min-width:12px;"></div>
+        <button class="btn btn-ghost btn-sm" id="repExportCsv">⬇ Export Excel (.csv)</button>
+        <button class="btn btn-primary btn-sm" id="repExportPdf">🖨 Export PDF</button>
+      </div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>Client</th><th>Brand</th><th>Service</th><th>Time</th><th>Status</th><th>Price</th></tr></thead>
+          <tbody id="reportRows"></tbody>
+        </table>
+      </div>
+      <div id="reportTotals" style="margin-top:14px;font-size:13px;color:var(--ink-soft);"></div>
+
+      <div style="margin:34px 0 8px;font-size:11px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.5px;">Full data export</div>
+      <p style="font-size:12px;color:var(--muted);margin:0 0 12px;max-width:560px;">Exports every booking, product, service, offer and (if you manage Employees) employee account this login can see — respecting department access the same way the tabs above do. Useful for backups, or handing everything to an accountant or a new system.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" id="fullExportCsv">⬇ Export All Data (Excel/.csv)</button>
+        <button class="btn btn-primary btn-sm" id="fullExportPdf">🖨 Export All Data (PDF)</button>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:14px;max-width:560px;">"Export PDF" opens your browser's print dialog with a clean, print-ready version of the report — choose "Save as PDF" as the destination. This works fully offline and needs no extra software.</div>
+    </div>
     </div>
   </section>
   </div>
+
+  <div id="printArea"></div>
 
   <footer>
     <span data-i18n="footerNote">Prototype for demonstration — content, prices and translations are placeholders to be replaced with real data.</span>
@@ -668,7 +722,7 @@ function defaultStore(){
     // all filtered to only these brands for that account; Overview and
     // Employees stay account-wide. Owner-style accounts get all three.
     users:[
-      {id:'u1',name:'Kawa',tabs:['overview','bookings','products','services','offers','gallery','employees'],brands:['dolce','polished','core'],pin:'1234'},
+      {id:'u1',name:'Kawa',tabs:['overview','bookings','products','services','offers','gallery','employees','reports'],brands:['dolce','polished','core'],pin:'1234'},
       {id:'u2',name:'Sara',tabs:['bookings'],brands:['dolce'],pin:'1111'},
       {id:'u3',name:'Aya',tabs:['bookings','gallery'],brands:['polished'],pin:'2222'},
       {id:'u4',name:'Diyar',tabs:['bookings','gallery'],brands:['core'],pin:'3333'},
@@ -692,12 +746,14 @@ function loadStore(){
         // Migrate any older saved accounts that still used a single `role`
         // string instead of a `tabs` checkbox array (PRESETS isn't defined
         // yet at this point in the script, so the mapping is inlined here).
-        const legacyTabs={owner:['overview','bookings','products','services','offers','gallery','employees'],reception:['bookings'],staff:['bookings','gallery']};
+        const legacyTabs={owner:['overview','bookings','products','services','offers','gallery','employees','reports'],reception:['bookings'],staff:['bookings','gallery']};
         parsed.users=parsed.users.map(u=>u.tabs?u:{...u,tabs:legacyTabs[u.role]||['bookings']});
-        // Offers is a newer section — any account that already manages
-        // Employees (the account-management tier) gets it automatically so
-        // existing saved sessions don't lose access to something new.
+        // Offers and Reports are newer sections — any account that already
+        // manages Employees (the account-management tier) gets them
+        // automatically so existing saved sessions don't lose access to
+        // something new.
         parsed.users=parsed.users.map(u=>(u.tabs.includes('employees')&&!u.tabs.includes('offers'))?{...u,tabs:[...u.tabs,'offers']}:u);
+        parsed.users=parsed.users.map(u=>(u.tabs.includes('employees')&&!u.tabs.includes('reports'))?{...u,tabs:[...u.tabs,'reports']}:u);
         // Brand/department scoping is newer — any saved account without a
         // `brands` list gets all three, matching its previous unscoped access.
         parsed.users=parsed.users.map(u=>(u.brands&&u.brands.length)?u:{...u,brands:Object.keys(BRANDS)});
@@ -1353,6 +1409,7 @@ const TAB_DEFS=[
   {key:'offers',label:'Offers'},
   {key:'gallery',label:'Photos & Video'},
   {key:'employees',label:'Employees'},
+  {key:'reports',label:'Reports'},
 ];
 const PRESETS={
   owner:{label:'Owner / Admin',tabs:TAB_DEFS.map(t=>t.key)},
@@ -1368,7 +1425,9 @@ function accessLabel(tabs){
   return tabs.map(tabLabel).join(', ');
 }
 // Which admin sections are per-brand data an employee's department should
-// filter — Overview and Employees are account-wide and stay unfiltered.
+// filter — Overview, Employees and Reports are account-wide sections (Reports
+// still respects department internally, filtering the data it pulls from
+// the sections above, rather than being a data collection of its own).
 const BRAND_SCOPED_TABS=['bookings','products','services','offers','gallery'];
 function userBrands(u){ return (u&&u.brands&&u.brands.length) ? u.brands : Object.keys(BRANDS); }
 function canSeeBrand(u,brand){ return userBrands(u).includes(brand); }
@@ -1438,7 +1497,7 @@ function showAdminForRole(){
   });
   if(!allowed.includes(adminTab)) adminTab=allowed[0]||'bookings';
   document.querySelectorAll('#adminTabsRow [data-admin-tab]').forEach(x=>x.classList.toggle('active',x.dataset.adminTab===adminTab));
-  ['overview','bookings','products','services','offers','gallery','employees'].forEach(p=>{
+  ['overview','bookings','products','services','offers','gallery','employees','reports'].forEach(p=>{
     document.getElementById('admin'+p[0].toUpperCase()+p.slice(1)).classList.toggle('active',adminTab===p);
   });
   // Services has its own brand sub-tabs — hide any brand this account isn't
@@ -1448,7 +1507,7 @@ function showAdminForRole(){
   });
   if(!canSeeBrand(currentUser,svcBrandTab)) svcBrandTab=userBrands(currentUser)[0];
   document.querySelectorAll('#svcBrandTabs [data-svc-brand-tab]').forEach(x=>x.classList.toggle('active',x.dataset.svcBrandTab===svcBrandTab));
-  renderAdminProducts(); renderAdminServices(); renderAdminOffers(); renderAdminGallery(); renderAdminBookings(); renderBrandPhotos(); renderAdminEmployees();
+  renderAdminProducts(); renderAdminServices(); renderAdminOffers(); renderAdminGallery(); renderAdminBookings(); renderBrandPhotos(); renderAdminEmployees(); renderAdminReports();
 }
 
 /* ---------------- Full-screen client app ---------------- */
@@ -1504,6 +1563,7 @@ document.querySelectorAll('[data-admin-tab]').forEach(b=>{
     document.getElementById('adminOffers').classList.toggle('active',adminTab==='offers');
     document.getElementById('adminGallery').classList.toggle('active',adminTab==='gallery');
     document.getElementById('adminEmployees').classList.toggle('active',adminTab==='employees');
+    document.getElementById('adminReports').classList.toggle('active',adminTab==='reports');
   });
 });
 document.querySelectorAll('[data-svc-brand-tab]').forEach(b=>{
@@ -2127,6 +2187,163 @@ function openEmployeeForm(editIndex){
   });
 }
 document.getElementById('addEmployeeBtn').addEventListener('click',()=>openEmployeeForm());
+
+/* ---------------- Admin: Reports (daily accounting + full export) ----------------
+   No PDF/Excel library is bundled — that would either need network access
+   (breaking offline use, like the Android APK test build) or add hundreds of
+   KB to a single-file prototype. Instead: "Excel" is a CSV file, which Excel,
+   Numbers and Google Sheets all open natively; "PDF" is the browser's own
+   print dialog pointed at a clean, print-only view — choosing "Save as PDF"
+   there produces a real PDF with zero extra software. A real backend build
+   can generate true .xlsx/.pdf server-side if that polish is ever needed. */
+function reportDateDefault(){
+  const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function reportDateToFmt(iso){
+  const parts=(iso||'').split('-').map(Number);
+  if(parts.length!==3||parts.some(isNaN)) return '';
+  return fmtDate(new Date(parts[0],parts[1]-1,parts[2]));
+}
+function bookingPrice(bk){
+  const s=svcList(bk.brand).find(x=>x.id===bk.serviceId);
+  return s?effectivePrice(s):null;
+}
+function csvEscape(v){
+  v=(v===null||v===undefined)?'':String(v);
+  return /[",\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v;
+}
+function downloadTextFile(filename,text,mime){
+  const blob=new Blob([text],{type:(mime||'text/plain')+';charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function printReport(title,bodyHtml){
+  const area=document.getElementById('printArea');
+  area.innerHTML=`<h1>${title}</h1>${bodyHtml}`;
+  window.print();
+}
+window.addEventListener('afterprint',()=>{ const a=document.getElementById('printArea'); if(a) a.innerHTML=''; });
+
+function currentReportScopeText(){
+  return userBrands(currentUser).length>=Object.keys(BRANDS).length ? 'All brands' : brandsLabel(currentUser&&currentUser.brands);
+}
+
+function renderAdminReports(){
+  const dateInput=document.getElementById('repDate');
+  if(!dateInput) return;
+  if(!dateInput.value) dateInput.value=reportDateDefault();
+  const scopeLabel=document.getElementById('reportScopeLabel');
+  const scopeText=currentReportScopeText();
+  scopeLabel.textContent = scopeText==='All brands' ? '— across all brands' : `— for ${scopeText}`;
+
+  const targetFmt=reportDateToFmt(dateInput.value);
+  const rows=STORE.bookings.filter(bk=>canSeeBrand(currentUser,bk.brand) && bk.date===targetFmt);
+  const tbody=document.getElementById('reportRows');
+  tbody.innerHTML = rows.length ? rows.map(bk=>{
+    const price=bookingPrice(bk);
+    return `<tr>
+      <td>${bk.clientName}</td>
+      <td><span class="brand-tag" style="background:${brandColor[bk.brand]}">${BRANDS[bk.brand].name}</span></td>
+      <td>${bk.serviceName}</td>
+      <td>${bk.time}</td>
+      <td><span class="status-badge ${bk.status}">${bk.status}</span></td>
+      <td>${price===null?'—':'$'+price}</td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="6"><div class="admin-empty">No bookings on this date${scopeText==='All brands'?'':' for your department'}.</div></td></tr>`;
+
+  const counted=rows.filter(bk=>bk.status!=='Cancelled');
+  const byBrand={};
+  counted.forEach(bk=>{ const p=bookingPrice(bk)||0; byBrand[bk.brand]=(byBrand[bk.brand]||0)+p; });
+  const visibleBrands=Object.keys(BRANDS).filter(b=>canSeeBrand(currentUser,b));
+  const grand=Object.values(byBrand).reduce((a,b)=>a+b,0);
+  const totalsEl=document.getElementById('reportTotals');
+  totalsEl.innerHTML = rows.length ? `
+    <div style="display:flex;gap:22px;flex-wrap:wrap;align-items:baseline;">
+      ${visibleBrands.map(b=>`<div><b>${BRANDS[b].name}:</b> $${(byBrand[b]||0).toFixed(0)}</div>`).join('')}
+      <div style="font-weight:700;">Total: $${grand.toFixed(0)}</div>
+      <div style="color:var(--muted);">(${counted.length} of ${rows.length} bookings counted — cancelled bookings excluded)</div>
+    </div>` : '';
+
+  document.getElementById('repToday').onclick=()=>{ dateInput.value=reportDateDefault(); renderAdminReports(); };
+  dateInput.onchange=renderAdminReports;
+
+  document.getElementById('repExportCsv').onclick=()=>{
+    const head=['Client','Brand','Service','Time','Status','Price'];
+    const body=rows.map(bk=>{ const p=bookingPrice(bk); return [bk.clientName,BRANDS[bk.brand].name,bk.serviceName,bk.time,bk.status,p===null?'':p]; });
+    const totalLines=[[],['Totals by brand (excludes cancelled)'],...visibleBrands.map(b=>[BRANDS[b].name,(byBrand[b]||0).toFixed(0)]),['Grand total',grand.toFixed(0)]];
+    const csv=[['Daily Report',targetFmt,scopeText],head,...body,...totalLines].map(r=>r.map(csvEscape).join(',')).join('\r\n');
+    downloadTextFile(`daily-report-${dateInput.value}.csv`,csv,'text/csv');
+  };
+  document.getElementById('repExportPdf').onclick=()=>{
+    const html=`
+      <p><b>Date:</b> ${targetFmt} &nbsp;&nbsp; <b>Scope:</b> ${scopeText}</p>
+      <table><thead><tr><th>Client</th><th>Brand</th><th>Service</th><th>Time</th><th>Status</th><th>Price</th></tr></thead>
+      <tbody>${rows.map(bk=>{ const p=bookingPrice(bk); return `<tr><td>${bk.clientName}</td><td>${BRANDS[bk.brand].name}</td><td>${bk.serviceName}</td><td>${bk.time}</td><td>${bk.status}</td><td>${p===null?'—':'$'+p}</td></tr>`; }).join('')}</tbody></table>
+      <p style="margin-top:14px;"><b>Totals (excl. cancelled):</b> ${visibleBrands.map(b=>`${BRANDS[b].name} $${(byBrand[b]||0).toFixed(0)}`).join(' &middot; ')} — <b>Grand total $${grand.toFixed(0)}</b> (${counted.length} of ${rows.length} bookings)</p>`;
+    printReport(`Daily Report — ${targetFmt}`,html);
+  };
+
+  document.getElementById('fullExportCsv').onclick=exportAllDataCsv;
+  document.getElementById('fullExportPdf').onclick=exportAllDataPdf;
+}
+
+// Builds the section list for a full export, using exactly the same section
+// access (tabs) and department (brands) filtering as the live admin tabs —
+// nothing is exported that this account couldn't already see on screen.
+function exportSectionsForCurrentUser(){
+  const sections=[];
+  const allowed=currentUser?currentUser.tabs:[];
+  if(allowed.includes('bookings')){
+    const rows=STORE.bookings.filter(bk=>canSeeBrand(currentUser,bk.brand));
+    sections.push({title:'Bookings',head:['Client','Brand','Service','Date','Time','Status'],
+      rows:rows.map(bk=>[bk.clientName,BRANDS[bk.brand].name,bk.serviceName,bk.date,bk.time,bk.status])});
+  }
+  if(allowed.includes('products')){
+    const rows=STORE.products.filter(p=>canSeeBrand(currentUser,p.brand));
+    sections.push({title:'Products',head:['Name','Brand','Price','Discount %','Effective Price'],
+      rows:rows.map(p=>[p.n,BRANDS[p.brand].name,p.price,p.discount||0,effectivePrice(p)])});
+  }
+  if(allowed.includes('services')){
+    Object.keys(BRANDS).filter(b=>canSeeBrand(currentUser,b)).forEach(b=>{
+      sections.push({title:`Services — ${BRANDS[b].name}`,head:['Name','Category','Duration','Price','Discount %','Effective Price'],
+        rows:svcList(b).map(s=>[s.n,s.cat,s.dur,s.price,s.discount||0,effectivePrice(s)])});
+    });
+  }
+  if(allowed.includes('offers')){
+    const rows=STORE.offers.filter(o=>canSeeBrand(currentUser,o.brand));
+    sections.push({title:'Offers',head:['Title','Brand','Description'],rows:rows.map(o=>[o.t,BRANDS[o.brand].name,o.s])});
+  }
+  if(allowed.includes('employees')){
+    sections.push({title:'Employees',head:['Name','Access','Department','PIN'],
+      rows:STORE.users.map(u=>[u.name,accessLabel(u.tabs),brandsLabel(u.brands),u.pin])});
+  }
+  return sections;
+}
+function exportAllDataCsv(){
+  const sections=exportSectionsForCurrentUser();
+  const lines=[['Dolce / Polished / Core — Full Data Export',reportDateDefault(),currentReportScopeText()],[]];
+  sections.forEach(sec=>{
+    lines.push([sec.title]);
+    lines.push(sec.head);
+    sec.rows.forEach(r=>lines.push(r));
+    lines.push([]);
+  });
+  const csv=lines.map(r=>r.map(csvEscape).join(',')).join('\r\n');
+  downloadTextFile(`dolce-full-export-${reportDateDefault()}.csv`,csv,'text/csv');
+}
+function exportAllDataPdf(){
+  const sections=exportSectionsForCurrentUser();
+  const html=`<p><b>Scope:</b> ${currentReportScopeText()} &nbsp;&nbsp; <b>Generated:</b> ${reportDateDefault()}</p>`+
+    sections.map(sec=>`
+    <h3>${sec.title}</h3>
+    <table><thead><tr>${sec.head.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+    <tbody>${sec.rows.length?sec.rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="${sec.head.length}">None</td></tr>`}</tbody></table>
+  `).join('');
+  printReport(`Full Data Export — ${reportDateDefault()}`,html);
+}
 
 /* ---------------- Admin: Brand photos ---------------- */
 function renderBrandPhotos(){
