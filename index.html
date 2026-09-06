@@ -471,6 +471,7 @@
       <button data-admin-tab="gallery">Photos &amp; Video</button>
       <button data-admin-tab="employees">Employees</button>
       <button data-admin-tab="reports">Reports</button>
+      <button data-admin-tab="purchases">Purchases</button>
     </div>
 
     <div class="admin-panel active" id="adminOverview">
@@ -518,9 +519,10 @@
         <button class="btn btn-primary" id="addProductBtn">+ Add Product</button>
       </div>
       <div id="productFormWrap"></div>
+      <div id="productSaleFormWrap"></div>
       <div class="admin-table-wrap">
         <table class="admin-table">
-          <thead><tr><th>Product</th><th>Brand</th><th>Price</th><th></th></tr></thead>
+          <thead><tr><th>Product</th><th>Brand</th><th>Price</th><th>Stock</th><th></th></tr></thead>
           <tbody id="productRows"></tbody>
         </table>
       </div>
@@ -615,6 +617,8 @@
       </div>
       <div id="reportTotals" style="margin-top:14px;font-size:13px;color:var(--ink-soft);"></div>
 
+      <div id="registerCloseWrap" style="margin-top:22px;padding-top:20px;border-top:1px solid var(--line);"></div>
+
       <div style="margin:34px 0 8px;font-size:11px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.5px;">Full data export</div>
       <p style="font-size:12px;color:var(--muted);margin:0 0 12px;max-width:560px;">Exports every booking, product, service, offer and (if you manage Employees) employee account this login can see — respecting department access the same way the tabs above do. Useful for backups, or handing everything to an accountant or a new system.</p>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
@@ -622,6 +626,21 @@
         <button class="btn btn-primary btn-sm" id="fullExportPdf">🖨 Export All Data (PDF)</button>
       </div>
       <div style="font-size:11px;color:var(--muted);margin-top:14px;max-width:560px;">"Export PDF" opens your browser's print dialog with a clean, print-ready version of the report — choose "Save as PDF" as the destination. This works fully offline and needs no extra software.</div>
+    </div>
+
+    <div class="admin-panel" id="adminPurchases">
+      <div class="admin-toolbar">
+        <div style="font-size:12.5px;color:var(--ink-soft);"><span id="purchaseCount">0</span> purchases logged <span id="purchaseScopeLabel"></span></div>
+        <button class="btn btn-primary" id="addPurchaseBtn">+ Log Purchase</button>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin:-6px 0 14px;max-width:560px;">Log inventory you buy in from a supplier — it's added to that product's stock automatically. This is how Stock levels on the Products tab actually move.</p>
+      <div id="purchaseFormWrap"></div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>Date</th><th>Product</th><th>Brand</th><th>Qty</th><th>Unit Cost</th><th>Total</th><th>Supplier</th></tr></thead>
+          <tbody id="purchaseRows"></tbody>
+        </table>
+      </div>
     </div>
     </div>
   </section>
@@ -689,12 +708,12 @@ function defaultStore(){
       ],
     },
     products:[
-      {id:'p1',n:'Skin Hydrating Serum',price:65,brand:'dolce'},
-      {id:'p2',n:'Hair Repair Mask',price:45,brand:'polished'},
-      {id:'p3',n:'Wellness Yoga Mat',price:55,discount:10,brand:'core'},
-      {id:'p4',n:'Vitamin C Booster',price:40,brand:'dolce'},
-      {id:'p5',n:'Nail Strengthener Kit',price:25,brand:'polished'},
-      {id:'p6',n:'Pilates Resistance Band',price:28,brand:'core'},
+      {id:'p1',n:'Skin Hydrating Serum',price:65,brand:'dolce',stock:24},
+      {id:'p2',n:'Hair Repair Mask',price:45,brand:'polished',stock:18},
+      {id:'p3',n:'Wellness Yoga Mat',price:55,discount:10,brand:'core',stock:12},
+      {id:'p4',n:'Vitamin C Booster',price:40,brand:'dolce',stock:4},
+      {id:'p5',n:'Nail Strengthener Kit',price:25,brand:'polished',stock:30},
+      {id:'p6',n:'Pilates Resistance Band',price:28,brand:'core',stock:0},
     ],
     media:[
       {id:'m1',brand:'dolce',serviceId:'hydra',type:'photo',kind:'before-after',visibility:'public',consent:true,clientName:'',note:'Before',dataUrl:ph('BEFORE','#3a3630','#171512'),mime:'image/jpeg'},
@@ -716,13 +735,20 @@ function defaultStore(){
     // the employee/Admin App accounts. Empty by default; created the first
     // time someone signs up with a phone number in the demo.
     clients:[],
+    // Inventory operations: purchases restock a product (adds to stock),
+    // productSales record a retail sale at the counter (removes from stock)
+    // so the Reports tab has real product revenue to reconcile alongside
+    // booking revenue, and registerCloses is the end-of-day cash-up log.
+    purchases:[],
+    productSales:[],
+    registerCloses:[],
     brandImages:{dolce:'',polished:'',core:''},
     // `brands` scopes an account to one or more departments (Dolce / Polished
     // / Core). Bookings, Products, Services, Offers and Photos & Video are
     // all filtered to only these brands for that account; Overview and
     // Employees stay account-wide. Owner-style accounts get all three.
     users:[
-      {id:'u1',name:'Kawa',tabs:['overview','bookings','products','services','offers','gallery','employees','reports'],brands:['dolce','polished','core'],pin:'1234'},
+      {id:'u1',name:'Kawa',tabs:['overview','bookings','products','services','offers','gallery','employees','reports','purchases'],brands:['dolce','polished','core'],pin:'1234'},
       {id:'u2',name:'Sara',tabs:['bookings'],brands:['dolce'],pin:'1111'},
       {id:'u3',name:'Aya',tabs:['bookings','gallery'],brands:['polished'],pin:'2222'},
       {id:'u4',name:'Diyar',tabs:['bookings','gallery'],brands:['core'],pin:'3333'},
@@ -743,17 +769,25 @@ function loadStore(){
         if(!parsed.clients) parsed.clients=defaultStore().clients;
         if(!parsed.brandImages) parsed.brandImages=defaultStore().brandImages;
         if(!parsed.users) parsed.users=defaultStore().users;
+        if(!parsed.purchases) parsed.purchases=[];
+        if(!parsed.productSales) parsed.productSales=[];
+        if(!parsed.registerCloses) parsed.registerCloses=[];
+        // Older saved products predate stock tracking — default them to a
+        // reasonable on-hand quantity rather than 0, so existing catalogs
+        // don't suddenly all show as out of stock.
+        parsed.products=parsed.products.map(p=>('stock' in p)?p:{...p,stock:20});
         // Migrate any older saved accounts that still used a single `role`
         // string instead of a `tabs` checkbox array (PRESETS isn't defined
         // yet at this point in the script, so the mapping is inlined here).
-        const legacyTabs={owner:['overview','bookings','products','services','offers','gallery','employees','reports'],reception:['bookings'],staff:['bookings','gallery']};
+        const legacyTabs={owner:['overview','bookings','products','services','offers','gallery','employees','reports','purchases'],reception:['bookings'],staff:['bookings','gallery']};
         parsed.users=parsed.users.map(u=>u.tabs?u:{...u,tabs:legacyTabs[u.role]||['bookings']});
-        // Offers and Reports are newer sections — any account that already
-        // manages Employees (the account-management tier) gets them
+        // Offers, Reports and Purchases are newer sections — any account that
+        // already manages Employees (the account-management tier) gets them
         // automatically so existing saved sessions don't lose access to
         // something new.
         parsed.users=parsed.users.map(u=>(u.tabs.includes('employees')&&!u.tabs.includes('offers'))?{...u,tabs:[...u.tabs,'offers']}:u);
         parsed.users=parsed.users.map(u=>(u.tabs.includes('employees')&&!u.tabs.includes('reports'))?{...u,tabs:[...u.tabs,'reports']}:u);
+        parsed.users=parsed.users.map(u=>(u.tabs.includes('employees')&&!u.tabs.includes('purchases'))?{...u,tabs:[...u.tabs,'purchases']}:u);
         // Brand/department scoping is newer — any saved account without a
         // `brands` list gets all three, matching its previous unscoped access.
         parsed.users=parsed.users.map(u=>(u.brands&&u.brands.length)?u:{...u,brands:Object.keys(BRANDS)});
@@ -1410,6 +1444,7 @@ const TAB_DEFS=[
   {key:'gallery',label:'Photos & Video'},
   {key:'employees',label:'Employees'},
   {key:'reports',label:'Reports'},
+  {key:'purchases',label:'Purchases'},
 ];
 const PRESETS={
   owner:{label:'Owner / Admin',tabs:TAB_DEFS.map(t=>t.key)},
@@ -1428,7 +1463,7 @@ function accessLabel(tabs){
 // filter — Overview, Employees and Reports are account-wide sections (Reports
 // still respects department internally, filtering the data it pulls from
 // the sections above, rather than being a data collection of its own).
-const BRAND_SCOPED_TABS=['bookings','products','services','offers','gallery'];
+const BRAND_SCOPED_TABS=['bookings','products','services','offers','gallery','purchases'];
 function userBrands(u){ return (u&&u.brands&&u.brands.length) ? u.brands : Object.keys(BRANDS); }
 function canSeeBrand(u,brand){ return userBrands(u).includes(brand); }
 function brandsLabel(brands){
@@ -1497,7 +1532,7 @@ function showAdminForRole(){
   });
   if(!allowed.includes(adminTab)) adminTab=allowed[0]||'bookings';
   document.querySelectorAll('#adminTabsRow [data-admin-tab]').forEach(x=>x.classList.toggle('active',x.dataset.adminTab===adminTab));
-  ['overview','bookings','products','services','offers','gallery','employees','reports'].forEach(p=>{
+  ['overview','bookings','products','services','offers','gallery','employees','reports','purchases'].forEach(p=>{
     document.getElementById('admin'+p[0].toUpperCase()+p.slice(1)).classList.toggle('active',adminTab===p);
   });
   // Services has its own brand sub-tabs — hide any brand this account isn't
@@ -1507,7 +1542,7 @@ function showAdminForRole(){
   });
   if(!canSeeBrand(currentUser,svcBrandTab)) svcBrandTab=userBrands(currentUser)[0];
   document.querySelectorAll('#svcBrandTabs [data-svc-brand-tab]').forEach(x=>x.classList.toggle('active',x.dataset.svcBrandTab===svcBrandTab));
-  renderAdminProducts(); renderAdminServices(); renderAdminOffers(); renderAdminGallery(); renderAdminBookings(); renderBrandPhotos(); renderAdminEmployees(); renderAdminReports();
+  renderAdminProducts(); renderAdminServices(); renderAdminOffers(); renderAdminGallery(); renderAdminBookings(); renderBrandPhotos(); renderAdminEmployees(); renderAdminPurchases(); renderAdminReports();
 }
 
 /* ---------------- Full-screen client app ---------------- */
@@ -1564,6 +1599,7 @@ document.querySelectorAll('[data-admin-tab]').forEach(b=>{
     document.getElementById('adminGallery').classList.toggle('active',adminTab==='gallery');
     document.getElementById('adminEmployees').classList.toggle('active',adminTab==='employees');
     document.getElementById('adminReports').classList.toggle('active',adminTab==='reports');
+    document.getElementById('adminPurchases').classList.toggle('active',adminTab==='purchases');
   });
 });
 document.querySelectorAll('[data-svc-brand-tab]').forEach(b=>{
@@ -1585,23 +1621,31 @@ function renderAdminProducts(){
   if(scopeLabel) scopeLabel.textContent = userBrands(currentUser).length>=Object.keys(BRANDS).length ? 'across all brands' : `for ${brandsLabel(currentUser&&currentUser.brands)}`;
   const rows=document.getElementById('productRows');
   if(!scoped.length){
-    rows.innerHTML=`<tr><td colspan="4"><div class="admin-empty">No products yet — click "Add Product" to create the first one.</div></td></tr>`;
+    rows.innerHTML=`<tr><td colspan="5"><div class="admin-empty">No products yet — click "Add Product" to create the first one.</div></td></tr>`;
     return;
   }
+  const LOW_STOCK=5;
   rows.innerHTML=scoped.map((p)=>{
     const i=STORE.products.indexOf(p);
+    const stock=p.stock||0;
+    const stockHtml = stock<=0
+      ? `<span class="status-badge Cancelled">Out of stock</span>`
+      : (stock<=LOW_STOCK ? `<span class="status-badge Requested">${stock} left — low</span>` : `${stock}`);
     return `
     <tr>
       <td><span class="swdot" style="${p.image?`background-image:url('${p.image}')`:`background:linear-gradient(140deg,${BRANDS[p.brand].c1},${BRANDS[p.brand].c2})`}"></span>${p.n}</td>
       <td><span class="brand-tag" style="background:${brandColor[p.brand]}">${BRANDS[p.brand].name}</span></td>
       <td>${priceHtml(p)}</td>
+      <td>${stockHtml}</td>
       <td><div class="rowbtns">
+        <button class="btn btn-ghost btn-sm" data-sell-prod="${i}" ${stock<=0?'disabled':''}>Sell</button>
         <button class="btn btn-ghost btn-sm" data-edit-prod="${i}">Edit</button>
         <button class="btn btn-danger btn-sm" data-del-prod="${i}">Delete</button>
       </div></td>
     </tr>`;
   }).join('');
   rows.querySelectorAll('[data-edit-prod]').forEach(b=>b.addEventListener('click',()=>openProductForm(parseInt(b.dataset.editProd))));
+  rows.querySelectorAll('[data-sell-prod]').forEach(b=>b.addEventListener('click',()=>openProductSaleForm(parseInt(b.dataset.sellProd))));
   rows.querySelectorAll('[data-del-prod]').forEach(b=>b.addEventListener('click',()=>{
     const p=STORE.products[parseInt(b.dataset.delProd)];
     STORE.products.splice(parseInt(b.dataset.delProd),1);
@@ -1610,9 +1654,36 @@ function renderAdminProducts(){
     if(currentScreen==='shop'||currentScreen==='welcome') render();
   }));
 }
+function openProductSaleForm(productIndex){
+  const p=STORE.products[productIndex];
+  if(!p||(p.stock||0)<=0) return;
+  const unitPrice=effectivePrice(p);
+  document.getElementById('productSaleFormWrap').innerHTML=`
+    <div class="admin-form">
+      <div class="field full" style="grid-column:1/-1;"><label>Recording a sale of</label><div style="font-weight:700;">${p.n} — $${unitPrice} each (${p.stock} in stock)</div></div>
+      <div class="field"><label>Quantity</label><input id="ps_qty" type="number" min="1" max="${p.stock}" step="1" value="1"></div>
+      <div class="field"><label>Client name (optional)</label><input id="ps_client" type="text" placeholder="Walk-in"></div>
+      <div class="actions">
+        <button class="btn btn-ghost" id="ps_cancel">Cancel</button>
+        <button class="btn btn-primary" id="ps_save">Record Sale</button>
+      </div>
+    </div>`;
+  document.getElementById('ps_cancel').addEventListener('click',()=>{document.getElementById('productSaleFormWrap').innerHTML='';});
+  document.getElementById('ps_save').addEventListener('click',()=>{
+    const qty=Math.max(1,parseInt(document.getElementById('ps_qty').value)||1);
+    const clientName=document.getElementById('ps_client').value.trim()||'Walk-in';
+    if(qty>p.stock){ toast(`Only ${p.stock} in stock.`); return; }
+    p.stock=p.stock-qty;
+    STORE.productSales.push({id:nextId('ps',STORE.productSales),productId:p.id,n:p.n,brand:p.brand,qty,unitPrice,total:unitPrice*qty,date:fmtDate(new Date()),clientName});
+    saveStore();
+    document.getElementById('productSaleFormWrap').innerHTML='';
+    renderAdminProducts();
+    toast(`Sold ${qty} × ${p.n} to ${clientName} — $${unitPrice*qty}.`);
+  });
+}
 function openProductForm(editIndex){
   const editing=editIndex!==undefined;
-  const p=editing?STORE.products[editIndex]:{n:'',price:'',discount:0,brand:userBrands(currentUser)[0],image:''};
+  const p=editing?STORE.products[editIndex]:{n:'',price:'',discount:0,brand:userBrands(currentUser)[0],image:'',stock:0};
   document.getElementById('productFormWrap').innerHTML=`
     <div class="admin-form">
       <div class="field"><label>Product name</label><input id="pf_name" type="text" value="${p.n}" placeholder="e.g. Rosehip Face Oil"></div>
@@ -1621,10 +1692,11 @@ function openProductForm(editIndex){
       </div>
       <div class="field"><label>Price ($)</label><input id="pf_price" type="number" min="0" step="1" value="${p.price}"></div>
       <div class="field"><label>Discount % (optional)</label><input id="pf_discount" type="number" min="0" max="99" step="1" placeholder="0 — no discount" value="${p.discount||''}"></div>
+      <div class="field"><label>Stock on hand</label><input id="pf_stock" type="number" min="0" step="1" value="${p.stock||0}"></div>
       <div class="field" style="grid-column:1/-1;"><label>Photo ${p.image?'(uploaded — choose a file to replace it)':'(optional — falls back to a colour swatch)'}</label>
         <div class="upload-drop"><input id="pf_image" type="file" accept="image/*"></div>
       </div>
-      <div style="grid-column:1/-1;font-size:11px;color:var(--muted);margin-top:-6px;">A discount above 0% shows the old price crossed out next to the new one, and adds this product to the welcome screen's "Upcoming Events &amp; Offers" automatically — no need to also create an Offer for it.</div>
+      <div style="grid-column:1/-1;font-size:11px;color:var(--muted);margin-top:-6px;">A discount above 0% shows the old price crossed out next to the new one, and adds this product to the welcome screen's "Upcoming Events &amp; Offers" automatically — no need to also create an Offer for it. Stock moves down automatically when you record a sale, and up automatically when you log a purchase in the Purchases tab — edit it directly here only to make a correction.</div>
       <div class="actions">
         <button class="btn btn-ghost" id="pf_cancel">Cancel</button>
         <button class="btn btn-primary" id="pf_save">${editing?'Save changes':'Add product'}</button>
@@ -1636,13 +1708,14 @@ function openProductForm(editIndex){
     const brand=document.getElementById('pf_brand').value;
     const price=parseFloat(document.getElementById('pf_price').value)||0;
     const discount=Math.min(99,Math.max(0,parseInt(document.getElementById('pf_discount').value)||0));
+    const stock=Math.max(0,parseInt(document.getElementById('pf_stock').value)||0);
     if(!n){ document.getElementById('pf_name').focus(); return; }
     const saveBtn=document.getElementById('pf_save'); saveBtn.disabled=true; saveBtn.textContent='Saving…';
     try{
       const file=document.getElementById('pf_image').files[0];
       const image = file ? await resizeImageFile(file) : (p.image||'');
       const base = editing ? STORE.products[editIndex] : {id:nextId('p',STORE.products)};
-      const updated={...base,n,brand,price,discount,image};
+      const updated={...base,n,brand,price,discount,stock,image};
       if(editing) STORE.products[editIndex]=updated; else STORE.products.push(updated);
       const ok=saveStore();
       if(!ok){
@@ -2022,10 +2095,13 @@ function renderAdminBookings(){
   rows.innerHTML=scoped.slice().reverse().map((bk)=>{
     const i=STORE.bookings.indexOf(bk);
     const advance=nextStatus[bk.status];
-    const actions = canEdit ? `<div class="rowbtns">
+    const locked=isDateBrandClosed(bk.date,bk.brand);
+    const actions = locked
+      ? `<span style="font-size:11px;color:var(--muted);">🔒 Day closed</span>`
+      : (canEdit ? `<div class="rowbtns">
         ${advance?`<button class="btn btn-ghost btn-sm" data-advance-booking="${i}">Mark ${advance}</button>`:''}
         ${(bk.status==='Requested'||bk.status==='Confirmed')?`<button class="btn btn-danger btn-sm" data-cancel-booking="${i}">Cancel</button>`:''}
-      </div>` : '';
+      </div>` : '');
     return `<tr>
       <td>${bk.clientName}</td>
       <td><span class="brand-tag" style="background:${brandColor[bk.brand]}">${BRANDS[bk.brand].name}</span></td>
@@ -2209,6 +2285,20 @@ function bookingPrice(bk){
   const s=svcList(bk.brand).find(x=>x.id===bk.serviceId);
   return s?effectivePrice(s):null;
 }
+// Register close: a per-brand, per-day cash-up. `brands` on each record is
+// exactly the department scope that was closed (an Owner closing all three
+// at once writes one record covering all three; a department-scoped
+// employee closing writes a record covering only their own brand(s)), so a
+// single day can be closed brand-by-brand rather than all at once.
+function isDateBrandClosed(dateFmt,brand){
+  return STORE.registerCloses.some(rc=>rc.date===dateFmt && rc.brands.includes(brand));
+}
+function closesCoveringDate(dateFmt,brands){
+  return STORE.registerCloses.filter(rc=>rc.date===dateFmt && brands.some(b=>rc.brands.includes(b)));
+}
+function productSalesForDate(dateFmt){
+  return STORE.productSales.filter(ps=>canSeeBrand(currentUser,ps.brand) && ps.date===dateFmt);
+}
 function csvEscape(v){
   v=(v===null||v===undefined)?'':String(v);
   return /[",\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v;
@@ -2258,13 +2348,22 @@ function renderAdminReports(){
   const byBrand={};
   counted.forEach(bk=>{ const p=bookingPrice(bk)||0; byBrand[bk.brand]=(byBrand[bk.brand]||0)+p; });
   const visibleBrands=Object.keys(BRANDS).filter(b=>canSeeBrand(currentUser,b));
-  const grand=Object.values(byBrand).reduce((a,b)=>a+b,0);
+  const bookingGrand=Object.values(byBrand).reduce((a,b)=>a+b,0);
+
+  const sales=productSalesForDate(targetFmt);
+  const salesByBrand={};
+  sales.forEach(ps=>{ salesByBrand[ps.brand]=(salesByBrand[ps.brand]||0)+ps.total; });
+  const salesGrand=Object.values(salesByBrand).reduce((a,b)=>a+b,0);
+
+  const combinedByBrand={}; visibleBrands.forEach(b=>{ combinedByBrand[b]=(byBrand[b]||0)+(salesByBrand[b]||0); });
+  const grand=bookingGrand+salesGrand;
+
   const totalsEl=document.getElementById('reportTotals');
-  totalsEl.innerHTML = rows.length ? `
+  totalsEl.innerHTML = (rows.length||sales.length) ? `
     <div style="display:flex;gap:22px;flex-wrap:wrap;align-items:baseline;">
-      ${visibleBrands.map(b=>`<div><b>${BRANDS[b].name}:</b> $${(byBrand[b]||0).toFixed(0)}</div>`).join('')}
+      ${visibleBrands.map(b=>`<div><b>${BRANDS[b].name}:</b> $${(combinedByBrand[b]||0).toFixed(0)}</div>`).join('')}
       <div style="font-weight:700;">Total: $${grand.toFixed(0)}</div>
-      <div style="color:var(--muted);">(${counted.length} of ${rows.length} bookings counted — cancelled bookings excluded)</div>
+      <div style="color:var(--muted);">(bookings $${bookingGrand.toFixed(0)} + product sales $${salesGrand.toFixed(0)} · ${counted.length} of ${rows.length} bookings counted, cancelled excluded · ${sales.length} product sale${sales.length===1?'':'s'})</div>
     </div>` : '';
 
   document.getElementById('repToday').onclick=()=>{ dateInput.value=reportDateDefault(); renderAdminReports(); };
@@ -2273,8 +2372,10 @@ function renderAdminReports(){
   document.getElementById('repExportCsv').onclick=()=>{
     const head=['Client','Brand','Service','Time','Status','Price'];
     const body=rows.map(bk=>{ const p=bookingPrice(bk); return [bk.clientName,BRANDS[bk.brand].name,bk.serviceName,bk.time,bk.status,p===null?'':p]; });
-    const totalLines=[[],['Totals by brand (excludes cancelled)'],...visibleBrands.map(b=>[BRANDS[b].name,(byBrand[b]||0).toFixed(0)]),['Grand total',grand.toFixed(0)]];
-    const csv=[['Daily Report',targetFmt,scopeText],head,...body,...totalLines].map(r=>r.map(csvEscape).join(',')).join('\r\n');
+    const salesHead=[[],['Product sales'],['Product','Brand','Qty','Unit Price','Total','Client']];
+    const salesBody=sales.map(ps=>[ps.n,BRANDS[ps.brand].name,ps.qty,ps.unitPrice,ps.total,ps.clientName]);
+    const totalLines=[[],['Totals by brand (bookings + product sales, excludes cancelled)'],...visibleBrands.map(b=>[BRANDS[b].name,(combinedByBrand[b]||0).toFixed(0)]),['Grand total',grand.toFixed(0)]];
+    const csv=[['Daily Report',targetFmt,scopeText],head,...body,...salesHead,...salesBody,...totalLines].map(r=>r.map(csvEscape).join(',')).join('\r\n');
     downloadTextFile(`daily-report-${dateInput.value}.csv`,csv,'text/csv');
   };
   document.getElementById('repExportPdf').onclick=()=>{
@@ -2282,12 +2383,89 @@ function renderAdminReports(){
       <p><b>Date:</b> ${targetFmt} &nbsp;&nbsp; <b>Scope:</b> ${scopeText}</p>
       <table><thead><tr><th>Client</th><th>Brand</th><th>Service</th><th>Time</th><th>Status</th><th>Price</th></tr></thead>
       <tbody>${rows.map(bk=>{ const p=bookingPrice(bk); return `<tr><td>${bk.clientName}</td><td>${BRANDS[bk.brand].name}</td><td>${bk.serviceName}</td><td>${bk.time}</td><td>${bk.status}</td><td>${p===null?'—':'$'+p}</td></tr>`; }).join('')}</tbody></table>
-      <p style="margin-top:14px;"><b>Totals (excl. cancelled):</b> ${visibleBrands.map(b=>`${BRANDS[b].name} $${(byBrand[b]||0).toFixed(0)}`).join(' &middot; ')} — <b>Grand total $${grand.toFixed(0)}</b> (${counted.length} of ${rows.length} bookings)</p>`;
+      ${sales.length?`<h3>Product sales</h3><table><thead><tr><th>Product</th><th>Brand</th><th>Qty</th><th>Unit Price</th><th>Total</th><th>Client</th></tr></thead><tbody>${sales.map(ps=>`<tr><td>${ps.n}</td><td>${BRANDS[ps.brand].name}</td><td>${ps.qty}</td><td>$${ps.unitPrice}</td><td>$${ps.total}</td><td>${ps.clientName}</td></tr>`).join('')}</tbody></table>`:''}
+      <p style="margin-top:14px;"><b>Totals (bookings + product sales, excl. cancelled):</b> ${visibleBrands.map(b=>`${BRANDS[b].name} $${(combinedByBrand[b]||0).toFixed(0)}`).join(' &middot; ')} — <b>Grand total $${grand.toFixed(0)}</b></p>`;
     printReport(`Daily Report — ${targetFmt}`,html);
   };
 
+  renderRegisterClose(dateInput.value,targetFmt,visibleBrands,combinedByBrand,grand,scopeText);
+
   document.getElementById('fullExportCsv').onclick=exportAllDataCsv;
   document.getElementById('fullExportPdf').onclick=exportAllDataPdf;
+}
+
+// The end-of-day cash-up. A brand counts as "closed" for a date once some
+// close record covers it; an Owner viewing all three brands can close them
+// together in one action, while a department-scoped employee only ever
+// closes (or reopens) their own brand(s) — closing never touches a brand
+// this account can't see. Once closed, that brand+date's bookings can no
+// longer be advanced or cancelled from the Bookings tab (see
+// renderAdminBookings) until someone with Employees access reopens it —
+// closed books shouldn't quietly change, even for the Owner.
+function renderRegisterClose(dateIso,targetFmt,visibleBrands,combinedByBrand,grand,scopeText){
+  const wrap=document.getElementById('registerCloseWrap');
+  const already=closesCoveringDate(targetFmt,visibleBrands);
+  const openBrands=visibleBrands.filter(b=>!isDateBrandClosed(targetFmt,b));
+  const canReopen=currentUser&&currentUser.tabs.includes('employees');
+
+  let html=`<div style="font-size:11px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">End-of-day register close — ${targetFmt}</div>`;
+
+  if(already.length){
+    html+=already.map(rc=>{
+      const diff=rc.countedTotal-rc.expectedTotal;
+      const diffTxt = diff===0 ? 'matches exactly' : (diff>0 ? `$${diff.toFixed(0)} over` : `$${Math.abs(diff).toFixed(0)} short`);
+      return `<div style="background:#fff;border:1px solid var(--line);border-radius:9px;padding:12px 14px;margin-bottom:10px;font-size:12.5px;">
+        <div><b>Closed — ${rc.brands.map(b=>BRANDS[b].name).join(', ')}</b></div>
+        <div style="color:var(--ink-soft);margin-top:4px;">Expected $${rc.expectedTotal.toFixed(0)} · Counted $${rc.countedTotal.toFixed(0)} (cash $${rc.countedCash.toFixed(0)} + card $${rc.countedCard.toFixed(0)}) · <b>${diffTxt}</b></div>
+        ${rc.notes?`<div style="color:var(--muted);margin-top:4px;">Note: ${rc.notes}</div>`:''}
+        <div style="color:var(--muted);margin-top:4px;">Closed by ${rc.closedBy} at ${rc.closedAt}</div>
+        ${canReopen?`<button class="btn btn-ghost btn-sm" style="margin-top:8px;" data-reopen-close="${rc.id}">Reopen this day</button>`:''}
+      </div>`;
+    }).join('');
+  }
+
+  if(openBrands.length){
+    const openExpected=openBrands.reduce((sum,b)=>sum+(combinedByBrand[b]||0),0);
+    html+=`<div class="admin-form" style="margin-top:${already.length?'4px':'0'};">
+      <div class="field full" style="grid-column:1/-1;"><label>Closing register for</label><div style="font-weight:700;">${openBrands.map(b=>BRANDS[b].name).join(', ')} — expected $${openExpected.toFixed(0)}</div></div>
+      <div class="field"><label>Counted cash ($)</label><input id="rc_cash" type="number" min="0" step="0.01" value="0"></div>
+      <div class="field"><label>Counted card ($)</label><input id="rc_card" type="number" min="0" step="0.01" value="0"></div>
+      <div class="field full" style="grid-column:1/-1;"><label>Notes (optional)</label><input id="rc_notes" type="text" placeholder="e.g. $5 short, likely a rounding error at Reception"></div>
+      <div class="actions">
+        <button class="btn btn-primary" id="rc_close">🔒 Close Register — ${openBrands.map(b=>BRANDS[b].name).join(', ')}</button>
+      </div>
+    </div>`;
+  } else if(!already.length){
+    html+=`<div style="color:var(--muted);font-size:12.5px;">Nothing to close yet — ${scopeText==='All brands'?'no brands are':'your department isn\'t'} set up, which shouldn't happen.</div>`;
+  }
+
+  wrap.innerHTML=html;
+
+  wrap.querySelectorAll('[data-reopen-close]').forEach(b=>b.addEventListener('click',()=>{
+    const id=b.dataset.reopenClose;
+    const rc=STORE.registerCloses.find(x=>x.id===id);
+    STORE.registerCloses=STORE.registerCloses.filter(x=>x.id!==id);
+    saveStore();
+    toast(`${targetFmt} reopened for ${rc?rc.brands.map(x=>BRANDS[x].name).join(', '):'that department'} — bookings can be edited again.`);
+    renderAdminReports();
+    renderAdminBookings();
+  }));
+  const closeBtn=document.getElementById('rc_close');
+  if(closeBtn) closeBtn.addEventListener('click',()=>{
+    const countedCash=Math.max(0,parseFloat(document.getElementById('rc_cash').value)||0);
+    const countedCard=Math.max(0,parseFloat(document.getElementById('rc_card').value)||0);
+    const notes=document.getElementById('rc_notes').value.trim();
+    const openExpected=openBrands.reduce((sum,b)=>sum+(combinedByBrand[b]||0),0);
+    STORE.registerCloses.push({
+      id:nextId('rc',STORE.registerCloses), date:targetFmt, brands:openBrands.slice(),
+      expectedTotal:openExpected, countedCash, countedCard, countedTotal:countedCash+countedCard,
+      notes, closedBy:currentUser?currentUser.name:'Unknown', closedAt:new Date().toLocaleString(),
+    });
+    saveStore();
+    toast(`Register closed for ${targetFmt} — ${openBrands.map(b=>BRANDS[b].name).join(', ')}.`);
+    renderAdminReports();
+    renderAdminBookings();
+  });
 }
 
 // Builds the section list for a full export, using exactly the same section
@@ -2303,8 +2481,16 @@ function exportSectionsForCurrentUser(){
   }
   if(allowed.includes('products')){
     const rows=STORE.products.filter(p=>canSeeBrand(currentUser,p.brand));
-    sections.push({title:'Products',head:['Name','Brand','Price','Discount %','Effective Price'],
-      rows:rows.map(p=>[p.n,BRANDS[p.brand].name,p.price,p.discount||0,effectivePrice(p)])});
+    sections.push({title:'Products',head:['Name','Brand','Price','Discount %','Effective Price','Stock'],
+      rows:rows.map(p=>[p.n,BRANDS[p.brand].name,p.price,p.discount||0,effectivePrice(p),p.stock||0])});
+    const salesRows=STORE.productSales.filter(ps=>canSeeBrand(currentUser,ps.brand));
+    sections.push({title:'Product Sales',head:['Date','Product','Brand','Qty','Unit Price','Total','Client'],
+      rows:salesRows.map(ps=>[ps.date,ps.n,BRANDS[ps.brand].name,ps.qty,ps.unitPrice,ps.total,ps.clientName])});
+  }
+  if(allowed.includes('purchases')){
+    const rows=STORE.purchases.filter(pu=>canSeeBrand(currentUser,pu.brand));
+    sections.push({title:'Purchases',head:['Date','Product','Brand','Qty','Unit Cost','Total','Supplier'],
+      rows:rows.map(pu=>[pu.date,pu.n,BRANDS[pu.brand].name,pu.qty,pu.unitCost,pu.total,pu.supplier||''])});
   }
   if(allowed.includes('services')){
     Object.keys(BRANDS).filter(b=>canSeeBrand(currentUser,b)).forEach(b=>{
@@ -2319,6 +2505,11 @@ function exportSectionsForCurrentUser(){
   if(allowed.includes('employees')){
     sections.push({title:'Employees',head:['Name','Access','Department','PIN'],
       rows:STORE.users.map(u=>[u.name,accessLabel(u.tabs),brandsLabel(u.brands),u.pin])});
+  }
+  if(allowed.includes('reports')){
+    const rows=STORE.registerCloses.filter(rc=>rc.brands.some(b=>canSeeBrand(currentUser,b)));
+    sections.push({title:'Register Closes',head:['Date','Brands','Expected','Counted','Difference','Closed By','Closed At'],
+      rows:rows.map(rc=>[rc.date,rc.brands.map(b=>BRANDS[b].name).join(', '),rc.expectedTotal.toFixed(0),rc.countedTotal.toFixed(0),(rc.countedTotal-rc.expectedTotal).toFixed(0),rc.closedBy,rc.closedAt])});
   }
   return sections;
 }
@@ -2344,6 +2535,61 @@ function exportAllDataPdf(){
   `).join('');
   printReport(`Full Data Export — ${reportDateDefault()}`,html);
 }
+
+/* ---------------- Admin: Purchases (restocking inventory) ---------------- */
+function renderAdminPurchases(){
+  const scoped=STORE.purchases.filter(pu=>canSeeBrand(currentUser,pu.brand));
+  document.getElementById('purchaseCount').textContent=scoped.length;
+  const scopeLabel=document.getElementById('purchaseScopeLabel');
+  if(scopeLabel) scopeLabel.textContent = userBrands(currentUser).length>=Object.keys(BRANDS).length ? '— across all brands' : `— for ${brandsLabel(currentUser&&currentUser.brands)}`;
+  const rows=document.getElementById('purchaseRows');
+  rows.innerHTML = scoped.length ? scoped.slice().reverse().map(pu=>`
+    <tr>
+      <td>${pu.date}</td>
+      <td>${pu.n}</td>
+      <td><span class="brand-tag" style="background:${brandColor[pu.brand]}">${BRANDS[pu.brand].name}</span></td>
+      <td>${pu.qty}</td>
+      <td>$${pu.unitCost}</td>
+      <td>$${pu.total}</td>
+      <td>${pu.supplier||'—'}</td>
+    </tr>`).join('') : `<tr><td colspan="7"><div class="admin-empty">No purchases logged yet — click "Log Purchase" when you restock from a supplier.</div></td></tr>`;
+}
+function openPurchaseForm(){
+  const products=STORE.products.filter(p=>canSeeBrand(currentUser,p.brand));
+  if(!products.length){ toast('Add a product first — there\'s nothing to restock yet.'); return; }
+  document.getElementById('purchaseFormWrap').innerHTML=`
+    <div class="admin-form">
+      <div class="field" style="grid-column:1/-1;"><label>Product</label>
+        <select id="pu_product">${products.map(p=>`<option value="${p.id}">${p.n} — ${BRANDS[p.brand].name} (${p.stock||0} in stock)</option>`).join('')}</select>
+      </div>
+      <div class="field"><label>Quantity purchased</label><input id="pu_qty" type="number" min="1" step="1" value="1"></div>
+      <div class="field"><label>Unit cost ($)</label><input id="pu_cost" type="number" min="0" step="0.01" value=""></div>
+      <div class="field"><label>Supplier (optional)</label><input id="pu_supplier" type="text" placeholder="e.g. Erbil Beauty Supply"></div>
+      <div class="field"><label>Date</label><input id="pu_date" type="date" value="${reportDateDefault()}"></div>
+      <div class="actions">
+        <button class="btn btn-ghost" id="pu_cancel">Cancel</button>
+        <button class="btn btn-primary" id="pu_save">Log Purchase</button>
+      </div>
+    </div>`;
+  document.getElementById('pu_cancel').addEventListener('click',()=>{document.getElementById('purchaseFormWrap').innerHTML='';});
+  document.getElementById('pu_save').addEventListener('click',()=>{
+    const productId=document.getElementById('pu_product').value;
+    const qty=Math.max(1,parseInt(document.getElementById('pu_qty').value)||1);
+    const unitCost=Math.max(0,parseFloat(document.getElementById('pu_cost').value)||0);
+    const supplier=document.getElementById('pu_supplier').value.trim();
+    const dateIso=document.getElementById('pu_date').value||reportDateDefault();
+    const product=STORE.products.find(p=>p.id===productId);
+    if(!product){ toast('Choose a product.'); return; }
+    product.stock=(product.stock||0)+qty;
+    STORE.purchases.push({id:nextId('pu',STORE.purchases),productId,n:product.n,brand:product.brand,qty,unitCost,total:Math.round(unitCost*qty*100)/100,supplier,date:reportDateToFmt(dateIso)});
+    saveStore();
+    document.getElementById('purchaseFormWrap').innerHTML='';
+    renderAdminPurchases();
+    renderAdminProducts();
+    toast(`Logged ${qty} × ${product.n} — stock is now ${product.stock}.`);
+  });
+}
+document.getElementById('addPurchaseBtn').addEventListener('click',openPurchaseForm);
 
 /* ---------------- Admin: Brand photos ---------------- */
 function renderBrandPhotos(){
