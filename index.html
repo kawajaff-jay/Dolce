@@ -247,9 +247,10 @@
   .svc-row .info .m{font-size:11px;color:var(--muted);}
   .svc-row .price{font-size:13px;font-weight:700;}
   .svc-row .chev{color:var(--muted);font-size:16px;}
-  .price-old{text-decoration:line-through;color:var(--muted);font-weight:400;font-size:11px;margin-right:4px;}
-  .price-new{color:var(--gold-dark);font-weight:700;}
+  .price-old{text-decoration:line-through;color:var(--muted);font-weight:400;font-size:11px;display:block;white-space:nowrap;}
+  .price-new{color:var(--gold-dark);font-weight:700;white-space:nowrap;}
   .discount-badge{display:inline-block;background:var(--gold-dark);color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:999px;margin-left:5px;vertical-align:middle;white-space:nowrap;}
+  .svc-row .price{text-align:right;}
 
   /* detail */
   .detail-hero{height:170px;border-radius:16px;margin:8px 0 14px;background:linear-gradient(140deg,var(--sc1,#ccc),var(--sc2,#999));background-size:cover;background-position:center;}
@@ -381,6 +382,10 @@
         <button data-mode-btn="client" class="active">Client App</button>
         <button data-mode-btn="admin">Admin App</button>
       </div>
+      <div class="lang-switch" id="currencySwitch" role="group" aria-label="Currency">
+        <button data-currency-btn="USD" class="active">$ USD</button>
+        <button data-currency-btn="IQD">IQD</button>
+      </div>
       <div class="lang-switch" id="langSwitch" role="group" aria-label="Language">
         <button data-lang-btn="en" class="active">EN</button>
         <button data-lang-btn="ku">کوردی</button>
@@ -475,6 +480,7 @@
     </div>
 
     <div class="admin-panel active" id="adminOverview">
+      <div id="currencySettingsWrap"></div>
       <div id="brandPhotosWrap"></div>
       <div class="stat-row">
         <div class="stat"><div class="lbl">Total Bookings</div><div class="val">1,256</div></div>
@@ -742,6 +748,11 @@ function defaultStore(){
     purchases:[],
     productSales:[],
     registerCloses:[],
+    // Every price everywhere is stored and entered in USD — that never
+    // changes. `settings.usdToIqd` is just the display conversion rate for
+    // showing the same USD prices in Iraqi Dinar, editable from the Overview
+    // tab since it moves with the market rather than being a fixed peg.
+    settings:{usdToIqd:1450},
     brandImages:{dolce:'',polished:'',core:''},
     // `brands` scopes an account to one or more departments (Dolce / Polished
     // / Core). Bookings, Products, Services, Offers and Photos & Video are
@@ -772,6 +783,8 @@ function loadStore(){
         if(!parsed.purchases) parsed.purchases=[];
         if(!parsed.productSales) parsed.productSales=[];
         if(!parsed.registerCloses) parsed.registerCloses=[];
+        if(!parsed.settings) parsed.settings=defaultStore().settings;
+        if(!parsed.settings.usdToIqd) parsed.settings.usdToIqd=defaultStore().settings.usdToIqd;
         // Older saved products predate stock tracking — default them to a
         // reasonable on-hand quantity rather than 0, so existing catalogs
         // don't suddenly all show as out of stock.
@@ -825,9 +838,21 @@ function nextId(prefix,arr){ return prefix + (arr.length ? Math.max(...arr.map(x
 function hasDiscount(item){ return !!(item && item.discount && item.discount>0); }
 function discountedPrice(item){ return Math.round(item.price*(1-(item.discount||0)/100)); }
 function effectivePrice(item){ return hasDiscount(item)?discountedPrice(item):item.price; }
+// Every price is stored and entered in USD everywhere in the app — this is
+// purely a DISPLAY conversion, using the admin-editable market rate in
+// STORE.settings.usdToIqd (see the Overview tab). Nothing gets stored in
+// IQD, so switching the toggle back and forth never loses precision or
+// double-converts anything.
+function fmtMoney(usd){
+  if(currency==='IQD'){
+    const iqd=Math.round((usd||0)*(STORE.settings.usdToIqd||1450));
+    return `${iqd.toLocaleString()} IQD`;
+  }
+  return `$${usd}`;
+}
 function priceHtml(item){
-  if(!hasDiscount(item)) return `$${item.price}`;
-  return `<span class="price-old">$${item.price}</span><span class="price-new">$${discountedPrice(item)}</span><span class="discount-badge">-${item.discount}%</span>`;
+  if(!hasDiscount(item)) return fmtMoney(item.price);
+  return `<span class="price-old">${fmtMoney(item.price)}</span><span class="price-new">${fmtMoney(discountedPrice(item))}</span><span class="discount-badge">-${item.discount}%</span>`;
 }
 // Every currently-discounted product/service across all three brands,
 // shaped like an offer chip — merged with STORE.offers on the welcome
@@ -868,7 +893,7 @@ const I18N = {
     chooseDestination:'ئامانجەکەت هەڵبژێرە',welcomeSub:'ئەزموونی سیستەمی جوانی و تەندروستیمان بکە',navHome:'ماڵەوە',navBookings:'حجزەکان',navShop:'فرۆشگا',navProfile:'پرۆفایل',allServices:'هەموو',requestBooking:'داواکردنی حجز',requestViaWhatsapp:'هەروەها لە ڕێگەی واتساپ پەیوەندیمان پێوە بکە',confirmBookingBtn:'حجزەکە پشتڕاست بکە',bookedNote:'حجزکرا! لەژێر بەشی «حجزەکانم» دەیبینیت، بەم زووانە پشتڕاستی دەکەینەوە.',bookedTag:'حجزکراوە',whatsInc:'ئەوەی تێدایە',bookingSummary:'پوختەی حجز',preferredDate:'بەرواری دڵخواز',preferredTime:'کاتی دڵخواز',location:'شوێن',confirmNote:'بەروار و کاتێکی بەردەست هەڵبژێرە — هەمان بەردەستی کە لێرە دەیبینیت لە واتساپیشدا دەردەکەوێت.',waSent:'واتساپ لە تابێکی نوێدا دەکرێتەوە لەگەڵ وردەکاری حجزەکەت — کارمەندێک لەوێ پشتڕاستی دەکاتەوە.',aiAssistant:'یاریدەدەری AI',aiSub:'هەمیشە ئامادەیە بۆ یارمەتیدان',aiGreeting:'سڵاو! چۆن دەتوانم یارمەتیت بدەم ئەمڕۆ؟',yourPoints:'خاڵەکانت',toNextReward:'بۆ خەڵاتی داهاتوو',redeem:'خاڵەکانت بگۆڕەوە',r1:'چاککردنەوەی خۆڕایی',r2:'داشکاندنی تایبەت',r3:'دیاری تایبەت',r4:'پێشینەیی حجزکردن',addToCart:'زیادکردن بۆ سەبەتە',added:'زیادکرا ✓',myBookings:'حجزەکانم',upcoming:'داهاتوو',noBookings:'هێشتا هیچ حجزێکی داهاتوو نییە — خزمەتگوزارییەک حجز بکە تا لێرە دەربکەوێت.',past:'ڕابردوو',profile:'پرۆفایل و بەداخوازی',language:'زمان',askPlaceholder:'دەربارەی چارەسەرێک، پۆلێک یان بەرهەمێک بپرسە…',beforeAfter:'پێش و پاش',myProgress:'پێشکەوتنم'},
 };
 
-let lang='en', currentBrand=null, currentScreen='welcome', currentCat='All', currentService=null, cart=0;
+let lang='en', currency='USD', currentBrand=null, currentScreen='welcome', currentCat='All', currentService=null, cart=0;
 let selectedDateObj=null, selectedTime=null;
 const screenEl=document.getElementById('screen');
 
@@ -925,6 +950,21 @@ document.querySelectorAll('[data-lang-btn]').forEach(b=>{
     b.classList.add('active');
     applyI18n();
     render();
+  });
+});
+
+document.querySelectorAll('[data-currency-btn]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    currency=b.getAttribute('data-currency-btn');
+    document.querySelectorAll('[data-currency-btn]').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    render();
+    // Also refresh whichever admin tables are showing prices, since the
+    // Admin App stays open behind the Client App demo and should switch too.
+    if(currentUser){
+      renderAdminProducts(); renderAdminServices(); renderAdminOffers();
+      renderAdminBookings(); renderAdminPurchases(); renderAdminReports();
+    }
   });
 });
 
@@ -1000,7 +1040,7 @@ function renderBooking(){
   const timeChips=slots.map(sl=>`
     <button class="time-chip ${sl.time===selectedTime?'active':''} ${sl.taken?'taken':''}" ${sl.taken?'disabled':''} data-time="${sl.time}">${sl.time}${sl.taken?` · ${t('bookedTag')||'Booked'}`:''}</button>`).join('');
   const canBook=!!selectedTime;
-  const waText=encodeURIComponent(`Hi! I'd like to book ${s.n} at ${b.name} — $${effectivePrice(s)}, ${s.dur}. Preferred: ${dateStr}${selectedTime?' at '+selectedTime:''}.`);
+  const waText=encodeURIComponent(`Hi! I'd like to book ${s.n} at ${b.name} — ${fmtMoney(effectivePrice(s))}, ${s.dur}. Preferred: ${dateStr}${selectedTime?' at '+selectedTime:''}.`);
   const waHref=`https://wa.me/${BRAND_WHATSAPP[currentBrand]}?text=${waText}`;
   return `
     <div class="section-label" style="margin-top:0;">${t('bookingSummary')}</div>
@@ -1248,7 +1288,7 @@ function bindScreen(){
     }
     const note=document.getElementById('waNote');
     note.style.display='block';
-    note.innerHTML=`<b>${t('waSent')}</b><br><br>"Hi! I'd like to book <b>${s.n}</b> at <b>${b.name}</b> — $${effectivePrice(s)}, ${s.dur}. Preferred: ${dateStr} at ${selectedTime}."`;
+    note.innerHTML=`<b>${t('waSent')}</b><br><br>"Hi! I'd like to book <b>${s.n}</b> at <b>${b.name}</b> — ${fmtMoney(effectivePrice(s))}, ${s.dur}. Preferred: ${dateStr} at ${selectedTime}."`;
   });
   screenEl.querySelectorAll('[data-add]').forEach(el=>el.addEventListener('click',()=>{cart++;el.textContent=t('added');setTimeout(render,600);}));
   screenEl.querySelectorAll('[data-proflang]').forEach(el=>el.addEventListener('click',()=>{
@@ -1372,7 +1412,7 @@ function aiRespond(text){
     const list=recs.map((r,i)=>{
       const b=BRANDS[r.b]; const s=svcList(r.b).find(x=>x.id===r.id);
       if(!s) return '';
-      return `<li>${s.n} <span style="color:var(--muted);">— ${b.name}, $${effectivePrice(s)}${hasDiscount(s)?' 🏷️':''}</span></li>`;
+      return `<li>${s.n} <span style="color:var(--muted);">— ${b.name}, ${fmtMoney(effectivePrice(s))}${hasDiscount(s)?' 🏷️':''}</span></li>`;
     }).join('');
     aiBubble('bot',`<b>Recommended for you</b><ol>${list}</ol><span class="rec-btn" data-goto="${recs[0].b}|${recs[0].id}">View details →</span>`);
     const btn=document.querySelector('.ai-chat .rec-btn:last-of-type');
@@ -1542,7 +1582,7 @@ function showAdminForRole(){
   });
   if(!canSeeBrand(currentUser,svcBrandTab)) svcBrandTab=userBrands(currentUser)[0];
   document.querySelectorAll('#svcBrandTabs [data-svc-brand-tab]').forEach(x=>x.classList.toggle('active',x.dataset.svcBrandTab===svcBrandTab));
-  renderAdminProducts(); renderAdminServices(); renderAdminOffers(); renderAdminGallery(); renderAdminBookings(); renderBrandPhotos(); renderAdminEmployees(); renderAdminPurchases(); renderAdminReports();
+  renderAdminProducts(); renderAdminServices(); renderAdminOffers(); renderAdminGallery(); renderAdminBookings(); renderBrandPhotos(); renderCurrencySettings(); renderAdminEmployees(); renderAdminPurchases(); renderAdminReports();
 }
 
 /* ---------------- Full-screen client app ---------------- */
@@ -1660,7 +1700,7 @@ function openProductSaleForm(productIndex){
   const unitPrice=effectivePrice(p);
   document.getElementById('productSaleFormWrap').innerHTML=`
     <div class="admin-form">
-      <div class="field full" style="grid-column:1/-1;"><label>Recording a sale of</label><div style="font-weight:700;">${p.n} — $${unitPrice} each (${p.stock} in stock)</div></div>
+      <div class="field full" style="grid-column:1/-1;"><label>Recording a sale of</label><div style="font-weight:700;">${p.n} — ${fmtMoney(unitPrice)} each (${p.stock} in stock)</div></div>
       <div class="field"><label>Quantity</label><input id="ps_qty" type="number" min="1" max="${p.stock}" step="1" value="1"></div>
       <div class="field"><label>Client name (optional)</label><input id="ps_client" type="text" placeholder="Walk-in"></div>
       <div class="actions">
@@ -1678,7 +1718,7 @@ function openProductSaleForm(productIndex){
     saveStore();
     document.getElementById('productSaleFormWrap').innerHTML='';
     renderAdminProducts();
-    toast(`Sold ${qty} × ${p.n} to ${clientName} — $${unitPrice*qty}.`);
+    toast(`Sold ${qty} × ${p.n} to ${clientName} — ${fmtMoney(unitPrice*qty)}.`);
   });
 }
 function openProductForm(editIndex){
@@ -2340,7 +2380,7 @@ function renderAdminReports(){
       <td>${bk.serviceName}</td>
       <td>${bk.time}</td>
       <td><span class="status-badge ${bk.status}">${bk.status}</span></td>
-      <td>${price===null?'—':'$'+price}</td>
+      <td>${price===null?'—':fmtMoney(price)}</td>
     </tr>`;
   }).join('') : `<tr><td colspan="6"><div class="admin-empty">No bookings on this date${scopeText==='All brands'?'':' for your department'}.</div></td></tr>`;
 
@@ -2361,9 +2401,9 @@ function renderAdminReports(){
   const totalsEl=document.getElementById('reportTotals');
   totalsEl.innerHTML = (rows.length||sales.length) ? `
     <div style="display:flex;gap:22px;flex-wrap:wrap;align-items:baseline;">
-      ${visibleBrands.map(b=>`<div><b>${BRANDS[b].name}:</b> $${(combinedByBrand[b]||0).toFixed(0)}</div>`).join('')}
-      <div style="font-weight:700;">Total: $${grand.toFixed(0)}</div>
-      <div style="color:var(--muted);">(bookings $${bookingGrand.toFixed(0)} + product sales $${salesGrand.toFixed(0)} · ${counted.length} of ${rows.length} bookings counted, cancelled excluded · ${sales.length} product sale${sales.length===1?'':'s'})</div>
+      ${visibleBrands.map(b=>`<div><b>${BRANDS[b].name}:</b> ${fmtMoney(Math.round(combinedByBrand[b]||0))}</div>`).join('')}
+      <div style="font-weight:700;">Total: ${fmtMoney(Math.round(grand))}</div>
+      <div style="color:var(--muted);">(bookings ${fmtMoney(Math.round(bookingGrand))} + product sales ${fmtMoney(Math.round(salesGrand))} · ${counted.length} of ${rows.length} bookings counted, cancelled excluded · ${sales.length} product sale${sales.length===1?'':'s'})</div>
     </div>` : '';
 
   document.getElementById('repToday').onclick=()=>{ dateInput.value=reportDateDefault(); renderAdminReports(); };
@@ -2382,9 +2422,9 @@ function renderAdminReports(){
     const html=`
       <p><b>Date:</b> ${targetFmt} &nbsp;&nbsp; <b>Scope:</b> ${scopeText}</p>
       <table><thead><tr><th>Client</th><th>Brand</th><th>Service</th><th>Time</th><th>Status</th><th>Price</th></tr></thead>
-      <tbody>${rows.map(bk=>{ const p=bookingPrice(bk); return `<tr><td>${bk.clientName}</td><td>${BRANDS[bk.brand].name}</td><td>${bk.serviceName}</td><td>${bk.time}</td><td>${bk.status}</td><td>${p===null?'—':'$'+p}</td></tr>`; }).join('')}</tbody></table>
-      ${sales.length?`<h3>Product sales</h3><table><thead><tr><th>Product</th><th>Brand</th><th>Qty</th><th>Unit Price</th><th>Total</th><th>Client</th></tr></thead><tbody>${sales.map(ps=>`<tr><td>${ps.n}</td><td>${BRANDS[ps.brand].name}</td><td>${ps.qty}</td><td>$${ps.unitPrice}</td><td>$${ps.total}</td><td>${ps.clientName}</td></tr>`).join('')}</tbody></table>`:''}
-      <p style="margin-top:14px;"><b>Totals (bookings + product sales, excl. cancelled):</b> ${visibleBrands.map(b=>`${BRANDS[b].name} $${(combinedByBrand[b]||0).toFixed(0)}`).join(' &middot; ')} — <b>Grand total $${grand.toFixed(0)}</b></p>`;
+      <tbody>${rows.map(bk=>{ const p=bookingPrice(bk); return `<tr><td>${bk.clientName}</td><td>${BRANDS[bk.brand].name}</td><td>${bk.serviceName}</td><td>${bk.time}</td><td>${bk.status}</td><td>${p===null?'—':fmtMoney(p)}</td></tr>`; }).join('')}</tbody></table>
+      ${sales.length?`<h3>Product sales</h3><table><thead><tr><th>Product</th><th>Brand</th><th>Qty</th><th>Unit Price</th><th>Total</th><th>Client</th></tr></thead><tbody>${sales.map(ps=>`<tr><td>${ps.n}</td><td>${BRANDS[ps.brand].name}</td><td>${ps.qty}</td><td>${fmtMoney(ps.unitPrice)}</td><td>${fmtMoney(ps.total)}</td><td>${ps.clientName}</td></tr>`).join('')}</tbody></table>`:''}
+      <p style="margin-top:14px;"><b>Totals (bookings + product sales, excl. cancelled):</b> ${visibleBrands.map(b=>`${BRANDS[b].name} ${fmtMoney(Math.round(combinedByBrand[b]||0))}`).join(' &middot; ')} — <b>Grand total ${fmtMoney(Math.round(grand))}</b></p>`;
     printReport(`Daily Report — ${targetFmt}`,html);
   };
 
@@ -2413,10 +2453,10 @@ function renderRegisterClose(dateIso,targetFmt,visibleBrands,combinedByBrand,gra
   if(already.length){
     html+=already.map(rc=>{
       const diff=rc.countedTotal-rc.expectedTotal;
-      const diffTxt = diff===0 ? 'matches exactly' : (diff>0 ? `$${diff.toFixed(0)} over` : `$${Math.abs(diff).toFixed(0)} short`);
+      const diffTxt = diff===0 ? 'matches exactly' : (diff>0 ? `${fmtMoney(Math.round(diff))} over` : `${fmtMoney(Math.round(Math.abs(diff)))} short`);
       return `<div style="background:#fff;border:1px solid var(--line);border-radius:9px;padding:12px 14px;margin-bottom:10px;font-size:12.5px;">
         <div><b>Closed — ${rc.brands.map(b=>BRANDS[b].name).join(', ')}</b></div>
-        <div style="color:var(--ink-soft);margin-top:4px;">Expected $${rc.expectedTotal.toFixed(0)} · Counted $${rc.countedTotal.toFixed(0)} (cash $${rc.countedCash.toFixed(0)} + card $${rc.countedCard.toFixed(0)}) · <b>${diffTxt}</b></div>
+        <div style="color:var(--ink-soft);margin-top:4px;">Expected ${fmtMoney(Math.round(rc.expectedTotal))} · Counted ${fmtMoney(Math.round(rc.countedTotal))} (cash ${fmtMoney(Math.round(rc.countedCash))} + card ${fmtMoney(Math.round(rc.countedCard))}) · <b>${diffTxt}</b></div>
         ${rc.notes?`<div style="color:var(--muted);margin-top:4px;">Note: ${rc.notes}</div>`:''}
         <div style="color:var(--muted);margin-top:4px;">Closed by ${rc.closedBy} at ${rc.closedAt}</div>
         ${canReopen?`<button class="btn btn-ghost btn-sm" style="margin-top:8px;" data-reopen-close="${rc.id}">Reopen this day</button>`:''}
@@ -2427,9 +2467,9 @@ function renderRegisterClose(dateIso,targetFmt,visibleBrands,combinedByBrand,gra
   if(openBrands.length){
     const openExpected=openBrands.reduce((sum,b)=>sum+(combinedByBrand[b]||0),0);
     html+=`<div class="admin-form" style="margin-top:${already.length?'4px':'0'};">
-      <div class="field full" style="grid-column:1/-1;"><label>Closing register for</label><div style="font-weight:700;">${openBrands.map(b=>BRANDS[b].name).join(', ')} — expected $${openExpected.toFixed(0)}</div></div>
-      <div class="field"><label>Counted cash ($)</label><input id="rc_cash" type="number" min="0" step="0.01" value="0"></div>
-      <div class="field"><label>Counted card ($)</label><input id="rc_card" type="number" min="0" step="0.01" value="0"></div>
+      <div class="field full" style="grid-column:1/-1;"><label>Closing register for</label><div style="font-weight:700;">${openBrands.map(b=>BRANDS[b].name).join(', ')} — expected ${fmtMoney(Math.round(openExpected))}</div></div>
+      <div class="field"><label>Counted cash ($ — always entered in USD, even when viewing IQD above)</label><input id="rc_cash" type="number" min="0" step="0.01" value="0"></div>
+      <div class="field"><label>Counted card ($ — always entered in USD, even when viewing IQD above)</label><input id="rc_card" type="number" min="0" step="0.01" value="0"></div>
       <div class="field full" style="grid-column:1/-1;"><label>Notes (optional)</label><input id="rc_notes" type="text" placeholder="e.g. $5 short, likely a rounding error at Reception"></div>
       <div class="actions">
         <button class="btn btn-primary" id="rc_close">🔒 Close Register — ${openBrands.map(b=>BRANDS[b].name).join(', ')}</button>
@@ -2549,8 +2589,8 @@ function renderAdminPurchases(){
       <td>${pu.n}</td>
       <td><span class="brand-tag" style="background:${brandColor[pu.brand]}">${BRANDS[pu.brand].name}</span></td>
       <td>${pu.qty}</td>
-      <td>$${pu.unitCost}</td>
-      <td>$${pu.total}</td>
+      <td>${fmtMoney(pu.unitCost)}</td>
+      <td>${fmtMoney(pu.total)}</td>
       <td>${pu.supplier||'—'}</td>
     </tr>`).join('') : `<tr><td colspan="7"><div class="admin-empty">No purchases logged yet — click "Log Purchase" when you restock from a supplier.</div></td></tr>`;
 }
@@ -2592,6 +2632,38 @@ function openPurchaseForm(){
 document.getElementById('addPurchaseBtn').addEventListener('click',openPurchaseForm);
 
 /* ---------------- Admin: Brand photos ---------------- */
+/* ---------------- Admin: Currency settings (USD/IQD exchange rate) ----------------
+   All prices are entered and stored in USD everywhere in the app — this rate
+   is only used to convert those USD numbers into IQD for display, wherever
+   the currency toggle in the top nav is set to IQD. It's admin-editable
+   because the USD/IQD market rate moves and isn't a fixed peg, unlike, say,
+   the exact tax rate a real business might hardcode. */
+function renderCurrencySettings(){
+  const wrap=document.getElementById('currencySettingsWrap'); if(!wrap) return;
+  wrap.innerHTML=`
+    <div class="section-label" style="margin:0 0 10px;">Currency</div>
+    <div class="admin-form" style="max-width:420px;">
+      <div class="field full" style="grid-column:1/-1;">
+        <label>Exchange rate — IQD per 1 USD</label>
+        <input id="cs_rate" type="number" min="1" step="1" value="${STORE.settings.usdToIqd}">
+      </div>
+      <div class="actions" style="justify-content:flex-start;">
+        <button class="btn btn-primary btn-sm" id="cs_save">Save Rate</button>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin:6px 0 22px;max-width:460px;">Every price is still entered and stored in USD — this only controls what "IQD" mode shows on screen (the ${currency==='IQD'?'toggle at the top is currently set to IQD':'toggle at the top, currently set to USD'}). Update it whenever the market rate moves; there's no live feed, so this is only as accurate as the last time someone updated it.</div>`;
+  document.getElementById('cs_save').addEventListener('click',()=>{
+    const rate=Math.max(1,parseFloat(document.getElementById('cs_rate').value)||STORE.settings.usdToIqd);
+    STORE.settings.usdToIqd=rate;
+    saveStore();
+    toast(`Exchange rate updated — 1 USD = ${rate.toLocaleString()} IQD.`);
+    if(currency==='IQD'){
+      render();
+      renderAdminProducts(); renderAdminServices(); renderAdminOffers();
+      renderAdminBookings(); renderAdminPurchases(); renderAdminReports();
+    }
+  });
+}
 function renderBrandPhotos(){
   const wrap=document.getElementById('brandPhotosWrap'); if(!wrap) return;
   wrap.innerHTML=`
