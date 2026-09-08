@@ -1189,16 +1189,21 @@ async function pullCatalog(){
     try{
       const namesRes=await supa.rpc('list_staff_names');
       if(!namesRes.error && namesRes.data){
-        const freshSlugs=new Set(namesRes.data.map(r=>r.login_slug));
-        // Drop any cached staff card left over from a previous sync whose
-        // account no longer exists on the server (e.g. it was deleted and
-        // recreated with a new ID) — otherwise a stale, dead login card
-        // lingers on this device forever alongside the real one.
-        STORE.users=STORE.users.filter(u=>!u.loginSlug || freshSlugs.has(u.loginSlug));
+        const freshBySlug=new Map(namesRes.data.map(r=>[r.login_slug,r]));
+        // Drop any cached staff card that no longer matches the server: its
+        // account was deleted (slug gone) or recreated with a new ID (slug
+        // still exists but points somewhere else now). Without this, a
+        // stale, dead login card lingers on this device forever alongside
+        // the real one.
+        STORE.users=STORE.users.filter(u=>{
+          if(!u.loginSlug) return true;              // legacy local-only demo account
+          const fresh=freshBySlug.get(u.loginSlug);
+          return fresh && fresh.id===u.id;
+        });
         namesRes.data.forEach(rowu=>{
-          const existing=STORE.users.find(u=>u.loginSlug===rowu.login_slug) || STORE.users.find(u=>u.id===rowu.id);
-          if(existing){ existing.id=rowu.id; existing.name=rowu.name; existing.loginSlug=rowu.login_slug; }
-          else { STORE.users.push({id:rowu.id,name:rowu.name,brands:[],tabs:[],pin:'',loginSlug:rowu.login_slug}); }
+          if(!STORE.users.some(u=>u.id===rowu.id)){
+            STORE.users.push({id:rowu.id,name:rowu.name,brands:[],tabs:[],pin:'',loginSlug:rowu.login_slug});
+          }
         });
       }
     }catch(e){}
