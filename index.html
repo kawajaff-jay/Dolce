@@ -2053,13 +2053,20 @@ try{
 }catch(e){}
 
 function renderLogin(){
+  // Once a real, cloud-verified account exists for someone (it has a
+  // loginSlug), hide the old local-only demo card with the same name —
+  // otherwise the same person shows up twice: one card that actually logs
+  // in, and one leftover card that never will.
+  const visibleUsers = supa
+    ? STORE.users.filter(u=>u.loginSlug || !STORE.users.some(x=>x.loginSlug && x.name===u.name))
+    : STORE.users;
   document.getElementById('adminLogin').innerHTML=`
     <div class="login-wrap">
       <h2>Admin App login</h2>
       <p>Pick your account. Each employee has their own login and only sees the sections shared with them.</p>
       <div class="login-note">${supa?'Secure, server-verified login.':'Offline demo mode — PINs shown for convenience since there\'s no connection to verify against.'}</div>
       <div class="login-cards">
-        ${STORE.users.map(u=>`
+        ${visibleUsers.map(u=>`
           <div class="login-card">
             <div class="av">${u.name[0]}</div>
             <div class="nm">${u.name}</div>
