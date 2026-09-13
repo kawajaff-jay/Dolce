@@ -2882,7 +2882,7 @@ function renderAdminEmployees(){
 }
 function openEmployeeForm(editIndex){
   const editing=editIndex!==undefined;
-  const u=editing?STORE.users[editIndex]:{name:'',tabs:['bookings'],pin:'',brands:[]};
+  const u=editing?STORE.users[editIndex]:{name:'',tabs:['bookings'],pin:'',brands:Object.keys(BRANDS)};
   const checkboxes=TAB_DEFS.map(t=>`
     <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:400;color:var(--ink-soft);padding:6px 0;">
       <input type="checkbox" value="${t.key}" ${u.tabs.includes(t.key)?'checked':''} class="ef-tab-cb"> ${t.label}
@@ -2939,6 +2939,7 @@ function openEmployeeForm(editIndex){
     }
     const isOwnerRole=tabs.includes('employees');
     const saveBtn=document.getElementById('ef_save'); saveBtn.disabled=true;
+    try{
 
     if(editing){
       const pinChangedForSelf = currentUser && currentUser.id===u.id && pin!==u.pin;
@@ -2978,6 +2979,10 @@ function openEmployeeForm(editIndex){
     document.getElementById('employeeFormWrap').innerHTML='';
     renderAdminEmployees();
     toast(`${name} ${editing?'updated':'added'} — access: ${accessLabel(tabs)} · ${brandsLabel(brands)}.`);
+    }catch(e){
+      toast('Something went wrong saving this employee — '+(e&&e.message?e.message:'please try again.'));
+      saveBtn.disabled=false;
+    }
   });
 }
 document.getElementById('addEmployeeBtn').addEventListener('click',()=>openEmployeeForm());
