@@ -2967,7 +2967,13 @@ function openEmployeeForm(editIndex){
       const slug=randomSlug();
       const tempClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:false}});
       const{data:signUpData,error:signUpErr}=await tempClient.auth.signUp({email:empEmail(slug),password:empPassword(pin)});
-      if(signUpErr || !signUpData.user){ toast('Could not create the account — '+(signUpErr?signUpErr.message:'unknown error')); saveBtn.disabled=false; return; }
+      if(signUpErr || !signUpData.user){
+        const rateLimited=signUpErr && /rate limit/i.test(signUpErr.message||'');
+        toast(rateLimited
+          ? 'Too many accounts created recently — Supabase limits how many confirmation emails it can send per hour. Ask your Supabase admin to turn off "Confirm email" under Authentication → Providers → Email (these staff accounts don\'t use real email anyway), or wait a bit and try again.'
+          : 'Could not create the account — '+(signUpErr?signUpErr.message:'unknown error'));
+        saveBtn.disabled=false; return;
+      }
       const newId=signUpData.user.id;
       const{error:profErr}=await supa.from('profiles').insert({id:newId,name,brands,tabs,is_owner:isOwnerRole,login_slug:slug});
       if(profErr){ toast('Account created, but saving their profile failed — '+profErr.message); saveBtn.disabled=false; return; }
