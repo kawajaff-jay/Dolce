@@ -257,7 +257,8 @@
   .dest-card.core{background:linear-gradient(120deg,#5c6b5a,#37413a);}
   .offers-strip{display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;margin:14px 0 4px;padding-bottom:2px;}
   .offers-strip::-webkit-scrollbar{height:0;}
-  .offer-chip{flex:none;width:140px;min-height:70px;height:auto;scroll-snap-align:start;border-radius:12px;background:var(--card);border:1px solid var(--line);padding:9px;font-size:10.5px;overflow-wrap:break-word;}
+  .offer-chip{flex:none;width:140px;min-height:70px;height:auto;scroll-snap-align:start;border-radius:12px;background:var(--card);border:1px solid var(--line);padding:9px;font-size:10.5px;overflow-wrap:break-word;overflow:hidden;}
+  .offer-chip-img{width:calc(100% + 18px);margin:-9px -9px 6px;height:60px;object-fit:cover;display:block;}
   .offer-chip b{display:block;font-size:11.5px;margin-bottom:2px;white-space:normal;overflow-wrap:break-word;}
   .offer-chip span{color:var(--gold-dark);font-weight:700;}
   .section-label{font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700;margin:16px 0 8px;}
@@ -942,8 +943,8 @@ const CLOUD_TABLES={
   offers:{
     table:'offers',
     list:()=>STORE.offers,
-    row:(o)=>({id:o.id,brand:o.brand,title:o.t,subtitle:o.s||''}),
-    app:(r)=>({id:r.id,t:r.title,s:r.subtitle||'',brand:r.brand}),
+    row:(o)=>({id:o.id,brand:o.brand,title:o.t,subtitle:o.s||'',image:o.image||''}),
+    app:(r)=>({id:r.id,t:r.title,s:r.subtitle||'',brand:r.brand,image:r.image||''}),
   },
   bookings:{
     table:'bookings',
@@ -1495,7 +1496,7 @@ function goto(screen){currentScreen=screen;render();}
 
 function renderWelcome(){
   const allOffers=[...STORE.offers,...activeDiscountOffers()];
-  const offers=allOffers.map(o=>`<div class="offer-chip"><b>${o.t}</b>${o.s}<br><span>${BRANDS[o.brand].name}</span></div>`).join('');
+  const offers=allOffers.map(o=>`<div class="offer-chip">${o.image?`<img class="offer-chip-img" src="${o.image}">`:''}<b>${o.t}</b>${o.s}<br><span>${BRANDS[o.brand].name}</span></div>`).join('');
   const offersHtml=allOffers.length?`
     <div class="section-label">Upcoming Events &amp; Offers</div>
     <div class="offers-strip">${offers}</div>` : '';
@@ -2422,7 +2423,7 @@ function renderAdminOffers(){
     const i=STORE.offers.indexOf(o);
     return `
     <tr>
-      <td>${o.t}</td>
+      <td><span class="swdot" style="${o.image?`background-image:url('${o.image}')`:`background:linear-gradient(140deg,${BRANDS[o.brand].c1},${BRANDS[o.brand].c2})`}"></span>${o.t}</td>
       <td><span class="brand-tag" style="background:${brandColor[o.brand]}">${BRANDS[o.brand].name}</span></td>
       <td>${o.s}</td>
       <td><div class="rowbtns">
@@ -2458,7 +2459,7 @@ function renderAdminOffers(){
 }
 function openOfferForm(editIndex){
   const editing=editIndex!==undefined;
-  const o=editing?STORE.offers[editIndex]:{t:'',s:'',brand:userBrands(currentUser)[0]};
+  const o=editing?STORE.offers[editIndex]:{t:'',s:'',brand:userBrands(currentUser)[0],image:''};
   document.getElementById('offerFormWrap').innerHTML=`
     <div class="admin-form">
       <div class="field"><label>Title</label><input id="of_title" type="text" value="${o.t}" placeholder="e.g. Glow Season"></div>
@@ -2466,24 +2467,38 @@ function openOfferForm(editIndex){
         <select id="of_brand">${brandOptionsHtml(o.brand)}</select>
       </div>
       <div class="field" style="grid-column:1/-1;"><label>Description</label><input id="of_desc" type="text" value="${o.s}" placeholder="e.g. 20% off all facials"></div>
+      <div class="field full" style="grid-column:1/-1;"><label>Photo ${o.image?'(uploaded — choose a file to replace it)':'(optional)'}</label>
+        <div class="upload-drop"><input id="of_image" type="file" accept="image/*"></div>
+      </div>
       <div class="actions">
         <button class="btn btn-ghost" id="of_cancel">Cancel</button>
         <button class="btn btn-primary" id="of_save">${editing?'Save changes':'Add offer'}</button>
       </div>
     </div>`;
   document.getElementById('of_cancel').addEventListener('click',()=>{document.getElementById('offerFormWrap').innerHTML='';});
-  document.getElementById('of_save').addEventListener('click',()=>{
+  document.getElementById('of_save').addEventListener('click',async()=>{
     const title=document.getElementById('of_title').value.trim();
     const brand=document.getElementById('of_brand').value;
     const desc=document.getElementById('of_desc').value.trim();
     if(!title){ document.getElementById('of_title').focus(); return; }
+    const saveBtn=document.getElementById('of_save'); saveBtn.disabled=true; saveBtn.textContent='Saving…';
+    let image=o.image||'';
+    try{
+      const file=document.getElementById('of_image').files[0];
+      if(file) image=await resizeImageFile(file);
+    }catch(e){
+      toast('Could not read that photo — try a different file.');
+      saveBtn.disabled=false; saveBtn.textContent=editing?'Save changes':'Add offer';
+      return;
+    }
     const base=editing?STORE.offers[editIndex]:{id:nextId('o',STORE.offers)};
-    const updated={...base,t:title,s:desc,brand};
+    const updated={...base,t:title,s:desc,brand,image};
     if(editing) STORE.offers[editIndex]=updated; else STORE.offers.push(updated);
     const ok=saveStore();
     if(!ok){
       if(editing) STORE.offers[editIndex]=base; else STORE.offers.pop();
-      toast("This browser's demo storage is full.");
+      toast("This browser's demo storage is full — try a smaller photo.");
+      saveBtn.disabled=false; saveBtn.textContent=editing?'Save changes':'Add offer';
       return;
     }
     cloudSave('offers',updated.id);

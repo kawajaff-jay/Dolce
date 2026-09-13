@@ -150,6 +150,7 @@ alter table if exists public.products add column if not exists updated_at timest
 alter table if exists public.offers add column if not exists brand text;
 alter table if exists public.offers add column if not exists title text;
 alter table if exists public.offers add column if not exists subtitle text default '';
+alter table if exists public.offers add column if not exists image text default '';
 alter table if exists public.offers add column if not exists created_at timestamptz default now();
 alter table if exists public.offers add column if not exists updated_at timestamptz default now();
 
@@ -252,7 +253,7 @@ begin
       ('profiles', array['id','name','login_slug','brands','tabs','is_owner','created_at','updated_at']),
       ('services', array['id','brand','name','category','duration','price_usd','discount_percent','description','points','image','sort_order','created_at','updated_at']),
       ('products', array['id','brand','name','price_usd','discount_percent','stock','image','created_at','updated_at']),
-      ('offers', array['id','brand','title','subtitle','created_at','updated_at']),
+      ('offers', array['id','brand','title','subtitle','image','created_at','updated_at']),
       ('brand_images', array['brand','image_url','updated_at']),
       ('settings', array['key','value','updated_at']),
       ('clients', array['id','phone','name','points','created_at','updated_at']),
@@ -433,6 +434,7 @@ create table if not exists public.offers (
   brand      text not null,
   title      text not null,
   subtitle   text default '',
+  image      text default '',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
