@@ -1905,6 +1905,26 @@ function ensureGreeting(){
     chat.dataset.greeted='1';
   }
 }
+// Fallback for anything the curated keyword groups above don't cover: scan
+// every service's actual name/category/description/points text for overlap
+// with what the client typed. This is what lets a brand-new service someone
+// adds later (with a good description) get recommended automatically,
+// without a developer adding a new hardcoded keyword group for it.
+const AI_STOPWORDS=new Set(['the','and','for','with','that','this','have','has','want','need','looking','like','some','good','best','what','your','you','are','can','get','about','into','from','more','than','just','how','when','where','which','their','them','its','for','not','but','was','were','been','also','any','all','out','use','used']);
+function searchServicesByText(text){
+  const words=(text.toLowerCase().match(/[a-z]{3,}/g)||[]).filter(w=>!AI_STOPWORDS.has(w));
+  if(!words.length) return [];
+  const scored=[];
+  Object.keys(BRANDS).forEach(brand=>{
+    svcList(brand).forEach(s=>{
+      const hay=[s.n,s.cat,s.desc,(s.points||[]).join(' ')].join(' ').toLowerCase();
+      const score=words.reduce((n,w)=>n+(hay.includes(w)?1:0),0);
+      if(score>0) scored.push({b:brand,id:s.id,score});
+    });
+  });
+  scored.sort((a,b)=>b.score-a.score);
+  return scored.slice(0,3);
+}
 function handleAISend(){
   const input=document.getElementById('aiInput');
   const val=input.value.trim();
@@ -1963,7 +1983,13 @@ function aiRespond(text){
     reply='Great idea — here are a few favorites across our brands that make great gifts.';
     recs=[{b:'dolce',id:'hydra'},{b:'polished',id:'gelmani'},{b:'core',id:'private'}];
   } else {
-    reply='I can help with skincare & clinic treatments (Dolce), hair & nails (Polished), or yoga & pilates (Core). What are you hoping to achieve?';
+    const found=searchServicesByText(text);
+    if(found.length){
+      reply='Based on what you mentioned, here\'s what I found in our services.';
+      recs=found.map(f=>({b:f.b,id:f.id}));
+    } else {
+      reply='I can help with skincare & clinic treatments (Dolce), hair & nails (Polished), or yoga & pilates (Core). What are you hoping to achieve?';
+    }
   }
   aiBubble('bot',reply);
   if(recs.length){
