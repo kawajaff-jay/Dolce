@@ -1421,9 +1421,7 @@ const screenEl=document.getElementById('screen');
 // Both the in-app "Confirm Booking" button and the WhatsApp message pull
 // from this same list, so a client sees the same availability either way.
 const BUSINESS_HOURS=['10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM'];
-// Placeholder WhatsApp number for Core — replace once its real business
-// line is known. Dolce and Polished use their real numbers.
-const BRAND_WHATSAPP={dolce:'9647509000200',polished:'9647519000200',core:'9647503334455'};
+const BRAND_WHATSAPP={dolce:'9647509000200',polished:'9647519000200',core:'9647519000300'};
 // Reception line the AI assistant offers when it can't match a client's
 // request to anything in the catalog.
 const CLINIC_PHONE='9647509000200';
@@ -1581,7 +1579,6 @@ function renderBooking(){
     <div style="font-size:11px;color:var(--muted);margin-top:10px;">${t('confirmNote')}</div>
     <button class="primary-btn" id="confirmBooking" ${canBook?'':'disabled style="opacity:.5;"'}>${t('confirmBookingBtn')}</button>
     <a class="wa-btn" id="sendWA" href="${waHref}" target="_blank" rel="noopener">💬 ${t('requestViaWhatsapp')}</a>
-    ${currentBrand==='core'?`<div style="font-size:9.5px;color:var(--muted);margin-top:6px;text-align:center;">Demo WhatsApp number — replace with your real business line.</div>`:''}
     <div id="waNote" style="display:none;font-size:11px;color:var(--ink-soft);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:10px;"></div>
   `;
 }
