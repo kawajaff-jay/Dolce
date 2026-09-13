@@ -1423,6 +1423,9 @@ const screenEl=document.getElementById('screen');
 const BUSINESS_HOURS=['10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM'];
 // Placeholder WhatsApp numbers — replace with each brand's real business line.
 const BRAND_WHATSAPP={dolce:'9647501112233',polished:'9647502223344',core:'9647503334455'};
+// Placeholder reception line the AI assistant offers when it can't match a
+// client's request to anything in the catalog — replace with the real number.
+const CLINIC_PHONE='9647509998888';
 
 function upcomingDates(n){
   const out=[]; const base=new Date(); base.setHours(0,0,0,0);
@@ -1988,7 +1991,7 @@ function aiRespond(text){
       reply='Based on what you mentioned, here\'s what I found in our services.';
       recs=found.map(f=>({b:f.b,id:f.id}));
     } else {
-      reply='I can help with skincare & clinic treatments (Dolce), hair & nails (Polished), or yoga & pilates (Core). What are you hoping to achieve?';
+      reply=`I couldn't quite find a match for that. Our team can help directly — please contact us at <a href="tel:+${CLINIC_PHONE}">+${CLINIC_PHONE}</a>.`;
     }
   }
   aiBubble('bot',reply);
