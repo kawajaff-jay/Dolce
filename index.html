@@ -2429,7 +2429,7 @@ function renderAdminOffers(){
     const i=STORE.offers.indexOf(o);
     return `
     <tr>
-      <td>${o.t}</td>
+      <td><span class="swdot" style="${o.image?`background-image:url('${o.image}')`:`background:linear-gradient(140deg,${BRANDS[o.brand].c1},${BRANDS[o.brand].c2})`}"></span>${o.t}</td>
       <td><span class="brand-tag" style="background:${brandColor[o.brand]}">${BRANDS[o.brand].name}</span></td>
       <td>${o.s}</td>
       <td><div class="rowbtns">
@@ -2465,7 +2465,7 @@ function renderAdminOffers(){
 }
 function openOfferForm(editIndex){
   const editing=editIndex!==undefined;
-  const o=editing?STORE.offers[editIndex]:{t:'',s:'',brand:userBrands(currentUser)[0]};
+  const o=editing?STORE.offers[editIndex]:{t:'',s:'',brand:userBrands(currentUser)[0],image:''};
   document.getElementById('offerFormWrap').innerHTML=`
     <div class="admin-form">
       <div class="field"><label>Title</label><input id="of_title" type="text" value="${o.t}" placeholder="e.g. Glow Season"></div>
@@ -2503,7 +2503,7 @@ function openOfferForm(editIndex){
     const ok=saveStore();
     if(!ok){
       if(editing) STORE.offers[editIndex]=base; else STORE.offers.pop();
-      toast("This browser's demo storage is full.");
+      toast("This browser's demo storage is full — try a smaller photo.");
       saveBtn.disabled=false; saveBtn.textContent=editing?'Save changes':'Add offer';
       return;
     }
