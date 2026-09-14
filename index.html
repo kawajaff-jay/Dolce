@@ -1425,8 +1425,10 @@ const screenEl=document.getElementById('screen');
 // Both the in-app "Confirm Booking" button and the WhatsApp message pull
 // from this same list, so a client sees the same availability either way.
 const BUSINESS_HOURS=['10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM'];
-// Placeholder WhatsApp numbers — replace with each brand's real business line.
-const BRAND_WHATSAPP={dolce:'9647501112233',polished:'9647502223344',core:'9647503334455'};
+const BRAND_WHATSAPP={dolce:'9647509000200',polished:'9647519000200',core:'9647519000300'};
+// Reception line the AI assistant offers when it can't match a client's
+// request to anything in the catalog.
+const CLINIC_PHONE='9647509000200';
 
 function upcomingDates(n){
   const out=[]; const base=new Date(); base.setHours(0,0,0,0);
@@ -1584,7 +1586,6 @@ function renderBooking(){
     <div style="font-size:11px;color:var(--muted);margin-top:10px;">${t('confirmNote')}</div>
     <button class="primary-btn" id="confirmBooking" ${canBook?'':'disabled style="opacity:.5;"'}>${t('confirmBookingBtn')}</button>
     <a class="wa-btn" id="sendWA" href="${waHref}" target="_blank" rel="noopener">💬 ${t('requestViaWhatsapp')}</a>
-    <div style="font-size:9.5px;color:var(--muted);margin-top:6px;text-align:center;">Demo WhatsApp number — replace with your real business line.</div>
     <div id="waNote" style="display:none;font-size:11px;color:var(--ink-soft);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:10px;"></div>
   `;
 }
@@ -1912,6 +1913,26 @@ function ensureGreeting(){
     chat.dataset.greeted='1';
   }
 }
+// Fallback for anything the curated keyword groups above don't cover: scan
+// every service's actual name/category/description/points text for overlap
+// with what the client typed. This is what lets a brand-new service someone
+// adds later (with a good description) get recommended automatically,
+// without a developer adding a new hardcoded keyword group for it.
+const AI_STOPWORDS=new Set(['the','and','for','with','that','this','have','has','want','need','looking','like','some','good','best','what','your','you','are','can','get','about','into','from','more','than','just','how','when','where','which','their','them','its','for','not','but','was','were','been','also','any','all','out','use','used']);
+function searchServicesByText(text){
+  const words=(text.toLowerCase().match(/[a-z]{3,}/g)||[]).filter(w=>!AI_STOPWORDS.has(w));
+  if(!words.length) return [];
+  const scored=[];
+  Object.keys(BRANDS).forEach(brand=>{
+    svcList(brand).forEach(s=>{
+      const hay=[s.n,s.cat,s.desc,(s.points||[]).join(' ')].join(' ').toLowerCase();
+      const score=words.reduce((n,w)=>n+(hay.includes(w)?1:0),0);
+      if(score>0) scored.push({b:brand,id:s.id,score});
+    });
+  });
+  scored.sort((a,b)=>b.score-a.score);
+  return scored.slice(0,3);
+}
 function handleAISend(){
   const input=document.getElementById('aiInput');
   const val=input.value.trim();
@@ -1924,26 +1945,59 @@ function aiRespond(text){
   aiBubble('user',text);
   const lower=text.toLowerCase();
   let recs=[]; let reply='';
-  if(/wedding|bridal/.test(lower)){
+  if(/wedding|bridal|engagement|bride/.test(lower)){
     reply='Congratulations! 🎉 Here\'s a personalized plan across all three brands for you.';
     recs=[{b:'dolce',id:'hydra'},{b:'dolce',id:'led'},{b:'polished',id:'balayage'},{b:'core',id:'private'}];
-  } else if(/acne|scar|skin/.test(lower)){
+  } else if(/wrinkle|fine line|anti-?aging|anti-?ageing|botox|frown line/.test(lower)){
+    reply='For smoothing lines and a refreshed look, these injectable and skin treatments are popular choices.';
+    recs=[{b:'dolce',id:'botox'},{b:'dolce',id:'fillers'},{b:'dolce',id:'led'}];
+  } else if(/lips|volume|cheek|plump|contour/.test(lower)){
+    reply='Sounds like you\'re after more volume and definition — here\'s what works well for that.';
+    recs=[{b:'dolce',id:'fillers'},{b:'dolce',id:'hydra'}];
+  } else if(/laser|hair removal|underarm|unwanted hair|shaving/.test(lower)){
+    reply='Laser hair removal is a great long-term option for that.';
+    recs=[{b:'dolce',id:'laser'}];
+  } else if(/acne|scar|pigment|dull|dry skin|oily skin|sensitive skin|glow|radiant|breakout|\bskin\b/.test(lower)){
     reply='Here\'s what tends to work well for skin concerns like this — best discussed further with a Dolce provider.';
     recs=[{b:'dolce',id:'hydra'},{b:'dolce',id:'led'},{b:'dolce',id:'peel'}];
-  } else if(/hair|color|frizz/.test(lower)){
+  } else if(/hair|color|frizz|haircut|trim|dye|split end/.test(lower)){
     reply='For hair goals like that, these Polished services are a great starting point.';
     recs=[{b:'polished',id:'keratin'},{b:'polished',id:'balayage'},{b:'polished',id:'cut'}];
-  } else if(/nail/.test(lower)){
+  } else if(/nail|manicure|pedicure|polish/.test(lower)){
     reply='Here are some popular nail options at Polished.';
-    recs=[{b:'polished',id:'gelmani'},{b:'polished',id:'pedi'}];
-  } else if(/stress|relax|calm|anxious|tired/.test(lower)){
+    recs=[{b:'polished',id:'gelmani'},{b:'polished',id:'pedi'},{b:'polished',id:'nailart'}];
+  } else if(/posture|core strength|toning|abs|reformer|full-?body/.test(lower)){
+    reply='These Core classes are great for building strength and improving posture.';
+    recs=[{b:'core',id:'reformer'},{b:'core',id:'matpil'}];
+  } else if(/stress|relax|calm|anxious|tired|burnout|overwhelmed|unwind/.test(lower)){
     reply='Sounds like a good time to slow down — these Core sessions are great for that.';
     recs=[{b:'core',id:'sound'},{b:'core',id:'vinyasa'},{b:'core',id:'private'}];
-  } else if(/pregnan|prenatal/.test(lower)){
+  } else if(/pregnan|prenatal|expecting|maternity/.test(lower)){
     reply='Congratulations! This class is designed exactly for that.';
     recs=[{b:'core',id:'prenatal'}];
+  } else if(/back pain|sore|injury|injured|recover/.test(lower)){
+    reply='For recovery and easing soreness, a one-on-one session lets us focus on exactly what you need.';
+    recs=[{b:'core',id:'private'},{b:'core',id:'sound'}];
+  } else if(/beginner|first time|never done|new to yoga|new to pilates/.test(lower)){
+    reply='No experience needed — these classes are beginner-friendly and welcoming.';
+    recs=[{b:'core',id:'vinyasa'},{b:'core',id:'matpil'}];
+  } else if(/budget|cheap|afford|discount|deal|sale/.test(lower)){
+    reply='Here are a couple of our best-value picks running a discount right now.';
+    recs=[{b:'dolce',id:'hydra'},{b:'polished',id:'balayage'}];
+  } else if(/party|event|date night|going out|special occasion|night out/.test(lower)){
+    reply='Getting ready for something special? These Polished services are perfect for it.';
+    recs=[{b:'polished',id:'cut'},{b:'polished',id:'gelmani'},{b:'polished',id:'balayage'}];
+  } else if(/gift|present|surprise/.test(lower)){
+    reply='Great idea — here are a few favorites across our brands that make great gifts.';
+    recs=[{b:'dolce',id:'hydra'},{b:'polished',id:'gelmani'},{b:'core',id:'private'}];
   } else {
-    reply='I can help with skincare & clinic treatments (Dolce), hair & nails (Polished), or yoga & pilates (Core). What are you hoping to achieve?';
+    const found=searchServicesByText(text);
+    if(found.length){
+      reply='Based on what you mentioned, here\'s what I found in our services.';
+      recs=found.map(f=>({b:f.b,id:f.id}));
+    } else {
+      reply=`I couldn't quite find a match for that. Our team can help directly — please contact us at <a href="tel:+${CLINIC_PHONE}">+${CLINIC_PHONE}</a>.`;
+    }
   }
   aiBubble('bot',reply);
   if(recs.length){
@@ -2849,7 +2903,7 @@ function renderAdminEmployees(){
 }
 function openEmployeeForm(editIndex){
   const editing=editIndex!==undefined;
-  const u=editing?STORE.users[editIndex]:{name:'',tabs:['bookings'],pin:'',brands:[]};
+  const u=editing?STORE.users[editIndex]:{name:'',tabs:['bookings'],pin:'',brands:Object.keys(BRANDS)};
   const checkboxes=TAB_DEFS.map(t=>`
     <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:400;color:var(--ink-soft);padding:6px 0;">
       <input type="checkbox" value="${t.key}" ${u.tabs.includes(t.key)?'checked':''} class="ef-tab-cb"> ${t.label}
@@ -2906,6 +2960,7 @@ function openEmployeeForm(editIndex){
     }
     const isOwnerRole=tabs.includes('employees');
     const saveBtn=document.getElementById('ef_save'); saveBtn.disabled=true;
+    try{
 
     if(editing){
       const pinChangedForSelf = currentUser && currentUser.id===u.id && pin!==u.pin;
@@ -2933,7 +2988,13 @@ function openEmployeeForm(editIndex){
       const slug=randomSlug();
       const tempClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:false}});
       const{data:signUpData,error:signUpErr}=await tempClient.auth.signUp({email:empEmail(slug),password:empPassword(pin)});
-      if(signUpErr || !signUpData.user){ toast('Could not create the account — '+(signUpErr?signUpErr.message:'unknown error')); saveBtn.disabled=false; return; }
+      if(signUpErr || !signUpData.user){
+        const rateLimited=signUpErr && /rate limit/i.test(signUpErr.message||'');
+        toast(rateLimited
+          ? 'Too many accounts created recently — Supabase limits how many confirmation emails it can send per hour. Ask your Supabase admin to turn off "Confirm email" under Authentication → Providers → Email (these staff accounts don\'t use real email anyway), or wait a bit and try again.'
+          : 'Could not create the account — '+(signUpErr?signUpErr.message:'unknown error'));
+        saveBtn.disabled=false; return;
+      }
       const newId=signUpData.user.id;
       const{error:profErr}=await supa.from('profiles').insert({id:newId,name,brands,tabs,is_owner:isOwnerRole,login_slug:slug});
       if(profErr){ toast('Account created, but saving their profile failed — '+profErr.message); saveBtn.disabled=false; return; }
@@ -2945,6 +3006,10 @@ function openEmployeeForm(editIndex){
     document.getElementById('employeeFormWrap').innerHTML='';
     renderAdminEmployees();
     toast(`${name} ${editing?'updated':'added'} — access: ${accessLabel(tabs)} · ${brandsLabel(brands)}.`);
+    }catch(e){
+      toast('Something went wrong saving this employee — '+(e&&e.message?e.message:'please try again.'));
+      saveBtn.disabled=false;
+    }
   });
 }
 document.getElementById('addEmployeeBtn').addEventListener('click',()=>openEmployeeForm());
