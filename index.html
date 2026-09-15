@@ -244,6 +244,15 @@
   body.native-app .phone.fullscreen{top:0;height:100vh;transition:height .05s linear,top .05s linear;}
   body.native-app .phone.fullscreen .screen{height:100%;max-width:none;padding-top:env(safe-area-inset-top,0px);}
   body.native-app.kb-open .ai-overlay{border-radius:0;}
+  /* Every Face ID iPhone (11 and newer) reserves a strip at the very bottom
+     of the screen for the home-indicator bar — the line you swipe up on.
+     Without allowing for it, the bottom nav and the AI message box sit
+     underneath that bar, which makes them awkward to tap. Older Touch ID
+     phones (like the SE) report 0 here, so they're unaffected. */
+  .phone.fullscreen .bottom-nav{bottom:calc(12px + env(safe-area-inset-bottom,0px));}
+  .phone.fullscreen .fab-ai{bottom:calc(96px + env(safe-area-inset-bottom,0px));}
+  .phone.fullscreen .screen-body{padding-bottom:calc(90px + env(safe-area-inset-bottom,0px));}
+  .phone.fullscreen .ai-input{padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));}
   .screen-head{padding:22px 18px 10px;display:flex;align-items:center;gap:10px;background:var(--cream);flex:none;}
   .screen-head .back{width:28px;height:28px;border-radius:50%;background:var(--card);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
   .screen-head .title{font-family:Georgia,serif;font-size:17px;flex:1;}
