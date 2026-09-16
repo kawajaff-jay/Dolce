@@ -1421,12 +1421,35 @@ function activeDiscountOffers(){
    screen rather than actually texted. */
 const CLIENT_KEY='odc_current_client';
 const DEMO_OTP='1234';
+/* Customer self-login is OFF until real sign-in is built (Apple/Google, which
+   needs an Apple Developer account).
+   Why this switch exists: the login below is a DEMO — the code is always 1234
+   and it's printed on the screen. Client records (real names, phone numbers,
+   loyalty points) sync to the shared Supabase database, and this same file is
+   published publicly on GitHub Pages. So while this is on, anyone on the
+   internet could type a customer's phone number, enter 1234, and read that
+   customer's details and booking history. Harmless while there are no real
+   customers in the database; a genuine privacy hole the moment reception
+   starts adding them.
+   With it off, browsing still works exactly as before — only the account
+   screens are closed, and customers are pointed at WhatsApp to book, which is
+   how they book today anyway.
+   To turn real sign-in back on later, set this to true once the demo login has
+   actually been replaced. Do not set it to true while the code is still 1234. */
+const CLIENT_LOGIN_ENABLED=false;
 function normalizedPhone(p){ return (p||'').replace(/\D/g,''); }
 function findClientByPhone(p){ return STORE.clients.find(c=>c.phone===normalizedPhone(p)); }
 let loggedInClient=null;
 try{
-  const savedClientId=localStorage.getItem(CLIENT_KEY);
-  if(savedClientId) loggedInClient=STORE.clients.find(c=>c.id===savedClientId)||null;
+  if(!CLIENT_LOGIN_ENABLED){
+    // Sign out anyone still holding a session from the old demo login, so
+    // turning the switch off actually closes the door rather than only
+    // hiding the sign-in screen from new visitors.
+    localStorage.removeItem(CLIENT_KEY);
+  } else {
+    const savedClientId=localStorage.getItem(CLIENT_KEY);
+    if(savedClientId) loggedInClient=STORE.clients.find(c=>c.id===savedClientId)||null;
+  }
 }catch(e){}
 let authStep='phone', authPhone='', pendingScreen=null;
 
@@ -1613,6 +1636,17 @@ function renderBooking(){
 }
 
 function renderClientAuth(){
+  if(!CLIENT_LOGIN_ENABLED){
+    const wa=BRAND_WHATSAPP[currentBrand]||BRAND_WHATSAPP.dolce;
+    return `
+      <div class="section-label" style="margin-top:0;">Booking accounts are coming soon</div>
+      <div style="font-size:14px;color:var(--ink-soft);margin-bottom:16px;">
+        You can browse everything here now. To book an appointment or check one you've
+        already made, message us on WhatsApp and our team will take care of it.
+      </div>
+      <a class="wa-btn" href="https://wa.me/${wa}" target="_blank" rel="noopener">💬 Message us on WhatsApp</a>
+    `;
+  }
   if(authStep==='phone'){
     return `
       <div class="section-label" style="margin-top:0;">Log in or create an account</div>
