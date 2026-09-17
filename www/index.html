@@ -1134,7 +1134,15 @@ async function flushOutbox(){
       }catch(netErr){ lastSyncError='offline'; break; }
       if(res && res.error){
         if(isPermanentSyncError(res.error)){
-          console.warn('[sync] dropping a change the database refused:',job,res.error.message);
+          // The database refused this outright, so retrying forever would jam
+          // everything behind it — it still has to leave the queue. But it is
+          // NOT allowed to disappear quietly: this is somebody's booking or
+          // somebody's takings. It goes on a visible "not saved" list instead,
+          // and the sync badge turns into a red warning until a human deals
+          // with it. Losing money records behind a green tick is worse than
+          // any error message.
+          recordSyncFailure(job,res.error);
+          console.warn('[sync] refused by the database:',job,res.error.message);
           lastSyncError=res.error.message||'refused';
           outbox=outbox.filter(j=>j!==job);
         } else {
@@ -1162,24 +1170,132 @@ async function flushOutbox(){
 /* A quiet little status pill, bottom-left. It stays invisible while
    everything is synced, and only speaks up when something is waiting — so it
    is never in the way, but you are never left wondering either. */
+/* ---- Changes the database refused ---------------------------------------
+   These are kept separately from the outbox and survive a reload, because
+   the person who typed them needs to know they were not saved. */
+const FAILED_KEY='odc_sync_failed_v1';
+let syncFailures=[];
+try{ syncFailures=JSON.parse(localStorage.getItem(FAILED_KEY)||'[]')||[]; }catch(e){ syncFailures=[]; }
+function saveSyncFailures(){
+  try{ localStorage.setItem(FAILED_KEY,JSON.stringify(syncFailures.slice(-50))); }catch(e){}
+}
+// Turn {op,kind,id} into something a salon owner can recognise on screen.
+function describeJob(job){
+  const labels={bookings:'Booking',purchases:'Purchase',productSales:'Product sale',
+    registerCloses:'Register close',clients:'Client',media:'Photo / video',
+    services:'Service',products:'Product',offers:'Offer',
+    brandImages:'Brand image',settings:'Setting'};
+  const what=labels[job.kind]||job.kind;
+  const bits=[];
+  try{
+    const spec=CLOUD_TABLES[job.kind];
+    const list=(spec&&spec.list)?spec.list():[];
+    const item=list.find(x=>String(x.id)===String(job.id));
+    if(item){
+      // Name the thing first (product, service, offer), then the person,
+      // then the date — whichever of those the record actually has. A sale
+      // is easier to recognise as "Rosehip Oil (Walk-in)" than as either
+      // half on its own.
+      const thing=item.n||item.name||item.t||item.serviceName||'';
+      const person=item.clientName||'';
+      if(thing) bits.push(thing);
+      if(person && person!==thing) bits.push(`(${person})`);
+      if(!bits.length && item.date) bits.push(item.date);
+    }
+  }catch(e){}
+  return bits.length?`${what} — ${bits.join(' ')}`:what;
+}
+function recordSyncFailure(job,err){
+  syncFailures.push({kind:job.kind,id:job.id,op:job.op,
+    what:describeJob(job),
+    why:(err&&err.message)||'refused by the database',
+    at:new Date().toISOString()});
+  saveSyncFailures();
+}
+// Put the refused changes back in the queue and try again. Worth offering,
+// because the usual cause is a permission that has since been corrected.
+function retrySyncFailures(){
+  const again=syncFailures.slice();
+  syncFailures=[]; saveSyncFailures();
+  again.forEach(f=>{ outbox.push({op:f.op,kind:f.kind,id:f.id}); });
+  saveOutbox(); updateSyncBadge();
+  closeSyncFailurePanel();
+  toast('Trying those changes again…');
+  flushOutbox();
+}
+function clearSyncFailures(){
+  syncFailures=[]; saveSyncFailures(); updateSyncBadge(); closeSyncFailurePanel();
+}
+function closeSyncFailurePanel(){
+  const p=document.getElementById('syncFailPanel'); if(p) p.remove();
+}
+function showSyncFailures(){
+  closeSyncFailurePanel();
+  const rows=syncFailures.slice().reverse().map(f=>`
+    <div style="padding:10px 0;border-bottom:1px solid rgba(0,0,0,.08);">
+      <div style="font-weight:700;font-size:15px;">${esc(f.what)}</div>
+      <div style="font-size:13.5px;color:#6b6b6b;margin-top:2px;">${esc(f.why)}</div>
+    </div>`).join('');
+  const p=document.createElement('div');
+  p.id='syncFailPanel';
+  p.style.cssText='position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.45);'+
+    'display:flex;align-items:center;justify-content:center;padding:20px;'+
+    'font-family:system-ui,-apple-system,sans-serif;';
+  p.innerHTML=`
+    <div style="background:#fff;border-radius:16px;max-width:460px;width:100%;
+                max-height:80vh;overflow-y:auto;padding:22px;">
+      <div style="font-size:19px;font-weight:800;margin-bottom:6px;">Not saved</div>
+      <div style="font-size:14.5px;color:#444;line-height:1.5;margin-bottom:14px;">
+        The shared database refused ${syncFailures.length} change${syncFailures.length===1?'':'s'}.
+        ${syncFailures.length===1?'It is':'They are'} <b>not stored anywhere</b>.
+        Write ${syncFailures.length===1?'it':'them'} down before clearing this,
+        or try again if the cause has been fixed.
+      </div>
+      ${rows}
+      <div style="display:flex;gap:8px;margin-top:18px;">
+        <button id="sfRetry" style="flex:1;background:#1c1a16;color:#fff;border:none;
+          border-radius:10px;padding:12px;font-size:15px;font-weight:700;">Try again</button>
+        <button id="sfClear" style="flex:1;background:#fff;color:#8e2a20;border:1px solid #d9c9c6;
+          border-radius:10px;padding:12px;font-size:15px;font-weight:700;">Clear</button>
+      </div>
+      <button id="sfClose" style="width:100%;background:none;border:none;color:#6b6b6b;
+        font-size:14px;margin-top:10px;padding:6px;">Close</button>
+    </div>`;
+  document.body.appendChild(p);
+  document.getElementById('sfRetry').addEventListener('click',retrySyncFailures);
+  document.getElementById('sfClear').addEventListener('click',clearSyncFailures);
+  document.getElementById('sfClose').addEventListener('click',closeSyncFailurePanel);
+  p.addEventListener('click',(e)=>{ if(e.target===p) closeSyncFailurePanel(); });
+}
+
 function updateSyncBadge(){
   if(typeof document==='undefined'||!document.body) return;
   let el=document.getElementById('cloudSyncPill');
-  if(!outbox.length){ if(el) el.style.display='none'; return; }
+  const waiting=outbox.length, failed=syncFailures.length;
+  if(!waiting && !failed){ if(el) el.style.display='none'; return; }
   if(!el){
     el=document.createElement('div');
     el.id='cloudSyncPill';
     el.style.cssText='position:fixed;left:16px;bottom:16px;z-index:120;background:#1c1a16;color:#fff;'+
       'padding:8px 14px;border-radius:999px;font-size:13.5px;font-weight:600;'+
       'font-family:system-ui,-apple-system,sans-serif;box-shadow:0 10px 26px rgba(0,0,0,.28);'+
-      'display:flex;align-items:center;gap:8px;cursor:pointer;';
-    el.title='Click to try sending now';
-    el.addEventListener('click',()=>flushOutbox());
+      'display:flex;align-items:center;gap:8px;cursor:pointer;max-width:calc(100vw - 32px);';
+    el.addEventListener('click',()=>{
+      if(syncFailures.length) showSyncFailures(); else flushOutbox();
+    });
     document.body.appendChild(el);
   }
-  const n=outbox.length;
   el.style.display='flex';
-  el.textContent=`☁︎ ${n} change${n===1?'':'s'} waiting to sync`;
+  if(failed){
+    // Deliberately alarming. A refused save must never look like a success.
+    el.style.background='#8e2a20';
+    el.title='These changes were refused and are not saved. Tap for details.';
+    el.textContent=`⚠︎ ${failed} change${failed===1?'':'s'} NOT saved — tap`;
+  } else {
+    el.style.background='#1c1a16';
+    el.title='Click to try sending now';
+    el.textContent=`☁︎ ${waiting} change${waiting===1?'':'s'} waiting to sync`;
+  }
 }
 
 /* ---- Reading back from the cloud ----------------------------------------- */
