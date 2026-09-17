@@ -715,6 +715,35 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
+/* ---------------- Safety: never trust text we didn't write ----------------
+   Every screen in this app is built by dropping values into a template and
+   handing the result to innerHTML. That is fine for text we control, but a
+   booking can be submitted by ANYONE on the internet (the public booking form
+   needs that, and the database allows it on purpose). If someone submits a
+   booking whose client name is a piece of HTML instead of a name, that HTML
+   would run inside the Admin App the moment an owner opens the Bookings tab —
+   with the owner's own permissions, able to read every customer and every
+   figure in the business.
+
+   esc() turns those characters into their harmless printable versions, so a
+   name like <img onerror=...> is DISPLAYED as that text instead of being
+   executed. Quotes are escaped too, because some of these values are dropped
+   inside HTML attributes like value="..." where a bare quote would break out.
+
+   Rule of thumb for anyone editing this file later: if a value came from the
+   database, from a form, or from anywhere other than this file, wrap it in
+   esc() before putting it in a template. Values that are plainly ours —
+   BRANDS names, translated UI labels, numbers we calculated — don't need it.
+   toast() is also safe without it: it assigns textContent, not innerHTML. */
+function esc(v){
+  return String(v==null?'':v)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+
 /* ---------------- Data ---------------- */
 // Brand metadata is fixed. Services & products live in STORE, which is the
 // shared "backend" both the Client App and Admin App read from — in a real
@@ -1545,8 +1574,8 @@ function goto(screen){currentScreen=screen;render();}
 function renderWelcome(){
   const allOffers=[...STORE.offers,...activeDiscountOffers()];
   const offers=allOffers.map(o=>o.image
-    ? `<div class="offer-chip has-photo"><div class="offer-photo" style="background-image:url('${o.image}')"></div><div class="offer-body"><b>${o.t}</b>${o.s}<br><span>${BRANDS[o.brand].name}</span></div></div>`
-    : `<div class="offer-chip"><b>${o.t}</b>${o.s}<br><span>${BRANDS[o.brand].name}</span></div>`
+    ? `<div class="offer-chip has-photo"><div class="offer-photo" style="background-image:url('${o.image}')"></div><div class="offer-body"><b>${esc(o.t)}</b>${esc(o.s)}<br><span>${BRANDS[o.brand].name}</span></div></div>`
+    : `<div class="offer-chip"><b>${esc(o.t)}</b>${esc(o.s)}<br><span>${BRANDS[o.brand].name}</span></div>`
   ).join('');
   const offersHtml=allOffers.length?`
     <div class="section-label">Upcoming Events &amp; Offers</div>
@@ -1568,7 +1597,7 @@ function renderServices(){
   const list=svcList(currentBrand).filter(s=>currentCat==='All'||s.cat===currentCat).map(s=>`
     <div class="svc-row" data-svc="${s.id}">
       <div class="swatch" style="${swStyle(s,currentBrand)}"></div>
-      <div class="info"><div class="n">${s.n}</div><div class="m">${s.dur} · ${s.cat}</div></div>
+      <div class="info"><div class="n">${esc(s.n)}</div><div class="m">${esc(s.dur)} · ${esc(s.cat)}</div></div>
       <div class="price">${priceHtml(s)}</div><div class="chev">›</div>
     </div>`).join('');
   return `
@@ -1587,13 +1616,13 @@ function renderDetail(){
     <div class="ba-strip">${gallery.map(m=>`
       <div class="ba-item">
         <div class="th ${m.type==='video'?'video':''}" style="background-image:url('${m.dataUrl}')" data-media="${m.id}"></div>
-        <div class="cap">${m.note||''}</div>
+        <div class="cap">${esc(m.note||'')}</div>
       </div>`).join('')}</div>` : '';
   return `
     <div class="detail-hero" style="${swStyle(s,currentBrand)}"></div>
-    <div class="detail-title">${s.n}</div>
-    <div class="detail-meta"><b>${s.dur}</b> &nbsp;|&nbsp; <b>${priceHtml(s)}</b></div>
-    <div class="detail-desc">${s.desc}</div>
+    <div class="detail-title">${esc(s.n)}</div>
+    <div class="detail-meta"><b>${esc(s.dur)}</b> &nbsp;|&nbsp; <b>${priceHtml(s)}</b></div>
+    <div class="detail-desc">${esc(s.desc)}</div>
     <div class="section-label" style="margin-top:0;">${t('whatsInc')}</div>
     ${pts}
     ${galleryHtml}
@@ -1614,12 +1643,12 @@ function renderBooking(){
   const timeChips=slots.map(sl=>`
     <button class="time-chip ${sl.time===selectedTime?'active':''} ${sl.taken?'taken':''}" ${sl.taken?'disabled':''} data-time="${sl.time}">${sl.time}${sl.taken?` · ${t('bookedTag')||'Booked'}`:''}</button>`).join('');
   const canBook=!!selectedTime;
-  const waText=encodeURIComponent(`Hi! I'd like to book ${s.n} at ${b.name} — ${fmtMoney(effectivePrice(s))}, ${s.dur}. Preferred: ${dateStr}${selectedTime?' at '+selectedTime:''}.`);
+  const waText=encodeURIComponent(`Hi! I'd like to book ${esc(s.n)} at ${b.name} — ${fmtMoney(effectivePrice(s))}, ${esc(s.dur)}. Preferred: ${dateStr}${selectedTime?' at '+selectedTime:''}.`);
   const waHref=`https://wa.me/${BRAND_WHATSAPP[currentBrand]}?text=${waText}`;
   return `
     <div class="section-label" style="margin-top:0;">${t('bookingSummary')}</div>
     <div class="book-card">
-      <div class="book-row"><span class="k">${b.name}</span><span class="v">${s.n}</span></div>
+      <div class="book-row"><span class="k">${b.name}</span><span class="v">${esc(s.n)}</span></div>
       <div class="book-row"><span class="k">Price</span><span class="v">${priceHtml(s)}</span></div>
       <div class="book-row"><span class="k">${t('location')}</span><span class="v">${b.name} — Erbil</span></div>
     </div>
@@ -1666,7 +1695,7 @@ function renderClientAuth(){
     <div class="book-card">
       <label style="font-size:13px;font-weight:700;color:var(--ink-soft);display:block;margin-bottom:6px;">Verification code</label>
       <input id="authCodeInput" type="text" inputmode="numeric" maxlength="4" placeholder="4-digit code" style="width:100%;border:1px solid var(--line);border-radius:9px;padding:10px 12px;font-size:15px;letter-spacing:4px;text-align:center;box-sizing:border-box;">
-      ${existing?`<div style="font-size:13.5px;color:var(--ink-soft);margin-top:10px;">Welcome back, <b>${existing.name}</b>.</div>`:`
+      ${existing?`<div style="font-size:13.5px;color:var(--ink-soft);margin-top:10px;">Welcome back, <b>${esc(existing.name)}</b>.</div>`:`
       <label style="font-size:13px;font-weight:700;color:var(--ink-soft);display:block;margin:12px 0 6px;">Your name</label>
       <input id="authNameInput" type="text" placeholder="e.g. Lana H." style="width:100%;border:1px solid var(--line);border-radius:9px;padding:10px 12px;font-size:15px;box-sizing:border-box;">`}
     </div>
@@ -1685,9 +1714,9 @@ function renderBookings(){
   }
   const rows=mine.slice().reverse().map(b=>`
     <div class="book-card" style="margin-top:8px;">
-      <div class="book-row"><span class="k">${BRANDS[b.brand].name}</span><span class="v">${b.serviceName}</span></div>
-      <div class="book-row"><span class="k">${t('preferredDate')}</span><span class="v">${b.date}, ${b.time}</span></div>
-      <div class="book-row"><span class="k">Status</span><span class="v"><span class="status-badge ${b.status}">${b.status}</span></span></div>
+      <div class="book-row"><span class="k">${BRANDS[b.brand].name}</span><span class="v">${esc(b.serviceName)}</span></div>
+      <div class="book-row"><span class="k">${t('preferredDate')}</span><span class="v">${esc(b.date)}, ${esc(b.time)}</span></div>
+      <div class="book-row"><span class="k">Status</span><span class="v"><span class="status-badge ${esc(b.status)}">${esc(b.status)}</span></span></div>
     </div>`).join('');
   return `<div class="section-label" style="margin-top:0;">${t('upcoming')}</div>${rows}`;
 }
@@ -1697,7 +1726,7 @@ function renderShop(){
     const b=BRANDS[p.brand];
     return `<div class="prod">
       <div class="sw" style="${swStyle(p,p.brand)}"></div>
-      <div class="n">${p.n}</div><div class="p">${priceHtml(p)}</div>
+      <div class="n">${esc(p.n)}</div><div class="p">${priceHtml(p)}</div>
       <button data-add="${i}">${t('addToCart')}</button>
     </div>`;
   }).join('');
@@ -1713,7 +1742,7 @@ function renderProfile(){
     ${progress.map(m=>`
       <div class="progress-row" data-media="${m.id}">
         <div class="th ${m.type==='video'?'video':''}" style="background-image:url('${m.dataUrl}')"></div>
-        <div><div class="n">${BRANDS[m.brand].name} — ${m.note||''}</div><div class="m">${m.clientName||'You'}</div></div>
+        <div><div class="n">${BRANDS[m.brand].name} — ${esc(m.note||'')}</div><div class="m">${esc(m.clientName||'You')}</div></div>
       </div>`).join('')}` : '';
   const pts=loggedInClient?loggedInClient.points:0;
   const REWARD_GOAL=3000;
@@ -1721,7 +1750,7 @@ function renderProfile(){
   return `
     <div class="section-label" style="margin-top:0;">${t('profile')}</div>
     <div class="book-card" style="display:flex;justify-content:space-between;align-items:center;">
-      <div><div style="font-weight:700;font-size:14.5px;">${loggedInClient?loggedInClient.name:''}</div><div style="font-size:13px;color:var(--muted);">${loggedInClient?loggedInClient.phone:''}</div></div>
+      <div><div style="font-weight:700;font-size:14.5px;">${esc(loggedInClient?loggedInClient.name:'')}</div><div style="font-size:13px;color:var(--muted);">${esc(loggedInClient?loggedInClient.phone:'')}</div></div>
       <button id="clientLogout" style="border:none;background:var(--ink);color:#fff;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:700;">Log out</button>
     </div>
     <div class="loyalty-card">
@@ -1861,7 +1890,7 @@ function bindScreen(){
     cloudSave('bookings',req.id);
     const note=document.getElementById('waNote');
     note.style.display='block';
-    note.innerHTML=`<b>${t('bookedNote')}</b><br><br>${s.n} — ${b.name}<br>${dateStr} at ${selectedTime}`;
+    note.innerHTML=`<b>${t('bookedNote')}</b><br><br>${esc(s.n)} — ${b.name}<br>${dateStr} at ${selectedTime}`;
     toast(`Booked — ${dateStr} at ${selectedTime}.`);
   });
 
@@ -1882,7 +1911,7 @@ function bindScreen(){
     }
     const note=document.getElementById('waNote');
     note.style.display='block';
-    note.innerHTML=`<b>${t('waSent')}</b><br><br>"Hi! I'd like to book <b>${s.n}</b> at <b>${b.name}</b> — ${fmtMoney(effectivePrice(s))}, ${s.dur}. Preferred: ${dateStr} at ${selectedTime}."`;
+    note.innerHTML=`<b>${t('waSent')}</b><br><br>"Hi! I'd like to book <b>${esc(s.n)}</b> at <b>${b.name}</b> — ${fmtMoney(effectivePrice(s))}, ${esc(s.dur)}. Preferred: ${dateStr} at ${selectedTime}."`;
   });
   screenEl.querySelectorAll('[data-add]').forEach(el=>el.addEventListener('click',()=>{cart++;el.textContent=t('added');setTimeout(render,600);}));
   screenEl.querySelectorAll('[data-proflang]').forEach(el=>el.addEventListener('click',()=>{
@@ -2064,7 +2093,7 @@ function aiRespond(text){
     const list=recs.map((r,i)=>{
       const b=BRANDS[r.b]; const s=svcList(r.b).find(x=>x.id===r.id);
       if(!s) return '';
-      return `<li>${s.n} <span style="color:var(--muted);">— ${b.name}, ${fmtMoney(effectivePrice(s))}${hasDiscount(s)?' 🏷️':''}</span></li>`;
+      return `<li>${esc(s.n)} <span style="color:var(--muted);">— ${b.name}, ${fmtMoney(effectivePrice(s))}${hasDiscount(s)?' 🏷️':''}</span></li>`;
     }).join('');
     aiBubble('bot',`<b>Recommended for you</b><ol>${list}</ol><span class="rec-btn" data-goto="${recs[0].b}|${recs[0].id}">View details →</span>`);
     const btn=document.querySelector('.ai-chat .rec-btn:last-of-type');
@@ -2189,8 +2218,8 @@ function renderLogin(){
       <div class="login-cards">
         ${visibleUsers.map(u=>`
           <div class="login-card">
-            <div class="av">${u.name[0]}</div>
-            <div class="nm">${u.name}</div>
+            <div class="av">${esc(u.name[0])}</div>
+            <div class="nm">${esc(u.name)}</div>
             ${u.tabs&&u.tabs.length?`<div class="role-pill">${accessLabel(u.tabs)}</div>`:''}
             ${u.brands&&u.brands.length?`<div class="role-pill" style="margin-top:4px;">${brandsLabel(u.brands)}</div>`:''}
             ${!supa?`<div class="cap">Demo PIN: ${u.pin}</div>`:''}
@@ -2248,7 +2277,7 @@ function showAdminForRole(){
   document.getElementById('adminLogin').style.display='none';
   document.getElementById('adminAuthed').style.display='';
   document.getElementById('userBadge').innerHTML=`
-    <span class="av" style="width:24px;height:24px;font-size:13px;background:linear-gradient(140deg,#3a3630,#171512);color:#fff;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;">${currentUser.name[0]}</span>
+    <span class="av" style="width:24px;height:24px;font-size:13px;background:linear-gradient(140deg,#3a3630,#171512);color:#fff;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;">${esc(currentUser.name[0])}</span>
     <b>${currentUser.name}</b> <span class="role-pill">${accessLabel(currentUser.tabs)}</span> <span class="role-pill">${brandsLabel(currentUser.brands)}</span>
     <button id="logoutBtn">Log out</button>`;
   document.getElementById('logoutBtn').addEventListener('click',async()=>{
@@ -2371,7 +2400,7 @@ function renderAdminProducts(){
       : (stock<=LOW_STOCK ? `<span class="status-badge Requested">${stock} left — low</span>` : `${stock}`);
     return `
     <tr>
-      <td><span class="swdot" style="${p.image?`background-image:url('${p.image}')`:`background:linear-gradient(140deg,${BRANDS[p.brand].c1},${BRANDS[p.brand].c2})`}"></span>${p.n}</td>
+      <td><span class="swdot" style="${p.image?`background-image:url('${p.image}')`:`background:linear-gradient(140deg,${BRANDS[p.brand].c1},${BRANDS[p.brand].c2})`}"></span>${esc(p.n)}</td>
       <td><span class="brand-tag" style="background:${brandColor[p.brand]}">${BRANDS[p.brand].name}</span></td>
       <td>${priceHtml(p)}</td>
       <td>${stockHtml}</td>
@@ -2398,7 +2427,7 @@ function openProductSaleForm(productIndex){
   const unitPrice=effectivePrice(p);
   document.getElementById('productSaleFormWrap').innerHTML=`
     <div class="admin-form">
-      <div class="field full" style="grid-column:1/-1;"><label>Recording a sale of</label><div style="font-weight:700;">${p.n} — ${fmtMoney(unitPrice)} each (${p.stock} in stock)</div></div>
+      <div class="field full" style="grid-column:1/-1;"><label>Recording a sale of</label><div style="font-weight:700;">${esc(p.n)} — ${fmtMoney(unitPrice)} each (${p.stock} in stock)</div></div>
       <div class="field"><label>Quantity</label><input id="ps_qty" type="number" min="1" max="${p.stock}" step="1" value="1"></div>
       <div class="field"><label>Client name (optional)</label><input id="ps_client" type="text" placeholder="Walk-in"></div>
       <div class="actions">
@@ -2428,7 +2457,7 @@ function openProductForm(editIndex){
   const p=editing?STORE.products[editIndex]:{n:'',price:'',discount:0,brand:userBrands(currentUser)[0],image:'',stock:0};
   document.getElementById('productFormWrap').innerHTML=`
     <div class="admin-form">
-      <div class="field"><label>Product name</label><input id="pf_name" type="text" value="${p.n}" placeholder="e.g. Rosehip Face Oil"></div>
+      <div class="field"><label>Product name</label><input id="pf_name" type="text" value="${esc(p.n)}" placeholder="e.g. Rosehip Face Oil"></div>
       <div class="field"><label>Brand</label>
         <select id="pf_brand">${brandOptionsHtml(p.brand)}</select>
       </div>
@@ -2489,9 +2518,9 @@ function renderAdminOffers(){
     const i=STORE.offers.indexOf(o);
     return `
     <tr>
-      <td><span class="swdot" style="${o.image?`background-image:url('${o.image}')`:`background:linear-gradient(140deg,${BRANDS[o.brand].c1},${BRANDS[o.brand].c2})`}"></span>${o.t}</td>
+      <td><span class="swdot" style="${o.image?`background-image:url('${o.image}')`:`background:linear-gradient(140deg,${BRANDS[o.brand].c1},${BRANDS[o.brand].c2})`}"></span>${esc(o.t)}</td>
       <td><span class="brand-tag" style="background:${brandColor[o.brand]}">${BRANDS[o.brand].name}</span></td>
-      <td>${o.s}</td>
+      <td>${esc(o.s)}</td>
       <td><div class="rowbtns">
         <button class="btn btn-ghost btn-sm" data-edit-offer="${i}">Edit</button>
         <button class="btn btn-danger btn-sm" data-del-offer="${i}">Delete</button>
@@ -2517,7 +2546,7 @@ function renderAdminOffers(){
       <table class="admin-table">
         <thead><tr><th>Item</th><th>Brand</th><th>Discount</th></tr></thead>
         <tbody>${autoList.map(o=>`
-          <tr><td>${o.t}</td><td><span class="brand-tag" style="background:${brandColor[o.brand]}">${BRANDS[o.brand].name}</span></td><td>${o.s}</td></tr>`).join('')}</tbody>
+          <tr><td>${esc(o.t)}</td><td><span class="brand-tag" style="background:${brandColor[o.brand]}">${BRANDS[o.brand].name}</span></td><td>${esc(o.s)}</td></tr>`).join('')}</tbody>
       </table>
     </div>
     <div style="font-size:13px;color:var(--muted);margin-top:8px;">To remove one of these, clear its discount back to 0 from the Products or Services tab.</div>
@@ -2528,11 +2557,11 @@ function openOfferForm(editIndex){
   const o=editing?STORE.offers[editIndex]:{t:'',s:'',brand:userBrands(currentUser)[0],image:''};
   document.getElementById('offerFormWrap').innerHTML=`
     <div class="admin-form">
-      <div class="field"><label>Title</label><input id="of_title" type="text" value="${o.t}" placeholder="e.g. Glow Season"></div>
+      <div class="field"><label>Title</label><input id="of_title" type="text" value="${esc(o.t)}" placeholder="e.g. Glow Season"></div>
       <div class="field"><label>Brand</label>
         <select id="of_brand">${brandOptionsHtml(o.brand)}</select>
       </div>
-      <div class="field" style="grid-column:1/-1;"><label>Description</label><input id="of_desc" type="text" value="${o.s}" placeholder="e.g. 20% off all facials"></div>
+      <div class="field" style="grid-column:1/-1;"><label>Description</label><input id="of_desc" type="text" value="${esc(o.s)}" placeholder="e.g. 20% off all facials"></div>
       <div class="field full" style="grid-column:1/-1;"><label>Photo ${o.image?'(uploaded — choose a file to replace it)':'(optional — card stays text-only without one)'}</label>
         <div class="upload-drop"><input id="of_image" type="file" accept="image/*"></div>
       </div>
@@ -2586,9 +2615,9 @@ function renderAdminServices(){
   }
   rows.innerHTML=list.map((s,i)=>`
     <tr>
-      <td><span class="swdot" style="${s.image?`background-image:url('${s.image}')`:`background:linear-gradient(140deg,${BRANDS[svcBrandTab].c1},${BRANDS[svcBrandTab].c2})`}"></span>${s.n}</td>
-      <td>${s.cat}</td>
-      <td>${s.dur}</td>
+      <td><span class="swdot" style="${s.image?`background-image:url('${s.image}')`:`background:linear-gradient(140deg,${BRANDS[svcBrandTab].c1},${BRANDS[svcBrandTab].c2})`}"></span>${esc(s.n)}</td>
+      <td>${esc(s.cat)}</td>
+      <td>${esc(s.dur)}</td>
       <td>${priceHtml(s)}</td>
       <td><div class="rowbtns">
         <button class="btn btn-ghost btn-sm" data-edit-svc="${i}">Edit</button>
@@ -2611,12 +2640,12 @@ function openServiceForm(editIndex){
   const catOpts=BRANDS[svcBrandTab].cats.map(c=>`<option value="${c}" ${s.cat===c?'selected':''}>${c}</option>`).join('');
   document.getElementById('serviceFormWrap').innerHTML=`
     <div class="admin-form">
-      <div class="field"><label>Service name</label><input id="sf_name" type="text" value="${s.n}" placeholder="e.g. Microneedling"></div>
+      <div class="field"><label>Service name</label><input id="sf_name" type="text" value="${esc(s.n)}" placeholder="e.g. Microneedling"></div>
       <div class="field"><label>Category</label><select id="sf_cat">${catOpts}</select></div>
-      <div class="field"><label>Duration</label><input id="sf_dur" type="text" value="${s.dur}" placeholder="e.g. 45 min"></div>
+      <div class="field"><label>Duration</label><input id="sf_dur" type="text" value="${esc(s.dur)}" placeholder="e.g. 45 min"></div>
       <div class="field"><label>Price ($)</label><input id="sf_price" type="number" min="0" step="1" value="${s.price}"></div>
       <div class="field"><label>Discount % (optional)</label><input id="sf_discount" type="number" min="0" max="99" step="1" placeholder="0 — no discount" value="${s.discount||''}"></div>
-      <div class="field full" style="grid-column:1/-1;"><label>Description</label><textarea id="sf_desc" rows="2" placeholder="Short client-facing description">${s.desc||''}</textarea></div>
+      <div class="field full" style="grid-column:1/-1;"><label>Description</label><textarea id="sf_desc" rows="2" placeholder="Short client-facing description">${esc(s.desc||'')}</textarea></div>
       <div class="field full" style="grid-column:1/-1;"><label>Photo ${s.image?'(uploaded — choose a file to replace it)':'(optional — falls back to a colour swatch)'}</label>
         <div class="upload-drop"><input id="sf_image" type="file" accept="image/*"></div>
       </div>
@@ -2674,8 +2703,8 @@ function openLightbox(mediaId){
   const body=document.getElementById('lbBody');
   body.innerHTML = m.type==='video'
     ? `<video src="${m.dataUrl}" controls autoplay playsinline></video>`
-    : `<img src="${m.dataUrl}" alt="${m.note||''}">`;
-  document.getElementById('lbCap').textContent = `${BRANDS[m.brand].name}${m.note?' — '+m.note:''}`;
+    : `<img src="${m.dataUrl}" alt="${esc(m.note||'')}">`;
+  document.getElementById('lbCap').textContent = `${BRANDS[m.brand].name}${esc(m.note?' — '+m.note:'')}`;
   document.getElementById('lightbox').classList.add('open');
 }
 
@@ -2732,12 +2761,12 @@ function renderAdminGallery(){
     return `<div class="gcard">
       <div class="thumb ${m.type==='video'?'video':''}" style="background-image:url('${m.dataUrl}')"></div>
       <div class="meta">
-        <div class="note">${m.note||'(no caption)'}</div>
+        <div class="note">${esc(m.note||'(no caption)')}</div>
         <div class="badges">
           <span class="tag ${m.visibility}">${m.visibility}</span>
           ${m.type==='video'?'<span class="tag video">video</span>':''}
         </div>
-        <div style="font-size:12.5px;color:var(--muted);margin-bottom:8px;">${BRANDS[m.brand].name} · ${svcName||'General'}${m.clientName?' · '+m.clientName:''}</div>
+        <div style="font-size:12.5px;color:var(--muted);margin-bottom:8px;">${BRANDS[m.brand].name} · ${svcName||'General'}${esc(m.clientName?' · '+m.clientName:'')}</div>
         <button class="btn btn-danger btn-sm" style="width:100%;" data-del-media="${i}">Delete</button>
       </div>
     </div>`;
@@ -2780,7 +2809,7 @@ function openMediaForm(){
   function fillServices(){
     const brand=document.getElementById('mf_brand').value;
     const sel=document.getElementById('mf_service');
-    sel.innerHTML=`<option value="">General (not tied to one service)</option>`+svcList(brand).map(s=>`<option value="${s.id}">${s.n}</option>`).join('');
+    sel.innerHTML=`<option value="">General (not tied to one service)</option>`+svcList(brand).map(s=>`<option value="${s.id}">${esc(s.n)}</option>`).join('');
   }
   fillServices();
   document.getElementById('mf_brand').addEventListener('change',fillServices);
@@ -2863,11 +2892,11 @@ function renderAdminBookings(){
         ${(bk.status==='Requested'||bk.status==='Confirmed')?`<button class="btn btn-danger btn-sm" data-cancel-booking="${i}">Cancel</button>`:''}
       </div>` : '');
     return `<tr>
-      <td>${bk.clientName}</td>
+      <td>${esc(bk.clientName)}</td>
       <td><span class="brand-tag" style="background:${brandColor[bk.brand]}">${BRANDS[bk.brand].name}</span></td>
-      <td>${bk.serviceName}</td>
-      <td>${bk.date}<br><span style="color:var(--muted);font-size:13px;">${bk.time}</span></td>
-      <td><span class="status-badge ${bk.status}">${bk.status}</span></td>
+      <td>${esc(bk.serviceName)}</td>
+      <td>${esc(bk.date)}<br><span style="color:var(--muted);font-size:13px;">${esc(bk.time)}</span></td>
+      <td><span class="status-badge ${esc(bk.status)}">${esc(bk.status)}</span></td>
       <td>${actions}</td>
     </tr>`;
   }).join('');
@@ -2900,7 +2929,7 @@ function openBookingForm(){
     </div>`;
   function fillServices(){
     const brand=document.getElementById('bf_brand').value;
-    document.getElementById('bf_service').innerHTML=svcList(brand).map(s=>`<option value="${s.id}">${s.n}</option>`).join('');
+    document.getElementById('bf_service').innerHTML=svcList(brand).map(s=>`<option value="${s.id}">${esc(s.n)}</option>`).join('');
   }
   fillServices();
   document.getElementById('bf_brand').addEventListener('change',fillServices);
@@ -2933,7 +2962,7 @@ function renderAdminEmployees(){
   const rows=document.getElementById('employeeRows');
   rows.innerHTML=STORE.users.map((u,i)=>`
     <tr>
-      <td><span class="swdot" style="background:linear-gradient(140deg,#3a3630,#171512);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-family:Georgia,serif;font-size:13.5px;">${u.name[0]}</span>${u.name}${currentUser&&currentUser.id===u.id?' <span style="color:var(--muted);font-size:12.5px;">(you)</span>':''}</td>
+      <td><span class="swdot" style="background:linear-gradient(140deg,#3a3630,#171512);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-family:Georgia,serif;font-size:13.5px;">${esc(u.name[0])}</span>${esc(u.name)}${currentUser&&currentUser.id===u.id?' <span style="color:var(--muted);font-size:12.5px;">(you)</span>':''}</td>
       <td><span class="role-pill">${accessLabel(u.tabs)}</span></td>
       <td>${brandsLabel(u.brands)}</td>
       <td>${u.pin}</td>
@@ -2974,7 +3003,7 @@ function openEmployeeForm(editIndex){
     </label>`).join('');
   document.getElementById('employeeFormWrap').innerHTML=`
     <div class="admin-form">
-      <div class="field"><label>Name</label><input id="ef_name" type="text" value="${u.name}" placeholder="e.g. Lana H."></div>
+      <div class="field"><label>Name</label><input id="ef_name" type="text" value="${esc(u.name)}" placeholder="e.g. Lana H."></div>
       <div class="field"><label>PIN (4 digits)</label><input id="ef_pin" type="text" maxlength="4" inputmode="numeric" value="${u.pin}" placeholder="e.g. 4321"></div>
       <div class="field full" style="grid-column:1/-1;">
         <label>Quick presets</label>
@@ -3145,11 +3174,11 @@ function renderAdminReports(){
   tbody.innerHTML = rows.length ? rows.map(bk=>{
     const price=bookingPrice(bk);
     return `<tr>
-      <td>${bk.clientName}</td>
+      <td>${esc(bk.clientName)}</td>
       <td><span class="brand-tag" style="background:${brandColor[bk.brand]}">${BRANDS[bk.brand].name}</span></td>
-      <td>${bk.serviceName}</td>
-      <td>${bk.time}</td>
-      <td><span class="status-badge ${bk.status}">${bk.status}</span></td>
+      <td>${esc(bk.serviceName)}</td>
+      <td>${esc(bk.time)}</td>
+      <td><span class="status-badge ${esc(bk.status)}">${esc(bk.status)}</span></td>
       <td>${price===null?'—':fmtMoney(price)}</td>
     </tr>`;
   }).join('') : `<tr><td colspan="6"><div class="admin-empty">No bookings on this date${scopeText==='All brands'?'':' for your department'}.</div></td></tr>`;
@@ -3192,8 +3221,8 @@ function renderAdminReports(){
     const html=`
       <p><b>Date:</b> ${targetFmt} &nbsp;&nbsp; <b>Scope:</b> ${scopeText}</p>
       <table><thead><tr><th>Client</th><th>Brand</th><th>Service</th><th>Time</th><th>Status</th><th>Price</th></tr></thead>
-      <tbody>${rows.map(bk=>{ const p=bookingPrice(bk); return `<tr><td>${bk.clientName}</td><td>${BRANDS[bk.brand].name}</td><td>${bk.serviceName}</td><td>${bk.time}</td><td>${bk.status}</td><td>${p===null?'—':'$'+p}</td></tr>`; }).join('')}</tbody></table>
-      ${sales.length?`<h3>Product sales</h3><table><thead><tr><th>Product</th><th>Brand</th><th>Qty</th><th>Unit Price</th><th>Total</th><th>Client</th></tr></thead><tbody>${sales.map(ps=>`<tr><td>${ps.n}</td><td>${BRANDS[ps.brand].name}</td><td>${ps.qty}</td><td>$${ps.unitPrice}</td><td>$${ps.total}</td><td>${ps.clientName}</td></tr>`).join('')}</tbody></table>`:''}
+      <tbody>${rows.map(bk=>{ const p=bookingPrice(bk); return `<tr><td>${esc(bk.clientName)}</td><td>${BRANDS[bk.brand].name}</td><td>${esc(bk.serviceName)}</td><td>${esc(bk.time)}</td><td>${esc(bk.status)}</td><td>${p===null?'—':'$'+p}</td></tr>`; }).join('')}</tbody></table>
+      ${sales.length?`<h3>Product sales</h3><table><thead><tr><th>Product</th><th>Brand</th><th>Qty</th><th>Unit Price</th><th>Total</th><th>Client</th></tr></thead><tbody>${sales.map(ps=>`<tr><td>${esc(ps.n)}</td><td>${BRANDS[ps.brand].name}</td><td>${ps.qty}</td><td>$${ps.unitPrice}</td><td>$${ps.total}</td><td>${esc(ps.clientName)}</td></tr>`).join('')}</tbody></table>`:''}
       <p style="margin-top:14px;"><b>Totals (bookings + product sales, excl. cancelled):</b> ${visibleBrands.map(b=>`${BRANDS[b].name} $${(combinedByBrand[b]||0).toFixed(0)}`).join(' &middot; ')} — <b>Grand total $${grand.toFixed(0)}</b></p>`;
     printReport(`Daily Report — ${targetFmt}`,html);
   };
@@ -3227,8 +3256,8 @@ function renderRegisterClose(dateIso,targetFmt,visibleBrands,combinedByBrand,gra
       return `<div style="background:#fff;border:1px solid var(--line);border-radius:9px;padding:12px 14px;margin-bottom:10px;font-size:14px;">
         <div><b>Closed — ${rc.brands.map(b=>BRANDS[b].name).join(', ')}</b></div>
         <div style="color:var(--ink-soft);margin-top:4px;">Expected ${fmtMoney(Math.round(rc.expectedTotal))} · Counted ${fmtMoney(Math.round(rc.countedTotal))} (cash ${fmtMoney(Math.round(rc.countedCash))} + card ${fmtMoney(Math.round(rc.countedCard))}) · <b>${diffTxt}</b></div>
-        ${rc.notes?`<div style="color:var(--muted);margin-top:4px;">Note: ${rc.notes}</div>`:''}
-        <div style="color:var(--muted);margin-top:4px;">Closed by ${rc.closedBy} at ${rc.closedAt}</div>
+        ${rc.notes?`<div style="color:var(--muted);margin-top:4px;">Note: ${esc(rc.notes)}</div>`:''}
+        <div style="color:var(--muted);margin-top:4px;">Closed by ${esc(rc.closedBy)} at ${rc.closedAt}</div>
         ${canReopen?`<button class="btn btn-ghost btn-sm" style="margin-top:8px;" data-reopen-close="${rc.id}">Reopen this day</button>`:''}
       </div>`;
     }).join('');
@@ -3356,13 +3385,13 @@ function renderAdminPurchases(){
   const rows=document.getElementById('purchaseRows');
   rows.innerHTML = scoped.length ? scoped.slice().reverse().map(pu=>`
     <tr>
-      <td>${pu.date}</td>
-      <td>${pu.n}</td>
+      <td>${esc(pu.date)}</td>
+      <td>${esc(pu.n)}</td>
       <td><span class="brand-tag" style="background:${brandColor[pu.brand]}">${BRANDS[pu.brand].name}</span></td>
       <td>${pu.qty}</td>
       <td>${fmtMoney(pu.unitCost)}</td>
       <td>${fmtMoney(pu.total)}</td>
-      <td>${pu.supplier||'—'}</td>
+      <td>${esc(pu.supplier||'—')}</td>
     </tr>`).join('') : `<tr><td colspan="7"><div class="admin-empty">No purchases logged yet — click "Log Purchase" when you restock from a supplier.</div></td></tr>`;
 }
 function openPurchaseForm(){
@@ -3371,7 +3400,7 @@ function openPurchaseForm(){
   document.getElementById('purchaseFormWrap').innerHTML=`
     <div class="admin-form">
       <div class="field" style="grid-column:1/-1;"><label>Product</label>
-        <select id="pu_product">${products.map(p=>`<option value="${p.id}">${p.n} — ${BRANDS[p.brand].name} (${p.stock||0} in stock)</option>`).join('')}</select>
+        <select id="pu_product">${products.map(p=>`<option value="${p.id}">${esc(p.n)} — ${BRANDS[p.brand].name} (${p.stock||0} in stock)</option>`).join('')}</select>
       </div>
       <div class="field"><label>Quantity purchased</label><input id="pu_qty" type="number" min="1" step="1" value="1"></div>
       <div class="field"><label>Unit cost ($)</label><input id="pu_cost" type="number" min="0" step="0.01" value=""></div>
