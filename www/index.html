@@ -919,7 +919,7 @@ try{
   }
 }catch(e){ supa=null; }
 
-// Staff still log in with just a name + 4-digit PIN — that part of the UI
+// Staff still log in with just a name + 6-digit PIN — that part of the UI
 // never changes. Behind the scenes each employee has a real (but hidden)
 // Supabase Auth account: a placeholder email nobody actually emails, and a
 // padded version of their PIN as the password (Supabase requires 6+
@@ -2172,6 +2172,17 @@ const PRESETS={
   reception:{label:'Reception',tabs:['bookings']},
   staff:{label:'Staff / Provider',tabs:['bookings','gallery']},
 };
+/* Owner status used to be inferred from having the Employees tab. Accounts
+   created before that changed have no isOwner field of their own, so fall
+   back to the old rule for them — otherwise the first time an existing owner
+   edited their own account the box would appear unticked and saving would
+   quietly strip their own access. Once saved, the record carries the flag
+   properly and the fallback stops applying. */
+function userIsOwner(u){
+  if(!u) return false;
+  if(u.isOwner!==undefined) return !!u.isOwner;
+  return (u.tabs||[]).includes('employees');
+}
 function tabLabel(key){ const d=TAB_DEFS.find(t=>t.key===key); return d?d.label:key; }
 function accessLabel(tabs){
   const sorted=[...tabs].sort().join(',');
@@ -2223,7 +2234,7 @@ function renderLogin(){
             ${u.tabs&&u.tabs.length?`<div class="role-pill">${accessLabel(u.tabs)}</div>`:''}
             ${u.brands&&u.brands.length?`<div class="role-pill" style="margin-top:4px;">${brandsLabel(u.brands)}</div>`:''}
             ${!supa?`<div class="cap">Demo PIN: ${u.pin}</div>`:''}
-            <input type="password" maxlength="4" inputmode="numeric" placeholder="Enter PIN" id="pin_${u.id}">
+            <input type="password" maxlength="6" inputmode="numeric" placeholder="Enter PIN" id="pin_${u.id}">
             <button class="btn btn-primary" data-login="${u.id}">Log in</button>
           </div>`).join('')}
       </div>
@@ -2953,7 +2964,7 @@ document.getElementById('addBookingBtn').addEventListener('click',openBookingFor
 
 /* ---------------- Admin: Employees (Owner only) ----------------
    New employees get a real Supabase login behind the scenes (see empEmail/
-   empPassword above) — their 4-digit PIN is what they actually type, but
+   empPassword above) — their 6-digit PIN is what they actually type, but
    it's checked and stored securely by Supabase, not compared against text
    in this file. If Supabase is unreachable, this falls back to saving
    locally only, same as the rest of the app. */
@@ -3004,7 +3015,7 @@ function openEmployeeForm(editIndex){
   document.getElementById('employeeFormWrap').innerHTML=`
     <div class="admin-form">
       <div class="field"><label>Name</label><input id="ef_name" type="text" value="${esc(u.name)}" placeholder="e.g. Lana H."></div>
-      <div class="field"><label>PIN (4 digits)</label><input id="ef_pin" type="text" maxlength="4" inputmode="numeric" value="${u.pin}" placeholder="e.g. 4321"></div>
+      <div class="field"><label>PIN (6 digits)</label><input id="ef_pin" type="text" maxlength="6" inputmode="numeric" value="${esc(u.pin)}" placeholder="e.g. 432198"></div>
       <div class="field full" style="grid-column:1/-1;">
         <label>Quick presets</label>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
@@ -3016,6 +3027,13 @@ function openEmployeeForm(editIndex){
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0 14px;background:#fff;border:1px solid var(--line);border-radius:9px;padding:4px 12px;">
           ${checkboxes}
         </div>
+      </div>
+      <div class="field full" style="grid-column:1/-1;">
+        <label>Full owner access</label>
+        <label style="display:flex;align-items:flex-start;gap:10px;font-size:14px;font-weight:400;color:var(--ink-soft);background:#fff;border:1px solid var(--line);border-radius:9px;padding:12px;">
+          <input type="checkbox" id="ef_owner" ${userIsOwner(u)?'checked':''} style="margin-top:3px;flex:none;">
+          <span>Treat this person as an <b>owner</b>. They will see every brand's data and every figure in the business, ignoring the department limits below. Leave this off for managers and reception — including anyone who just needs to add or edit staff.</span>
+        </label>
       </div>
       <div class="field full" style="grid-column:1/-1;">
         <label>Department (which brand's data they can see)</label>
@@ -3040,14 +3058,27 @@ function openEmployeeForm(editIndex){
     const tabs=Array.from(document.querySelectorAll('.ef-tab-cb:checked')).map(cb=>cb.value);
     const brands=Array.from(document.querySelectorAll('.ef-brand-cb:checked')).map(cb=>cb.value);
     if(!name){ document.getElementById('ef_name').focus(); return; }
-    if(!/^\d{4}$/.test(pin)){ toast('PIN must be exactly 4 digits.'); document.getElementById('ef_pin').focus(); return; }
+    if(!/^\d{6}$/.test(pin)){ toast('PIN must be exactly 6 digits.'); document.getElementById('ef_pin').focus(); return; }
     if(!tabs.length){ toast('Share at least one section with this employee.'); return; }
     if(!brands.length){ toast('Select at least one department — Dolce, Polished, or Core.'); return; }
     if(editing && u.tabs.includes('employees') && !tabs.includes('employees')){
       const otherEmployeeAdmins=STORE.users.filter((x,xi)=>xi!==editIndex && x.tabs.includes('employees'));
       if(!otherEmployeeAdmins.length){ toast('At least one account needs Employees access, so someone can always manage accounts.'); return; }
     }
-    const isOwnerRole=tabs.includes('employees');
+    /* Owner status is now its OWN deliberate choice, not a side effect of
+       sharing the Employees tab. It used to be `tabs.includes('employees')`,
+       which meant that giving a manager access to add a colleague silently
+       handed them every brand's data and every figure in the business —
+       the database's permission rules all begin by asking "is this an
+       owner?", so that one checkbox quietly bypassed every department limit.
+       Nothing on screen said so. */
+    const isOwnerRole=!!document.getElementById('ef_owner').checked;
+    // Never let the last owner be demoted — that would leave an account
+    // nobody can fully administer.
+    if(editing && userIsOwner(u) && !isOwnerRole){
+      const otherOwners=STORE.users.filter((x,xi)=>xi!==editIndex && userIsOwner(x));
+      if(!otherOwners.length){ toast('At least one account needs full owner access.'); return; }
+    }
     const saveBtn=document.getElementById('ef_save'); saveBtn.disabled=true;
     try{
 
@@ -3065,7 +3096,7 @@ function openEmployeeForm(editIndex){
           toast(`${name} was updated, but changing another person's PIN isn't supported yet — ${name} can change their own PIN by logging in and editing their own account.`);
         }
       }
-      STORE.users[editIndex]={...STORE.users[editIndex],name,tabs,brands,pin:(pinChangedForOther?u.pin:pin)};
+      STORE.users[editIndex]={...STORE.users[editIndex],name,tabs,brands,isOwner:isOwnerRole,pin:(pinChangedForOther?u.pin:pin)};
       if(currentUser && currentUser.id===STORE.users[editIndex].id){
         currentUser=STORE.users[editIndex];
         showAdminForRole();
@@ -3087,9 +3118,9 @@ function openEmployeeForm(editIndex){
       const newId=signUpData.user.id;
       const{error:profErr}=await supa.from('profiles').insert({id:newId,name,brands,tabs,is_owner:isOwnerRole,login_slug:slug});
       if(profErr){ toast('Account created, but saving their profile failed — '+profErr.message); saveBtn.disabled=false; return; }
-      STORE.users.push({id:newId,name,tabs,pin,brands,loginSlug:slug});
+      STORE.users.push({id:newId,name,tabs,pin,brands,loginSlug:slug,isOwner:isOwnerRole});
     } else {
-      STORE.users.push({id:nextId('u',STORE.users),name,tabs,pin,brands});
+      STORE.users.push({id:nextId('u',STORE.users),name,tabs,pin,brands,isOwner:isOwnerRole});
     }
     saveStore();
     document.getElementById('employeeFormWrap').innerHTML='';
