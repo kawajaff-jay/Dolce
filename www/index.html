@@ -612,7 +612,7 @@
       <button data-admin-tab="gallery">Photos &amp; Video</button>
       <button data-admin-tab="employees">Employees</button>
       <button data-admin-tab="reports">Reports</button>
-      <button data-admin-tab="purchases">Purchases</button>
+      <button data-admin-tab="purchases">Restocking</button>
     </div>
 
     <div class="admin-panel active" id="adminOverview">
@@ -660,6 +660,7 @@
         <div style="font-size:14px;color:var(--ink-soft);"><span id="prodCount">0</span> products <span id="prodScopeLabel">across all brands</span></div>
         <button class="btn btn-primary" id="addProductBtn">+ Add Product</button>
       </div>
+      <p style="font-size:13.5px;color:var(--muted);margin:-6px 0 14px;max-width:560px;"><b>What you sell.</b> Price, discount, photo and stock on hand for everything in the Client App's Shop — and where you record a sale to a customer. To add stock you've bought in, use the Restocking tab.</p>
       <div id="productFormWrap"></div>
       <div id="productSaleFormWrap"></div>
       <div class="admin-table-wrap">
@@ -781,10 +782,10 @@
 
     <div class="admin-panel" id="adminPurchases">
       <div class="admin-toolbar">
-        <div style="font-size:14px;color:var(--ink-soft);"><span id="purchaseCount">0</span> purchases logged <span id="purchaseScopeLabel"></span></div>
-        <button class="btn btn-primary" id="addPurchaseBtn">+ Log Purchase</button>
+        <div style="font-size:14px;color:var(--ink-soft);"><span id="purchaseCount">0</span> restocks logged <span id="purchaseScopeLabel"></span></div>
+        <button class="btn btn-primary" id="addPurchaseBtn">+ Log Restock</button>
       </div>
-      <p style="font-size:13.5px;color:var(--muted);margin:-6px 0 14px;max-width:560px;">Log inventory you buy in from a supplier — it's added to that product's stock automatically. This is how Stock levels on the Products tab actually move.</p>
+      <p style="font-size:13.5px;color:var(--muted);margin:-6px 0 14px;max-width:560px;"><b>Stock coming in.</b> Log what you buy from a supplier — the quantity is added to that product's stock straight away, and the cost is recorded for your reports. For stock going <i>out</i> to a customer, use "Sell" on the Products tab.</p>
       <div id="purchaseFormWrap"></div>
       <div class="admin-table-wrap">
         <table class="admin-table">
@@ -2834,7 +2835,7 @@ const TAB_DEFS=[
   {key:'gallery',label:'Photos & Video'},
   {key:'employees',label:'Employees'},
   {key:'reports',label:'Reports'},
-  {key:'purchases',label:'Purchases'},
+  {key:'purchases',label:'Restocking'},
 ];
 const PRESETS={
   owner:{label:'Owner / Admin',tabs:TAB_DEFS.map(t=>t.key)},
@@ -4180,7 +4181,7 @@ function exportSectionsForCurrentUser(){
   }
   if(allowed.includes('purchases')){
     const rows=STORE.purchases.filter(pu=>canSeeBrand(currentUser,pu.brand));
-    sections.push({title:'Purchases',head:['Date','Product','Brand','Qty','Unit Cost','Total','Supplier'],
+    sections.push({title:'Restocking',head:['Date','Product','Brand','Qty','Unit Cost','Total','Supplier'],
       rows:rows.map(pu=>[pu.date,pu.n,BRANDS[pu.brand].name,pu.qty,pu.unitCost,pu.total,pu.supplier||''])});
   }
   if(allowed.includes('services')){
@@ -4243,7 +4244,7 @@ function renderAdminPurchases(){
       <td>${fmtMoney(pu.unitCost)}</td>
       <td>${fmtMoney(pu.total)}</td>
       <td>${esc(pu.supplier||'—')}</td>
-    </tr>`).join('') : `<tr><td colspan="7"><div class="admin-empty">No purchases logged yet — click "Log Purchase" when you restock from a supplier.</div></td></tr>`;
+    </tr>`).join('') : `<tr><td colspan="7"><div class="admin-empty">Nothing logged yet — click "Log Restock" when you buy stock in from a supplier.</div></td></tr>`;
 }
 function openPurchaseForm(){
   const products=STORE.products.filter(p=>canSeeBrand(currentUser,p.brand));
@@ -4259,7 +4260,7 @@ function openPurchaseForm(){
       <div class="field"><label>Date</label><input id="pu_date" type="date" value="${reportDateDefault()}"></div>
       <div class="actions">
         <button class="btn btn-ghost" id="pu_cancel">Cancel</button>
-        <button class="btn btn-primary" id="pu_save">Log Purchase</button>
+        <button class="btn btn-primary" id="pu_save">Log Restock</button>
       </div>
     </div>`;
   document.getElementById('pu_cancel').addEventListener('click',()=>{document.getElementById('purchaseFormWrap').innerHTML='';});
