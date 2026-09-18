@@ -137,6 +137,15 @@
   .admin-empty{text-align:center;padding:34px 10px;color:var(--muted);font-size:14.5px;}
   .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:999px;font-size:14.5px;font-weight:600;box-shadow:0 14px 30px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:100;display:flex;align-items:center;gap:8px;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  /* The aftercare prompt, shown the moment a treatment is marked Completed. */
+  #aftercarePanel{display:none;}
+  #aftercarePanel.open{display:block;}
+  .ac-card{border:1px solid var(--gold);background:#fffdf7;border-radius:14px;padding:16px 18px;margin:0 0 16px;max-width:620px;}
+  .ac-head{font-size:15.5px;font-weight:700;color:var(--ink);margin-bottom:2px;}
+  .ac-meta{font-size:13px;color:var(--muted);margin-bottom:10px;}
+  .ac-body{white-space:pre-wrap;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.55;color:var(--ink-soft);}
+  .ac-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap;}
+  .ac-foot{font-size:12.5px;color:var(--muted);margin-top:8px;}
 
   /* ---------- Gallery (admin) ---------- */
   .gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;}
@@ -719,6 +728,7 @@
         <button class="btn btn-primary" id="addBookingBtn">+ Add Booking</button>
       </div>
       <div id="bookingFormWrap"></div>
+      <div id="aftercarePanel"></div>
       <div class="admin-table-wrap">
         <table class="admin-table">
           <thead><tr><th>Client</th><th>Brand</th><th>Service</th><th>Date / Time</th><th>Status</th><th></th></tr></thead>
@@ -1080,9 +1090,11 @@ const CLOUD_TABLES={
     list:(brand)=>STORE.services[brand]||[],
     row:(s,job)=>({id:s.id,brand:job.brand,name:s.n,category:s.cat||'',duration:s.dur||'',
       price_usd:numOr0(s.price),discount_percent:numOr0(s.discount),description:s.desc||'',
-      points:s.points||[],image:s.image||'',sort_order:(STORE.services[job.brand]||[]).indexOf(s)}),
+      points:s.points||[],image:s.image||'',aftercare:s.aftercare||'',
+      sort_order:(STORE.services[job.brand]||[]).indexOf(s)}),
     app:(r)=>({id:r.id,n:r.name,cat:r.category,dur:r.duration,price:Number(r.price_usd),
-      discount:r.discount_percent||0,desc:r.description||'',points:r.points||[],image:r.image||''}),
+      discount:r.discount_percent||0,desc:r.description||'',points:r.points||[],image:r.image||'',
+      aftercare:r.aftercare||''}),
   },
   products:{
     table:'products',
@@ -1103,10 +1115,11 @@ const CLOUD_TABLES={
     list:()=>STORE.bookings,
     row:(b)=>({id:b.id,brand:b.brand,service_id:b.serviceId||'',service_name:b.serviceName||'',
       date_label:b.date||'',time_label:b.time||'',date_iso:toIsoDate(b.date),
-      status:b.status||'Requested',client_name:b.clientName||'',client_id:b.clientId||null}),
+      status:b.status||'Requested',client_name:b.clientName||'',client_id:b.clientId||null,
+      client_phone:b.phone||'',aftercare_ok:!!b.aftercareOk}),
     app:(r)=>({id:r.id,brand:r.brand,serviceId:r.service_id||'',serviceName:r.service_name||'',
       date:r.date_label||'',time:r.time_label||'',status:r.status,clientName:r.client_name||'',
-      clientId:r.client_id||undefined}),
+      clientId:r.client_id||undefined,phone:r.client_phone||'',aftercareOk:!!r.aftercare_ok}),
   },
   media:{
     table:'media',
@@ -3340,6 +3353,9 @@ function openServiceForm(editIndex){
       <div class="field"><label>Price ($)</label><input id="sf_price" type="number" min="0" step="1" value="${s.price}"></div>
       <div class="field"><label>Discount % (optional)</label><input id="sf_discount" type="number" min="0" max="99" step="1" placeholder="0 — no discount" value="${s.discount||''}"></div>
       <div class="field full" style="grid-column:1/-1;"><label>Description</label><textarea id="sf_desc" rows="2" placeholder="Short client-facing description">${esc(s.desc||'')}</textarea></div>
+      <div class="field full" style="grid-column:1/-1;"><label>Aftercare note (sent to the client when this treatment is marked Completed)</label><textarea id="sf_aftercare" rows="3" placeholder="Written by your clinician — e.g. what to avoid, what to use, when to come back">${esc(s.aftercare||'')}</textarea>
+        <div style="font-size:13px;color:var(--muted);margin-top:6px;">Leave this empty and nothing is sent for this treatment. Keep it to general aftercare your doctor has approved — it goes to every client who has this treatment, so it cannot contain advice meant for one person.</div>
+      </div>
       <div class="field full" style="grid-column:1/-1;"><label>Photo ${s.image?'(uploaded — choose a file to replace it)':'(optional — falls back to a colour swatch)'}</label>
         <div class="upload-drop"><input id="sf_image" type="file" accept="image/*"></div>
         <div id="sf_frame"></div>
@@ -3359,6 +3375,7 @@ function openServiceForm(editIndex){
     const price=parseFloat(document.getElementById('sf_price').value)||0;
     const discount=Math.min(99,Math.max(0,parseInt(document.getElementById('sf_discount').value)||0));
     const desc=document.getElementById('sf_desc').value.trim();
+    const aftercare=document.getElementById('sf_aftercare').value.trim();
     if(!n){ document.getElementById('sf_name').focus(); return; }
     const saveBtn=document.getElementById('sf_save'); saveBtn.disabled=true; saveBtn.textContent='Saving…';
     const pickedSf = sfPos ? sfPos.value() : null;
@@ -3367,9 +3384,9 @@ function openServiceForm(editIndex){
     pruneFocus();
     const prevItem = editing ? {...list[editIndex]} : null;
     if(editing){
-      list[editIndex]={...list[editIndex],n,cat,dur,price,discount,desc,image};
+      list[editIndex]={...list[editIndex],n,cat,dur,price,discount,desc,image,aftercare};
     } else {
-      list.push({id:nextId('svc_'+svcBrandTab+'_',list),n,cat,dur,price,discount,desc,image,points:[]});
+      list.push({id:nextId('svc_'+svcBrandTab+'_',list),n,cat,dur,price,discount,desc,image,aftercare,points:[]});
     }
     const ok=saveStore();
     if(!ok){
@@ -3600,6 +3617,9 @@ function renderAdminBookings(){
     bk.status=nextStatus[bk.status]; saveStore(); cloudSave('bookings',bk.id); renderAdminBookings();
     toast(`${bk.clientName}'s booking marked ${bk.status}.`);
     if(currentScreen==='bookings') render();
+    // The client is at the desk on their way out — this is the moment the
+    // aftercare note is worth sending, not days later.
+    if(bk.status==='Completed') offerAftercare(bk);
   }));
   rows.querySelectorAll('[data-cancel-booking]').forEach(b=>b.addEventListener('click',()=>{
     const i=parseInt(b.dataset.cancelBooking); const bk=STORE.bookings[i];
@@ -3608,15 +3628,90 @@ function renderAdminBookings(){
     if(currentScreen==='bookings') render();
   }));
 }
+/* ---------------- Aftercare: the note that goes out when a treatment ends ----
+
+   A client who has just had a treatment is the one person most likely to
+   read, and act on, a short note about looking after the result — "wear
+   sunblock" matters far more on the day of a Hydrafacial than three days
+   later. So the prompt appears at the moment reception marks the booking
+   Completed, while the client is still at the desk.
+
+   Nothing is sent behind anyone's back: the note is shown in full, and it
+   only goes when someone presses the button, which hands it to WhatsApp with
+   the text already written. Sending it without that press needs the WhatsApp
+   Business API, which is a separate piece of work — when that exists, this
+   same trigger can do it silently and nothing else here has to change.
+
+   Three things have to be true or the prompt stays away: the treatment has a
+   note written for it, the client agreed to be contacted, and we have a
+   number to send it to. */
+
+function aftercareNoteFor(booking){
+  const list=(STORE.services[booking.brand]||[]);
+  const svc=list.find(s=>s.id===booking.serviceId);
+  return (svc && svc.aftercare || '').trim();
+}
+
+function bookingPhone(booking){
+  if(booking.phone) return normalizedPhone(booking.phone);
+  // A booking made from the Client App carries an account rather than a
+  // typed-in number.
+  const c=booking.clientId ? (STORE.clients||[]).find(x=>x.id===booking.clientId) : null;
+  return c ? normalizedPhone(c.phone||'') : '';
+}
+
+function offerAftercare(booking){
+  const note=aftercareNoteFor(booking);
+  if(!note) return;
+  if(!booking.aftercareOk) return;
+  const phone=bookingPhone(booking);
+  if(!phone) return;
+
+  const firstName=(booking.clientName||'').split(' ')[0]||'';
+  // The notification a phone shows on its lock screen says nothing about
+  // what the treatment was — some of what a clinic does is nobody else's
+  // business, and phones get read over shoulders.
+  const body=`${firstName?'Hi '+firstName+' — ':''}a note from ${BRANDS[booking.brand].name} about looking after your results:\n\n${note}`;
+
+  const wrap=document.getElementById('aftercarePanel');
+  wrap.innerHTML=`
+    <div class="ac-card">
+      <div class="ac-head">Send ${esc(booking.clientName)} their aftercare note?</div>
+      <div class="ac-meta">${esc(booking.serviceName)} · ${esc(booking.phone||phone)}</div>
+      <div class="ac-body">${esc(body)}</div>
+      <div class="ac-actions">
+        <button class="btn btn-ghost btn-sm" id="ac_skip">Not this time</button>
+        <button class="btn btn-primary btn-sm" id="ac_send">Send on WhatsApp</button>
+      </div>
+      <div class="ac-foot">Opens WhatsApp with the message ready — check it, then press send there.</div>
+    </div>`;
+  wrap.classList.add('open');
+  const close=()=>{ wrap.classList.remove('open'); wrap.innerHTML=''; };
+  document.getElementById('ac_skip').addEventListener('click',close);
+  document.getElementById('ac_send').addEventListener('click',()=>{
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(body)}`,'_blank','noopener');
+    close();
+    toast('Aftercare note opened in WhatsApp.');
+  });
+}
+
 function openBookingForm(){
   const brands=userBrands(currentUser);
   document.getElementById('bookingFormWrap').innerHTML=`
     <div class="admin-form">
       <div class="field"><label>Client name</label><input id="bf_client" type="text" placeholder="e.g. Lana H."></div>
+      <div class="field"><label>Phone number</label><input id="bf_phone" type="tel" inputmode="tel" placeholder="+964 750 123 4567"></div>
       <div class="field"><label>Brand</label><select id="bf_brand">${brands.map(b=>`<option value="${b}">${BRANDS[b].name}</option>`).join('')}</select></div>
       <div class="field"><label>Service</label><select id="bf_service"></select></div>
       <div class="field"><label>Date</label><input id="bf_date" type="text" placeholder="e.g. Sep 2, 2026"></div>
       <div class="field"><label>Time</label><input id="bf_time" type="text" placeholder="e.g. 5:00 PM"></div>
+      <div class="field full" style="grid-column:1/-1;">
+        <label style="display:flex;align-items:flex-start;gap:9px;font-weight:600;cursor:pointer;">
+          <input id="bf_consent" type="checkbox" style="margin-top:3px;flex:none;">
+          <span>Client agreed to receive aftercare messages about their treatment</span>
+        </label>
+        <div style="font-size:13px;color:var(--muted);margin-top:6px;">Ask them at the desk. Without this tick no message is offered when the treatment is completed.</div>
+      </div>
       <div class="actions">
         <button class="btn btn-ghost" id="bf_cancel">Cancel</button>
         <button class="btn btn-primary" id="bf_save">Add booking</button>
@@ -3631,12 +3726,14 @@ function openBookingForm(){
   document.getElementById('bf_cancel').addEventListener('click',()=>{document.getElementById('bookingFormWrap').innerHTML='';});
   document.getElementById('bf_save').addEventListener('click',()=>{
     const clientName=document.getElementById('bf_client').value.trim()||'Walk-in';
+    const phone=document.getElementById('bf_phone').value.trim();
+    const aftercareOk=!!document.getElementById('bf_consent').checked;
     const brand=document.getElementById('bf_brand').value;
     const serviceId=document.getElementById('bf_service').value;
     const serviceName=svcList(brand).find(s=>s.id===serviceId).n;
     const date=document.getElementById('bf_date').value.trim()||'TBD';
     const time=document.getElementById('bf_time').value.trim()||'TBD';
-    const newBooking={id:nextId('b',STORE.bookings),brand,serviceId,serviceName,date,time,status:'Confirmed',clientName};
+    const newBooking={id:nextId('b',STORE.bookings),brand,serviceId,serviceName,date,time,status:'Confirmed',clientName,phone,aftercareOk};
     STORE.bookings.push(newBooking);
     saveStore(); cloudSave('bookings',newBooking.id);
     document.getElementById('bookingFormWrap').innerHTML='';
