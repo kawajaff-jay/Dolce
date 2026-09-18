@@ -2497,8 +2497,19 @@ function renderLogin(){
       if(profErr || !profile){ toast('Logged in, but this account has no profile set up yet — ask the owner to check the Employees tab.'); await supa.auth.signOut(); return; }
       loggedInUser={id:profile.id,name:profile.name,brands:profile.brands||[],tabs:profile.tabs||[],isOwner:!!profile.is_owner,pin:u.pin};
     } else {
-      // Offline fallback (no internet / Supabase unreachable): fall back to
-      // the old local-only check so the demo still works while offline.
+      // Offline fallback (no internet, or the Supabase library failed to
+      // load). This checks the PIN against the copy held on this device.
+      //
+      // Critically, it must REFUSE accounts that have no usable local PIN.
+      // Staff names pulled from the cloud are stored with pin:'' because the
+      // real PIN lives with Supabase and never comes down here. Without this
+      // guard, `entered !== u.pin` compares '' against '' — so anyone could
+      // knock the device offline, pick a name from the list, and sign in by
+      // pressing Log In with the PIN box left empty.
+      if(!u.pin || !/^\d{4,6}$/.test(u.pin)){
+        toast('This account can only sign in while online — check the connection and try again.');
+        return;
+      }
       if(entered!==u.pin){ toast('Incorrect PIN for that account.'); return; }
       loggedInUser=u;
     }
