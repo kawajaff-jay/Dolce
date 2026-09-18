@@ -152,6 +152,14 @@
   .tag.video{background:#52514e;}
   .upload-drop{border:1.5px dashed var(--line);border-radius:10px;padding:16px;text-align:center;font-size:13.5px;color:var(--ink-soft);background:#fff;}
   .upload-drop input{width:100%;}
+  .img-pos{margin-top:10px;}
+  .img-pos .row{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;}
+  .img-pos .fr{background:#efece6;background-size:cover;background-repeat:no-repeat;border:1px solid var(--line);border-radius:10px;cursor:grab;touch-action:none;}
+  .img-pos .fr.wide{width:255px;height:78px;}
+  .img-pos .fr.sq{width:78px;height:78px;border-radius:12px;}
+  .img-pos .cap{font-size:11.5px;color:var(--muted);margin-top:4px;letter-spacing:.3px;}
+  .img-pos .reset{padding:6px 12px;font-size:12.5px;}
+  .img-pos .hint{font-size:12.5px;color:var(--muted);margin-top:8px;}
   .admin-form .consent-row{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink-soft);grid-column:1/-1;}
 
   /* ---------- Gallery (client) ---------- */
@@ -224,9 +232,9 @@
   .hero-cards .hc .name,.hero-cards .hc .sub{position:relative;z-index:1;}
   .hero-cards .hc .name{font-size:19px;}
   .hero-cards .hc .sub{font-size:12.5px;opacity:.9;font-family:system-ui,sans-serif;letter-spacing:.5px;text-transform:uppercase;}
-  .hc.dolce{background:linear-gradient(160deg,#b38653,#7d5a33);grid-row:1/3;}
-  .hc.polished{background:linear-gradient(160deg,#8a5b34,#4d2b16);}
-  .hc.core{background:linear-gradient(160deg,#74926a,#3a5433);}
+  .hc.dolce{background-image:linear-gradient(160deg,#b38653,#7d5a33);grid-row:1/3;}
+  .hc.polished{background-image:linear-gradient(160deg,#8a5b34,#4d2b16);}
+  .hc.core{background-image:linear-gradient(160deg,#74926a,#3a5433);}
 
   /* ---------- Features ---------- */
   .features{padding:36px 0 8px;}
@@ -325,9 +333,17 @@
   .dest-card::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(0,0,0,.55) 100%);}
   .dest-card span,.dest-card small{position:relative;z-index:1;}
   .dest-card small{display:block;font-family:system-ui,sans-serif;font-size:13px;letter-spacing:1.2px;text-transform:uppercase;font-weight:600;opacity:.92;}
-  .dest-card.dolce{background:linear-gradient(120deg,#b38653,#7d5a33);}
-  .dest-card.polished{background:linear-gradient(120deg,#8a5b34,#4d2b16);}
-  .dest-card.core{background:linear-gradient(120deg,#74926a,#3a5433);}
+  /* A logo isn't a photo: it has to be seen whole, so it is fitted inside the
+     card instead of filling it, and the dark scrim and brand name are dropped
+     because the logo already carries the name and the scrim would sit on top
+     of it. */
+  .dest-card.is-logo,.hero-cards .hc.is-logo{background-color:var(--cream);}
+  .dest-card.is-logo::before,.hero-cards .hc.is-logo::before{display:none;}
+  .dest-card.is-logo span,.dest-card.is-logo small,
+  .hero-cards .hc.is-logo .name,.hero-cards .hc.is-logo .sub{display:none;}
+  .dest-card.dolce{background-image:linear-gradient(120deg,#b38653,#7d5a33);}
+  .dest-card.polished{background-image:linear-gradient(120deg,#8a5b34,#4d2b16);}
+  .dest-card.core{background-image:linear-gradient(120deg,#74926a,#3a5433);}
   .offers-strip{display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;margin:14px 0 4px;padding-bottom:2px;}
   .offers-strip::-webkit-scrollbar{height:0;}
   .offer-chip{flex:none;width:140px;min-height:70px;height:auto;scroll-snap-align:start;border-radius:12px;background:var(--card);border:1px solid var(--line);padding:9px;font-size:12.5px;overflow-wrap:break-word;overflow:hidden;}
@@ -913,6 +929,10 @@ function defaultStore(){
     // tab since it moves with the market rather than being a fixed peg.
     settings:{usdToIqd:1450},
     brandImages:{dolce:'',polished:'',core:''},
+    // Where each photo should be cropped from, when someone has chosen by
+    // hand rather than leaving it to the automatic subject-finder. Keyed by
+    // the picture itself, so the choice follows it wherever it is shown.
+    imageFocus:{},
     // `brands` scopes an account to one or more departments (Dolce / Polished
     // / Core). Bookings, Products, Services, Offers and Photos & Video are
     // all filtered to only these brands for that account; Overview and
@@ -944,6 +964,7 @@ function loadStore(){
         if(!parsed.registerCloses) parsed.registerCloses=[];
         if(!parsed.settings) parsed.settings=defaultStore().settings;
         if(!parsed.settings.usdToIqd) parsed.settings.usdToIqd=defaultStore().settings.usdToIqd;
+        if(!parsed.imageFocus || typeof parsed.imageFocus!=='object') parsed.imageFocus={};
         // Older saved products predate stock tracking — default them to a
         // reasonable on-hand quantity rather than 0, so existing catalogs
         // don't suddenly all show as out of stock.
@@ -1142,7 +1163,9 @@ const CLOUD_TABLES={
   },
   settings:{
     table:'settings', key:'key',
-    find:()=>({key:'usd_to_iqd',value:String(STORE.settings.usdToIqd||1450)}),
+    find:(id)=> id==='image_focus'
+      ? {key:'image_focus',value:JSON.stringify(STORE.imageFocus||{})}
+      : {key:'usd_to_iqd',value:String(STORE.settings.usdToIqd||1450)},
     row:(x)=>x,
   },
 };
@@ -1408,7 +1431,7 @@ async function pullCatalog(){
       supa.from('products').select('*'),
       supa.from('offers').select('*'),
       supa.from('brand_images').select('*'),
-      supa.from('settings').select('*').eq('key','usd_to_iqd').maybeSingle(),
+      supa.from('settings').select('*').in('key',['usd_to_iqd','image_focus']),
     ]);
     if(svc.error||prod.error||off.error) return false;
 
@@ -1428,8 +1451,22 @@ async function pullCatalog(){
       STORE.offers  =mergeFromCloud(STORE.offers,  offRows, CLOUD_TABLES.offers,  ()=>true);
     }
     if(!img.error && img.data) img.data.forEach(r=>{ if(r.image_url) STORE.brandImages[r.brand]=r.image_url; });
-    if(!set.error && set.data && set.data.value){
-      const rate=Number(set.data.value); if(rate>0) STORE.settings.usdToIqd=rate;
+    if(!set.error && set.data){
+      const row=(k)=>set.data.find(r=>r.key===k);
+      const rateRow=row('usd_to_iqd');
+      if(rateRow && rateRow.value){ const rate=Number(rateRow.value); if(rate>0) STORE.settings.usdToIqd=rate; }
+      // Hand-chosen photo positions, so a picture framed on one device is
+      // framed the same way on all of them.
+      const focusRow=row('image_focus');
+      if(focusRow && focusRow.value){
+        try{
+          const parsed=JSON.parse(focusRow.value);
+          if(parsed && typeof parsed==='object'){
+            STORE.imageFocus={...(STORE.imageFocus||{}),...parsed};
+            focalCache.clear();
+          }
+        }catch(e){}
+      }
     }
 
     // Staff directory — names only, so everyone this owner has added appears
@@ -2039,6 +2076,395 @@ function bodyHtml(){
     case 'auth': return renderClientAuth();
     default: return '';
   }
+}
+
+/* ---------------- Photos: aim each card's crop at the subject ----------------
+
+   Every card shows a photo with `background-size:cover`, which fills the card
+   and trims whatever doesn't fit — from the middle. Cards are all different
+   shapes (a wide brand card, a square swatch, a tall hero), so a head-and-
+   shoulders photo uploaded once would lose the head on the wide ones.
+
+   Rather than crop the photo when it is uploaded (which would throw away
+   pixels the taller cards could have used), the whole photo is kept and each
+   card is simply told WHERE to crop from. That is what `background-position`
+   does, and it costs nothing: the same stored photo lands correctly on every
+   card shape, old photos are fixed too, and the database never has to know.
+
+   Finding the subject is done on a 48px thumbnail, scoring each pixel two ways:
+     - detail: flat areas (a wall, a backdrop, sky) score near zero while edges
+       score high, so the score follows the subject and not the background;
+     - skin: pixels in a skin-tone range count extra, because in this app the
+       subject of a photo is nearly always a person.
+   The weighted average of those scores is the focal point.
+
+   The work happens once per distinct photo and the answer is cached, so a
+   screen full of cards sharing a photo costs one measurement, not twenty. */
+
+const focalCache=new Map();
+const focalPending=new Map();
+
+function measureFocus(img){
+  try{
+    const N=48;
+    const w=Math.max(1,Math.min(N,img.naturalWidth||img.width));
+    const h=Math.max(1,Math.min(N,img.naturalHeight||img.height));
+    const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+    const ctx=cv.getContext('2d',{willReadFrequently:true});
+    ctx.drawImage(img,0,0,w,h);
+    const d=ctx.getImageData(0,0,w,h).data;
+    const lum=new Float32Array(w*h);
+    const skin=new Uint8Array(w*h);
+    for(let i=0,p=0;i<w*h;i++,p+=4){
+      const r=d[p], g=d[p+1], b=d[p+2];
+      lum[i]=0.299*r+0.587*g+0.114*b;
+      const mx=Math.max(r,g,b), mn=Math.min(r,g,b);
+      skin[i]=(r>95&&g>40&&b>20&&mx-mn>15&&Math.abs(r-g)>15&&r>g&&r>b)?1:0;
+    }
+    // Detail first: how busy is each pixel's neighbourhood?
+    const detail=new Float32Array(w*h);
+    let skinCount=0;
+    for(let y=0;y<h;y++){
+      for(let x=0;x<w;x++){
+        const i=y*w+x;
+        detail[i]=Math.abs(lum[i]-lum[i+(x<w-1?1:0)])+Math.abs(lum[i]-lum[i+(y<h-1?w:0)]);
+        if(skin[i]) skinCount++;
+      }
+    }
+    // If there is a person in the photo, the person is the subject — aim at
+    // them and ignore everything else. Judging by detail alone gets this
+    // wrong in an ordinary portrait: a dark dress against a pale wall has two
+    // long high-contrast edges and outweighs the face, so the crop settles on
+    // the chest. A trace of skin-coloured background shouldn't trigger this,
+    // hence the 2% floor.
+    let sx=0, sy=0, sw=0;
+    // A skin-toned wall or a sepia photo is background, not a subject, so a
+    // very large skin area means the test has stopped telling us anything.
+    if(skinCount>=0.02*w*h && skinCount<=0.6*w*h){
+      for(let i=0;i<w*h;i++){
+        if(!skin[i]) continue;
+        // Within the skin, favour the busy parts — eyes, mouth, hairline —
+        // over a flat expanse of arm or shoulder.
+        const weight=1+detail[i];
+        sx+=weight*((i%w)+0.5); sy+=weight*(Math.floor(i/w)+0.5); sw+=weight;
+      }
+    } else {
+      for(let i=0;i<w*h;i++){
+        const weight=detail[i];
+        sx+=weight*((i%w)+0.5); sy+=weight*(Math.floor(i/w)+0.5); sw+=weight;
+      }
+    }
+    // A flat image has no subject to find — leave it centred.
+    if(!(sw>0)) return {x:50,y:50};
+    return {
+      x:Math.round(Math.max(0,Math.min(1,sx/sw/w))*100),
+      y:Math.round(Math.max(0,Math.min(1,sy/sw/h))*100)
+    };
+  }catch(e){
+    // A photo from another site would taint the canvas and block reading it.
+    return {x:50,y:50};
+  }
+}
+
+function focusFor(url){
+  if(focalCache.has(url)) return Promise.resolve(focalCache.get(url));
+  if(focalPending.has(url)) return focalPending.get(url);
+  const chosen=savedFocus(url);
+  if(chosen){ focalCache.set(url,chosen); return Promise.resolve(chosen); }
+  const p=new Promise(resolve=>{
+    const img=new Image();
+    img.onload=()=>{
+      const lg=looksLikeLogo(img);
+      const f=lg ? {logo:true,bg:lg.bg,x:50,y:50} : measureFocus(img);
+      focalCache.set(url,f); resolve(f);
+    };
+    img.onerror=()=>{ const f={x:50,y:50}; focalCache.set(url,f); resolve(f); };
+    img.src=url;
+  }).then(f=>{ focalPending.delete(url); return f; });
+  focalPending.set(url,p);
+  return p;
+}
+
+/* Is this a logo (or other flat graphic) rather than a photograph?
+
+   A logo sits on a plain, usually white or transparent, backdrop that runs
+   right to the edges. A photograph almost never does. Filling a card with a
+   logo crops the wordmark in half, so once we can tell the two apart the card
+   can fit the logo inside itself instead. Measured on the same thumbnail the
+   focal point uses. Returns the logo's own backdrop colour when it finds one,
+   so the card can take that colour and the logo sits on it seamlessly instead
+   of in a visible white box. */
+function looksLikeLogo(img){
+  try{
+    const N=48;
+    const w=Math.max(1,Math.min(N,img.naturalWidth||img.width));
+    const h=Math.max(1,Math.min(N,img.naturalHeight||img.height));
+    if(w<4||h<4) return false;
+    const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+    const ctx=cv.getContext('2d',{willReadFrequently:true});
+    ctx.clearRect(0,0,w,h);
+    ctx.drawImage(img,0,0,w,h);
+    const d=ctx.getImageData(0,0,w,h).data;
+    const at=(x,y)=>{ const p=(y*w+x)*4; return [d[p],d[p+1],d[p+2],d[p+3]]; };
+    // The colour in the corners is the backdrop, if there is one.
+    const corners=[at(0,0),at(w-1,0),at(0,h-1),at(w-1,h-1)];
+    const bg=corners[0];
+    const near=(c)=>{
+      if(c[3]<16 && bg[3]<16) return true;              // both transparent
+      if((c[3]<16)!==(bg[3]<16)) return false;
+      return Math.abs(c[0]-bg[0])<=18 && Math.abs(c[1]-bg[1])<=18 && Math.abs(c[2]-bg[2])<=18;
+    };
+    if(!corners.every(near)) return null;
+    // A logo's backdrop is light or transparent — a dark photo corner isn't one.
+    const lum=0.299*bg[0]+0.587*bg[1]+0.114*bg[2];
+    if(bg[3]>=16 && lum<200) return null;
+    // The whole border should be that backdrop, almost without exception.
+    let border=0, borderBg=0;
+    for(let x=0;x<w;x++){ for(const y of [0,h-1]){ border++; if(near(at(x,y))) borderBg++; } }
+    for(let y=1;y<h-1;y++){ for(const x of [0,w-1]){ border++; if(near(at(x,y))) borderBg++; } }
+    if(borderBg/border < 0.92) return null;
+    // And it should account for a good share of the whole image.
+    let flat=0;
+    for(let y=0;y<h;y++){ for(let x=0;x<w;x++){ if(near(at(x,y))) flat++; } }
+    if(flat/(w*h) < 0.45) return null;
+    // A transparent logo has no colour of its own — let the card's own
+    // background show through.
+    return {bg: bg[3]<16 ? '' : 'rgb('+bg[0]+','+bg[1]+','+bg[2]+')'};
+  }catch(e){
+    return null;
+  }
+}
+
+function urlFromStyle(el){
+  const bg=el.style.backgroundImage||'';
+  const m=bg.match(/url\((['"]?)(.*?)\1\)/);
+  return m ? m[2] : '';
+}
+
+/* Point every photo card at its subject. Safe to call as often as we like:
+   an element whose photo hasn't changed since last time is skipped. */
+function applyFocalPoints(root){
+  (root||document).querySelectorAll('[style*="background-image"]').forEach(el=>{
+    const url=urlFromStyle(el);
+    if(!url) return;
+    // The positioning box drives its own previews while they are being
+    // dragged; this pass would keep snapping them back.
+    if(el.closest && el.closest('.img-pos')) return;
+    // Cheap identity for the photo currently on this element.
+    const tag=url.length+':'+url.slice(-24);
+    if(el.dataset.focalFor===tag) return;
+    el.dataset.focalFor=tag;
+    const place=(f)=>{
+      if(f.logo){
+        // Fit the whole logo inside the card rather than filling and cropping.
+        el.style.backgroundSize='contain';
+        el.style.backgroundRepeat='no-repeat';
+        el.style.backgroundPosition='center';
+        el.style.backgroundColor=f.bg||'';
+        el.classList.add('is-logo');
+      } else {
+        el.style.backgroundSize='';
+        el.style.backgroundRepeat='';
+        el.style.backgroundColor='';
+        el.style.backgroundPosition=f.x+'% '+f.y+'%';
+        el.classList.remove('is-logo');
+      }
+    };
+    const cached=focalCache.get(url);
+    if(cached){ place(cached); return; }
+    focusFor(url).then(f=>{
+      // The card may have been re-rendered with a different photo meanwhile.
+      if(el.dataset.focalFor===tag) place(f);
+    });
+  });
+}
+
+/* Screens are redrawn from many places (client screens, admin tabs, the photo
+   gallery, overlays). Watching the page is one hook that covers all of them,
+   instead of remembering to call this after every render. */
+let focalQueued=false;
+function scheduleFocalPass(){
+  if(focalQueued) return;
+  focalQueued=true;
+  requestAnimationFrame(()=>{ focalQueued=false; applyFocalPoints(); });
+}
+if(typeof MutationObserver!=='undefined'){
+  new MutationObserver(scheduleFocalPass).observe(document.documentElement,{
+    childList:true, subtree:true, attributeFilter:['style']
+  });
+}
+
+/* ---------------- Positioning a photo by hand ----------------
+
+   The automatic subject-finder is right most of the time, but it is a guess,
+   and the person uploading the photo always knows better. So every photo box
+   in the Admin App shows the picture inside the real card shapes and lets it
+   be dragged into place. The automatic guess is the starting position, so
+   usually there is nothing to do — it only has to be touched when the guess
+   is wrong.
+
+   The chosen position is remembered against the photo itself rather than
+   against the product or service, so it follows the picture wherever it is
+   used and never has to be set twice. It rides along in the existing
+   `settings` table as one row, which means it reaches the other devices
+   without the database needing a new column. */
+
+function imgKey(url){
+  // A short, stable name for a picture. Base64 photos are tens of thousands
+  // of characters, far too long to use as a key directly.
+  let h=5381;
+  for(let i=0;i<url.length;i+=7) h=(((h<<5)+h)^url.charCodeAt(i))>>>0;
+  return url.length.toString(36)+'-'+h.toString(36);
+}
+function savedFocus(url){
+  const f=(STORE.imageFocus||{})[imgKey(url)];
+  return (f && typeof f.x==='number' && typeof f.y==='number') ? {x:f.x,y:f.y,manual:true} : null;
+}
+function rememberFocus(url,f){
+  if(!STORE.imageFocus) STORE.imageFocus={};
+  if(f) STORE.imageFocus[imgKey(url)]={x:Math.round(f.x),y:Math.round(f.y)};
+  else delete STORE.imageFocus[imgKey(url)];
+  focalCache.delete(url);
+}
+/* Photos get replaced over time; their old positions would pile up in the
+   settings row forever otherwise. */
+function pruneFocus(){
+  if(!STORE.imageFocus) return;
+  const live=new Set();
+  const add=(u)=>{ if(u) live.add(imgKey(u)); };
+  Object.keys(STORE.brandImages||{}).forEach(b=>add(STORE.brandImages[b]));
+  Object.keys(STORE.services||{}).forEach(b=>(STORE.services[b]||[]).forEach(s=>add(s.image)));
+  (STORE.products||[]).forEach(p=>add(p.image));
+  (STORE.offers||[]).forEach(o=>add(o.image));
+  (STORE.media||[]).forEach(m=>add(m.dataUrl));
+  Object.keys(STORE.imageFocus).forEach(k=>{ if(!live.has(k)) delete STORE.imageFocus[k]; });
+}
+
+/* Build the drag-to-position box. Returns a small handle the form can ask for
+   the picture and its position when Save is pressed. */
+function photoPositioner(host,opts){
+  opts=opts||{};
+  const state={url:opts.url||'',focus:null,manual:false,dirty:false,nat:{w:0,h:0}};
+
+  function paint(){
+    host.querySelectorAll('.img-pos .fr').forEach(fr=>{
+      fr.style.backgroundImage="url('"+state.url+"')";
+      fr.style.backgroundSize='cover';
+      fr.style.backgroundRepeat='no-repeat';
+      fr.style.backgroundPosition=state.focus.x+'% '+state.focus.y+'%';
+      fr.dataset.focalFor='manual';   // keep the automatic pass off these
+    });
+    const r=host.querySelector('.img-pos .reset');
+    if(r) r.style.display=state.manual?'':'none';
+  }
+
+  function drag(fr){
+    let startX=0,startY=0,from=null;
+    const move=(e)=>{
+      if(!from) return;
+      // The picture should follow the finger exactly. How far a percent of
+      // background-position actually moves it depends on how much of the
+      // picture is hanging outside the frame, so work that out rather than
+      // guessing a sensitivity — otherwise a small drag jumps end to end.
+      const fw=fr.clientWidth||1, fh=fr.clientHeight||1;
+      const nw=state.nat.w||fw, nh=state.nat.h||fh;
+      const scale=Math.max(fw/nw,fh/nh);
+      const overX=Math.max(0,nw*scale-fw), overY=Math.max(0,nh*scale-fh);
+      const dx=overX>0 ? ((e.clientX-startX)/overX)*100 : 0;
+      const dy=overY>0 ? ((e.clientY-startY)/overY)*100 : 0;
+      // Dragging right shows more of the picture's left-hand side, so the
+      // position percentage goes down, not up.
+      state.focus={
+        x:Math.max(0,Math.min(100,from.x-dx)),
+        y:Math.max(0,Math.min(100,from.y-dy))
+      };
+      state.manual=true; state.dirty=true;
+      paint();
+      e.preventDefault();
+    };
+    const up=()=>{
+      const wasDragging=!!from;
+      from=null; fr.style.cursor='grab';
+      window.removeEventListener('pointermove',move);
+      window.removeEventListener('pointerup',up);
+      if(wasDragging && opts.onChange) opts.onChange(handle.value());
+    };
+    fr.addEventListener('pointerdown',(e)=>{
+      if(!state.url) return;
+      startX=e.clientX; startY=e.clientY; from={...state.focus};
+      fr.style.cursor='grabbing';
+      window.addEventListener('pointermove',move);
+      window.addEventListener('pointerup',up);
+      e.preventDefault();
+    });
+  }
+
+  async function load(url,keepSaved){
+    state.url=url;
+    if(!url){ host.innerHTML=''; return; }
+    const img=await new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.onerror=()=>r(null);i.src=url;});
+    state.nat={w:(img&&img.naturalWidth)||0,h:(img&&img.naturalHeight)||0};
+    const saved=keepSaved?savedFocus(url):null;
+    if(saved){ state.focus={x:saved.x,y:saved.y}; state.manual=true; }
+    else{
+      const auto=img?(looksLikeLogo(img)?{x:50,y:50}:measureFocus(img)):{x:50,y:50};
+      state.focus={x:auto.x,y:auto.y}; state.manual=false;
+    }
+    host.innerHTML=
+      '<div class="img-pos">'+
+        '<div class="row">'+
+          '<div><div class="fr wide"></div><div class="cap">Home card</div></div>'+
+          '<div><div class="fr sq"></div><div class="cap">In lists</div></div>'+
+          '<button type="button" class="btn btn-ghost reset">Use automatic</button>'+
+        '</div>'+
+        '<div class="hint">Drag the picture to choose what the card shows.</div>'+
+      '</div>';
+    host.querySelectorAll('.img-pos .fr').forEach(drag);
+    const r=host.querySelector('.img-pos .reset');
+    r.addEventListener('click',async()=>{
+      state.manual=false; state.dirty=true;
+      const img=await new Promise(res=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>res(null);i.src=state.url;});
+      const auto=img?(looksLikeLogo(img)?{x:50,y:50}:measureFocus(img)):{x:50,y:50};
+      state.focus={x:auto.x,y:auto.y};
+      rememberFocus(state.url,null);
+      paint();
+      if(opts.onChange) opts.onChange(handle.value());
+    });
+    paint();
+  }
+
+  const handle={
+    load,
+    value:()=>({url:state.url,focus:state.manual?state.focus:null,manual:state.manual,dirty:state.dirty}),
+    // Called once the photo has actually been saved, so the position is only
+    // written down for pictures that were kept.
+    commit(){
+      if(!state.url) return;
+      rememberFocus(state.url,state.manual?state.focus:null);
+    }
+  };
+  return handle;
+}
+
+/* Wire a file input to a positioning box underneath it. */
+function attachPhotoPicker(inputId,hostId,existingUrl){
+  const input=document.getElementById(inputId), host=document.getElementById(hostId);
+  if(!input||!host) return null;
+  const pos=photoPositioner(host,{});
+  if(existingUrl) pos.load(existingUrl,true);
+  input.addEventListener('change',async()=>{
+    const file=input.files[0];
+    if(!file){ return; }
+    host.innerHTML='<div class="hint" style="font-size:12.5px;color:var(--muted);">Reading photo…</div>';
+    try{
+      const url=await resizeImageFile(file);
+      await pos.load(url,false);
+    }catch(e){
+      host.innerHTML='';
+      toast('Could not read that photo — try a different file.');
+    }
+  });
+  return pos;
 }
 
 function render(){
@@ -2731,6 +3157,7 @@ function openProductForm(editIndex){
       <div class="field"><label>Stock on hand</label><input id="pf_stock" type="number" min="0" step="1" value="${p.stock||0}"></div>
       <div class="field" style="grid-column:1/-1;"><label>Photo ${p.image?'(uploaded — choose a file to replace it)':'(optional — falls back to a colour swatch)'}</label>
         <div class="upload-drop"><input id="pf_image" type="file" accept="image/*"></div>
+        <div id="pf_frame"></div>
       </div>
       <div style="grid-column:1/-1;font-size:13px;color:var(--muted);margin-top:-6px;">A discount above 0% shows the old price crossed out next to the new one, and adds this product to the welcome screen's "Upcoming Events &amp; Offers" automatically — no need to also create an Offer for it. Stock moves down automatically when you record a sale, and up automatically when you log a purchase in the Purchases tab — edit it directly here only to make a correction.</div>
       <div class="actions">
@@ -2738,6 +3165,7 @@ function openProductForm(editIndex){
         <button class="btn btn-primary" id="pf_save">${editing?'Save changes':'Add product'}</button>
       </div>
     </div>`;
+  const pfPos=attachPhotoPicker('pf_image','pf_frame',p.image||'');
   document.getElementById('pf_cancel').addEventListener('click',()=>{document.getElementById('productFormWrap').innerHTML='';});
   document.getElementById('pf_save').addEventListener('click',async()=>{
     const n=document.getElementById('pf_name').value.trim();
@@ -2748,8 +3176,8 @@ function openProductForm(editIndex){
     if(!n){ document.getElementById('pf_name').focus(); return; }
     const saveBtn=document.getElementById('pf_save'); saveBtn.disabled=true; saveBtn.textContent='Saving…';
     try{
-      const file=document.getElementById('pf_image').files[0];
-      const image = file ? await resizeImageFile(file) : (p.image||'');
+      const picked = pfPos ? pfPos.value() : null;
+      const image = (picked && picked.url) ? picked.url : (p.image||'');
       const base = editing ? STORE.products[editIndex] : {id:nextId('p',STORE.products)};
       const updated={...base,n,brand,price,discount,stock,image};
       if(editing) STORE.products[editIndex]=updated; else STORE.products.push(updated);
@@ -2760,6 +3188,8 @@ function openProductForm(editIndex){
         saveBtn.disabled=false; saveBtn.textContent=editing?'Save changes':'Add product';
         return;
       }
+      if(pfPos) pfPos.commit();
+      pruneFocus(); saveStore(); cloudSave('settings','image_focus');
       cloudSave('products',updated.id);
       document.getElementById('productFormWrap').innerHTML='';
       renderAdminProducts();
@@ -2829,12 +3259,14 @@ function openOfferForm(editIndex){
       <div class="field" style="grid-column:1/-1;"><label>Description</label><input id="of_desc" type="text" value="${esc(o.s)}" placeholder="e.g. 20% off all facials"></div>
       <div class="field full" style="grid-column:1/-1;"><label>Photo ${o.image?'(uploaded — choose a file to replace it)':'(optional — card stays text-only without one)'}</label>
         <div class="upload-drop"><input id="of_image" type="file" accept="image/*"></div>
+        <div id="of_frame"></div>
       </div>
       <div class="actions">
         <button class="btn btn-ghost" id="of_cancel">Cancel</button>
         <button class="btn btn-primary" id="of_save">${editing?'Save changes':'Add offer'}</button>
       </div>
     </div>`;
+  const ofPos=attachPhotoPicker('of_image','of_frame',o.image||'');
   document.getElementById('of_cancel').addEventListener('click',()=>{document.getElementById('offerFormWrap').innerHTML='';});
   document.getElementById('of_save').addEventListener('click',async()=>{
     const title=document.getElementById('of_title').value.trim();
@@ -2842,17 +3274,12 @@ function openOfferForm(editIndex){
     const desc=document.getElementById('of_desc').value.trim();
     if(!title){ document.getElementById('of_title').focus(); return; }
     const saveBtn=document.getElementById('of_save'); saveBtn.disabled=true; saveBtn.textContent='Saving…';
-    let image=o.image||'';
-    try{
-      const file=document.getElementById('of_image').files[0];
-      if(file) image=await resizeImageFile(file);
-    }catch(e){
-      toast('Could not read that photo — try a different file.');
-      saveBtn.disabled=false; saveBtn.textContent=editing?'Save changes':'Add offer';
-      return;
-    }
+    const pickedOf = ofPos ? ofPos.value() : null;
+    const image = (pickedOf && pickedOf.url) ? pickedOf.url : (o.image||'');
+    if(ofPos) ofPos.commit();
     const base=editing?STORE.offers[editIndex]:{id:nextId('o',STORE.offers)};
     const updated={...base,t:title,s:desc,brand,image};
+    pruneFocus();
     if(editing) STORE.offers[editIndex]=updated; else STORE.offers.push(updated);
     const ok=saveStore();
     if(!ok){
@@ -2862,6 +3289,7 @@ function openOfferForm(editIndex){
       return;
     }
     cloudSave('offers',updated.id);
+    cloudSave('settings','image_focus');
     document.getElementById('offerFormWrap').innerHTML='';
     renderAdminOffers();
     toast(`${title} ${editing?'updated':'added'} — now live on the Client App welcome screen.`);
@@ -2913,6 +3341,7 @@ function openServiceForm(editIndex){
       <div class="field full" style="grid-column:1/-1;"><label>Description</label><textarea id="sf_desc" rows="2" placeholder="Short client-facing description">${esc(s.desc||'')}</textarea></div>
       <div class="field full" style="grid-column:1/-1;"><label>Photo ${s.image?'(uploaded — choose a file to replace it)':'(optional — falls back to a colour swatch)'}</label>
         <div class="upload-drop"><input id="sf_image" type="file" accept="image/*"></div>
+        <div id="sf_frame"></div>
       </div>
       <div style="grid-column:1/-1;font-size:13px;color:var(--muted);margin-top:-6px;">A discount above 0% shows the old price crossed out next to the new one, and adds this service to the welcome screen's "Upcoming Events &amp; Offers" automatically — no need to also create an Offer for it.</div>
       <div class="actions">
@@ -2920,6 +3349,7 @@ function openServiceForm(editIndex){
         <button class="btn btn-primary" id="sf_save">${editing?'Save changes':'Add service'}</button>
       </div>
     </div>`;
+  const sfPos=attachPhotoPicker('sf_image','sf_frame',s.image||'');
   document.getElementById('sf_cancel').addEventListener('click',()=>{document.getElementById('serviceFormWrap').innerHTML='';});
   document.getElementById('sf_save').addEventListener('click',async()=>{
     const n=document.getElementById('sf_name').value.trim();
@@ -2930,15 +3360,10 @@ function openServiceForm(editIndex){
     const desc=document.getElementById('sf_desc').value.trim();
     if(!n){ document.getElementById('sf_name').focus(); return; }
     const saveBtn=document.getElementById('sf_save'); saveBtn.disabled=true; saveBtn.textContent='Saving…';
-    let image=s.image||'';
-    try{
-      const file=document.getElementById('sf_image').files[0];
-      if(file) image=await resizeImageFile(file);
-    }catch(e){
-      toast('Could not read that photo — try a different file.');
-      saveBtn.disabled=false; saveBtn.textContent=editing?'Save changes':'Add service';
-      return;
-    }
+    const pickedSf = sfPos ? sfPos.value() : null;
+    const image = (pickedSf && pickedSf.url) ? pickedSf.url : (s.image||'');
+    if(sfPos) sfPos.commit();
+    pruneFocus();
     const prevItem = editing ? {...list[editIndex]} : null;
     if(editing){
       list[editIndex]={...list[editIndex],n,cat,dur,price,discount,desc,image};
@@ -2953,6 +3378,7 @@ function openServiceForm(editIndex){
       return;
     }
     cloudSave('services', editing?list[editIndex].id:list[list.length-1].id, svcBrandTab);
+    cloudSave('settings','image_focus');
     document.getElementById('serviceFormWrap').innerHTML='';
     renderAdminServices();
     renderAdminOffers();
@@ -3904,6 +4330,7 @@ function renderBrandPhotos(){
           <div class="nm">${BRANDS[b].name} <span>— ${BRANDS[b].sub}</span></div>
           <div class="cap">Shows on the welcome screen and homepage — no photo yet falls back to a colour card.</div>
           <div class="upload-drop"><input type="file" accept="image/*" data-brand-photo="${b}"></div>
+          <div id="bp_frame_${b}"></div>
         </div>`).join('')}
     </div>`;
   wrap.querySelectorAll('[data-brand-photo]').forEach(inp=>inp.addEventListener('change',async()=>{
@@ -3919,7 +4346,9 @@ function renderBrandPhotos(){
         toast("This browser's demo storage is full — try a smaller photo.");
         return;
       }
+      pruneFocus(); saveStore();
       cloudSave('brandImages',brand);
+      cloudSave('settings','image_focus');
       renderBrandPhotos();
       applyBrandImages();
       toast(`${BRANDS[brand].name} photo updated — now live across the Client App.`);
@@ -3928,6 +4357,20 @@ function renderBrandPhotos(){
       toast('Could not read that photo — try a different file.');
     }
   }));
+  // A brand photo is saved the moment it is chosen, so its position is saved
+  // the moment it is dragged too — there is no Save button to wait for.
+  Object.keys(BRANDS).forEach(b=>{
+    const host=document.getElementById('bp_frame_'+b);
+    const img=STORE.brandImages[b];
+    if(!host||!img) return;
+    const pos=photoPositioner(host,{onChange:()=>{
+      pos.commit();
+      pruneFocus(); saveStore(); cloudSave('settings','image_focus');
+      applyBrandImages();
+      if(currentScreen==='welcome'||currentScreen==='services'||currentScreen==='detail'||currentScreen==='shop') render();
+    }});
+    pos.load(img,true);
+  });
 }
 function applyBrandImages(){
   Object.keys(BRANDS).forEach(b=>{
