@@ -151,6 +151,10 @@
   .ac-body{white-space:pre-wrap;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.55;color:var(--ink-soft);}
   .ac-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap;}
   .ac-foot{font-size:12.5px;color:var(--muted);margin-top:8px;}
+  /* Which WhatsApp account this ought to go out from. The app cannot choose
+     the sender, so the person pressing Send has to know. */
+  .ac-from{display:flex;align-items:flex-start;gap:8px;background:#fff;border:1px solid var(--gold);border-radius:10px;padding:10px 12px;margin-top:12px;font-size:13px;color:var(--ink-soft);line-height:1.5;}
+  .ac-from b{color:var(--ink);}
 
   /* ---------- Gallery (admin) ---------- */
   .gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;}
@@ -3749,6 +3753,14 @@ function renderAdminBookings(){
    note written for it, the client agreed to be contacted, and we have a
    number to send it to. */
 
+/* Stored numbers are bare digits; this is just so a person can read one at a
+   glance and check the phone in their hand matches. */
+function prettyPhone(digits){
+  const d=String(digits||'').replace(/\D/g,'');
+  if(d.length<10) return d?('+'+d):'';
+  return '+'+d.slice(0,3)+' '+d.slice(3,6)+' '+d.slice(6,9)+' '+d.slice(9);
+}
+
 function aftercareNoteFor(booking){
   const list=(STORE.services[booking.brand]||[]);
   const svc=list.find(s=>s.id===booking.serviceId);
@@ -3782,11 +3794,15 @@ function offerAftercare(booking){
       <div class="ac-head">Send ${esc(booking.clientName)} their aftercare note?</div>
       <div class="ac-meta">${esc(booking.serviceName)} · ${esc(booking.phone||phone)}</div>
       <div class="ac-body">${esc(body)}</div>
+      <div class="ac-from">
+        <span style="flex:none;">📱</span>
+        <span>Send this from the <b>${esc(BRANDS[booking.brand].name)}</b> WhatsApp — <b>${esc(prettyPhone(BRAND_WHATSAPP[booking.brand]||''))}</b>.<br>
+        The client should recognise the number, and if they reply it needs to reach the right team.</span>
+      </div>
       <div class="ac-actions">
         <button class="btn btn-ghost btn-sm" id="ac_skip">Not this time</button>
         <button class="btn btn-primary btn-sm" id="ac_send">Send on WhatsApp</button>
-      </div>
-      <div class="ac-foot">Opens WhatsApp with the message ready — check it, then press send there.</div>
+      </div>      <div class="ac-foot">Opens WhatsApp with the message ready — check it, then press send there.</div>
     </div>`;
   wrap.classList.add('open');
   const close=()=>{ wrap.classList.remove('open'); wrap.innerHTML=''; };
