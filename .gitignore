@@ -2,3 +2,7 @@ node_modules/
 .DS_Store
 ios/App/App/public/
 Dolce-Plus.apk
+
+# The database library is built into index.html now, so this downloaded copy
+# is only ever a working file — it is not part of the app.
+supabase.min.js
