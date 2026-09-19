@@ -326,6 +326,8 @@
      underneath that bar, which makes them awkward to tap. Older Touch ID
      phones (like the SE) report 0 here, so they're unaffected. */
   .phone.fullscreen .bottom-nav{bottom:calc(12px + env(safe-area-inset-bottom,0px));}
+  /* Sit the sync warning above the navigation bar rather than behind it. */
+  body.native-app #cloudSyncPill{bottom:calc(92px + env(safe-area-inset-bottom,0px))!important;}
   .phone.fullscreen .fab-ai{bottom:calc(96px + env(safe-area-inset-bottom,0px));}
   .phone.fullscreen .screen-body{padding-bottom:calc(148px + env(safe-area-inset-bottom,0px));}
   .phone.fullscreen .ai-input{padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));}
@@ -1444,6 +1446,11 @@ function updateSyncBadge(){
       'padding:8px 14px;border-radius:999px;font-size:13.5px;font-weight:600;'+
       'font-family:system-ui,-apple-system,sans-serif;box-shadow:0 10px 26px rgba(0,0,0,.28);'+
       'display:flex;align-items:center;gap:8px;cursor:pointer;max-width:calc(100vw - 32px);';
+    // The installed app fills the screen at z-index 500. At 120 this warning
+    // was painted UNDERNEATH it: the app had been reporting unsent bookings
+    // for hours and nobody could see it. A message about lost work has to be
+    // above everything.
+    el.style.zIndex='900';
     el.addEventListener('click',()=>{
       if(syncFailures.length) showSyncFailures(); else flushOutbox();
     });
