@@ -140,7 +140,11 @@
   .admin-form .field{display:flex;flex-direction:column;}
   .admin-form .actions{grid-column:1/-1;display:flex;gap:10px;justify-content:flex-end;}
   .admin-empty{text-align:center;padding:34px 10px;color:var(--muted);font-size:14.5px;}
-  .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:999px;font-size:14.5px;font-weight:600;box-shadow:0 14px 30px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:100;display:flex;align-items:center;gap:8px;}
+  .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:999px;font-size:14.5px;font-weight:600;box-shadow:0 14px 30px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:970;display:flex;align-items:center;gap:8px;}
+  /* In the installed app the screen itself sits at z-index 500. Anything that
+     speaks to the person — a message, a warning, a question — has to be above
+     that, or the app looks like it is ignoring them. */
+  body.native-app .toast{bottom:calc(96px + env(safe-area-inset-bottom,0px));}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
   /* The aftercare prompt, shown the moment a treatment is marked Completed. */
   #aftercarePanel{display:none;}
@@ -1403,7 +1407,10 @@ function showSyncFailures(){
     </div>`).join('');
   const p=document.createElement('div');
   p.id='syncFailPanel';
-  p.style.cssText='position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.45);'+
+  // Above the full-screen installed app (z-index 500) and above the warning
+  // pill itself. At 400 this panel opened BEHIND the app: tapping the warning
+  // appeared to do nothing at all.
+  p.style.cssText='position:fixed;inset:0;z-index:960;background:rgba(0,0,0,.45);'+
     'display:flex;align-items:center;justify-content:center;padding:20px;'+
     'font-family:system-ui,-apple-system,sans-serif;';
   p.innerHTML=`
@@ -4198,7 +4205,7 @@ function askToRestore(payload){
   const when=payload.takenAt?new Date(payload.takenAt).toLocaleString():'unknown date';
   const p=document.createElement('div');
   p.id='restorePanel';
-  p.style.cssText='position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.45);display:flex;'+
+  p.style.cssText='position:fixed;inset:0;z-index:960;background:rgba(0,0,0,.45);display:flex;'+
     'align-items:center;justify-content:center;padding:20px;font-family:system-ui,-apple-system,sans-serif;';
   p.innerHTML=`
     <div style="background:#fff;border-radius:16px;max-width:460px;width:100%;max-height:82vh;overflow-y:auto;padding:22px;">
