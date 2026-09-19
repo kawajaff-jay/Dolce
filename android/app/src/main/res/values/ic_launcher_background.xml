@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#FFFFFF</color>
+    <!-- Dolce cream, matching the app's own background so the icon reads as
+         part of the brand rather than a white square. -->
+    <color name="ic_launcher_background">#F4EEE3</color>
 </resources>
