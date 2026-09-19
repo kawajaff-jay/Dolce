@@ -1232,14 +1232,41 @@ function saveOutbox(){ try{ localStorage.setItem(OUTBOX_KEY, JSON.stringify(outb
 
 // Queue one change. Re-queuing the same record replaces the earlier entry, so
 // ten edits to one price still only send once, with the final value.
-function queueSync(op,kind,id,brand){
+function queueSync(op,kind,id,brand,opts){
   if(!CLOUD_TABLES[kind]) return;
   outbox=outbox.filter(j=>!(j.kind===kind && String(j.id)===String(id)));
-  outbox.push({op,kind,id:String(id),brand:brand||null,at:Date.now()});
+  const job={op,kind,id:String(id),brand:brand||null,at:Date.now()};
+  if(opts&&opts.guest) job.guest=true;
+  outbox.push(job);
   saveOutbox(); updateSyncBadge();
   flushOutbox();
 }
-function cloudSave(kind,id,brand){ queueSync('upsert',kind,id,brand); }
+function cloudSave(kind,id,brand,opts){ queueSync('upsert',kind,id,brand,opts); }
+
+/* A booking someone makes in the Client App belongs to a customer, not to
+   whoever happens to be logged in on that device. That distinction is not
+   cosmetic: the database gives customers permission to CREATE a booking and
+   staff permission to manage the diary, and it decides which you are from the
+   login attached to the request.
+
+   A phone that has ever been used to open the Admin App keeps that staff
+   login inside the app. Every customer booking made on it was then being sent
+   as staff — and refused, because that member of staff was not allowed to
+   write bookings. The installed app has no admin screen, so there was no way
+   to log out of it either.
+
+   Sending customer bookings through a second connection that carries no login
+   at all removes the ambiguity: a customer's booking is always a customer's
+   booking, whatever else is signed in. */
+let guestClient=null;
+function anonSupa(){
+  if(guestClient) return guestClient;
+  try{
+    guestClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,
+      {auth:{persistSession:false,autoRefreshToken:false}});
+  }catch(e){ guestClient=null; }
+  return guestClient;
+}
 function cloudDelete(kind,id,brand){ queueSync('delete',kind,id,brand); }
 
 // Look the record up as it exists right now and translate it for the database.
@@ -1288,9 +1315,13 @@ async function flushOutbox(){
           const payload=buildRow(job);
           // The record was deleted locally before we got round to sending it.
           if(!payload){ outbox=outbox.filter(j=>j!==job); continue; }
-          res = signedIn
-            ? await supa.from(spec.table).upsert(payload,{onConflict:keyCol})
-            : await supa.from(spec.table).insert(payload);
+          // A customer's booking goes out with no login attached, so the
+          // database judges it as a customer request. Everything else goes
+          // as whoever is signed in.
+          const client = job.guest ? (anonSupa()||supa) : supa;
+          res = (job.guest || !signedIn)
+            ? await client.from(spec.table).insert(payload)
+            : await client.from(spec.table).upsert(payload,{onConflict:keyCol});
         }
       }catch(netErr){ lastSyncError='offline'; break; }
       // A record that is already there is not a failure. It happens when the
@@ -1375,7 +1406,7 @@ function describeJob(job){
   return bits.length?`${what} — ${bits.join(' ')}`:what;
 }
 function recordSyncFailure(job,err){
-  syncFailures.push({kind:job.kind,id:job.id,op:job.op,
+  syncFailures.push({kind:job.kind,id:job.id,op:job.op,brand:job.brand,guest:!!job.guest,
     what:describeJob(job),
     why:(err&&err.message)||'refused by the database',
     at:new Date().toISOString()});
@@ -1386,7 +1417,19 @@ function recordSyncFailure(job,err){
 function retrySyncFailures(){
   const again=syncFailures.slice();
   syncFailures=[]; saveSyncFailures();
-  again.forEach(f=>{ outbox.push({op:f.op,kind:f.kind,id:f.id}); });
+  again.forEach(f=>{
+    const j={op:f.op,kind:f.kind,id:f.id,brand:f.brand||null};
+    // Still a customer's booking on the retry. Anything refused before this
+    // flag existed has to be recognised by what it looks like instead: a
+    // booking with a typed-in phone number and no customer account behind it
+    // came from the Client App, so it retries as a customer request.
+    if(f.guest) j.guest=true;
+    else if(f.kind==='bookings'){
+      const bk=(STORE.bookings||[]).find(x=>String(x.id)===String(f.id));
+      if(bk && bk.phone && !bk.clientId) j.guest=true;
+    }
+    outbox.push(j);
+  });
   saveOutbox(); updateSyncBadge();
   closeSyncFailurePanel();
   toast('Trying those changes again…');
@@ -2724,7 +2767,7 @@ function bindScreen(){
     STORE.bookings.push(req);
     const ok=saveStore();
     if(!ok){ STORE.bookings.pop(); toast("This browser's demo storage is full."); return; }
-    cloudSave('bookings',req.id);
+    cloudSave('bookings',req.id,null,{guest:!!guest});
     const note=document.getElementById('waNote');
     note.style.display='block';
     // A guest has no account, so there is no "My Bookings" for them to look in.
@@ -2756,7 +2799,7 @@ function bindScreen(){
         : {id:nextId('b',STORE.bookings),brand:currentBrand,serviceId:currentService,serviceName:s.n,
            date:dateStr,time:selectedTime,status:'Requested',clientName:loggedInClient.name,clientId:loggedInClient.id};
       STORE.bookings.push(waReq);
-      saveStore(); cloudSave('bookings',waReq.id);
+      saveStore(); cloudSave('bookings',waReq.id,null,{guest:!!waGuest});
     }
     const note=document.getElementById('waNote');
     note.style.display='block';
