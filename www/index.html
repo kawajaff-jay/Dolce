@@ -739,8 +739,11 @@
 
     <div class="admin-panel" id="adminBookings">
       <div class="admin-toolbar">
-        <div style="font-size:14px;color:var(--ink-soft);"><span id="bookingCount">0</span> bookings <span id="bookingScopeLabel">across all brands</span></div>
-        <button class="btn btn-primary" id="addBookingBtn">+ Add Booking</button>
+        <div style="font-size:14px;color:var(--ink-soft);"><span id="bookingCount">0</span> bookings <span id="bookingScopeLabel">across all brands</span> <span id="bookingFresh" style="color:var(--muted);"></span></div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost" id="refreshBookingsBtn">↻ Refresh</button>
+          <button class="btn btn-primary" id="addBookingBtn">+ Add Booking</button>
+        </div>
       </div>
       <div id="bookingFormWrap"></div>
       <div id="aftercarePanel"></div>
@@ -3107,6 +3110,13 @@ try{
   const savedId=localStorage.getItem(CUR_USER_KEY);
   if(savedId) currentUser=STORE.users.find(u=>u.id===savedId)||null;
 }catch(e){}
+// Someone returning to a page they were already signed into should also get
+// the diary kept current, not only someone who has just typed their PIN.
+if(typeof window!=='undefined'){
+  window.addEventListener('load',()=>{
+    if(currentUser && typeof startAdminLiveRefresh==='function') startAdminLiveRefresh();
+  });
+}
 
 function renderLogin(){
   // Once a real, cloud-verified account exists for someone (it has a
@@ -3168,6 +3178,7 @@ function renderLogin(){
     currentUser=loggedInUser;
     try{ localStorage.setItem(CUR_USER_KEY,currentUser.id); }catch(e){}
     showAdminForRole();
+    startAdminLiveRefresh();
     toast(`Logged in as ${currentUser.name} (${accessLabel(currentUser.tabs)}).`);
     // Now we know who this is, the database will hand over everything they
     // are allowed to see — bookings, purchases, sales, register history —
@@ -3181,6 +3192,57 @@ function renderLogin(){
 /* Redraws whatever the person is currently looking at. Used after fresh data
    arrives from the shared database, so a change someone made on another
    device appears without anyone having to reload the page. */
+/* ---------------- Keeping the diary current ----------------
+
+   A booking made on a customer's phone lands in the shared database, but the
+   Admin App only went and looked for it when somebody logged in or came back
+   to the tab. Sitting watching the screen, reception would see nothing —
+   which is exactly the moment they most need to.
+
+   So while the Admin App is open and somebody is signed in, it checks for new
+   work every half minute, and redraws only when something has actually
+   changed. It stays quiet while a form is open or a field is being typed in,
+   because redrawing under someone's hands would lose what they were writing. */
+
+let adminLiveTimer=null;
+function bookingsFingerprint(){
+  return (STORE.bookings||[]).length+'|'+
+         (STORE.bookings||[]).map(b=>b.id+':'+b.status).join(',');
+}
+function someoneIsTyping(){
+  const el=document.activeElement;
+  if(el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) return true;
+  // an open form counts too, even if the cursor is elsewhere
+  return ['bookingFormWrap','productFormWrap','serviceFormWrap','offerFormWrap',
+          'employeeFormWrap','purchaseFormWrap','productSaleFormWrap','mediaFormWrap']
+    .some(id=>{ const w=document.getElementById(id); return w && w.innerHTML.trim().length>0; });
+}
+function markBookingsFresh(){
+  const el=document.getElementById('bookingFresh');
+  if(el) el.textContent='· updated '+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+}
+async function checkForNewWork(opts){
+  if(!supa || !currentUser) return false;
+  if(typeof appMode!=='undefined' && appMode!=='admin') return false;
+  if(document.hidden) return false;
+  const before=bookingsFingerprint();
+  const ok=await refreshFromCloud(opts||{});
+  if(!ok) return false;
+  markBookingsFresh();
+  if(bookingsFingerprint()===before) return false;
+  if(someoneIsTyping()) return true;   // the data is in; the screen catches up after
+  rerenderEverything();
+  return true;
+}
+function startAdminLiveRefresh(){
+  if(adminLiveTimer || typeof setInterval==='undefined') return;
+  adminLiveTimer=setInterval(()=>{ checkForNewWork(); }, 30000);
+}
+if(typeof window!=='undefined'){
+  // Coming back to the window is the other moment worth checking.
+  window.addEventListener('focus',()=>{ checkForNewWork(); });
+}
+
 function rerenderEverything(){
   try{
     render();
@@ -3966,6 +4028,13 @@ function openBookingForm(){
   });
 }
 document.getElementById('addBookingBtn').addEventListener('click',openBookingForm);
+document.getElementById('refreshBookingsBtn').addEventListener('click',async()=>{
+  const btn=document.getElementById('refreshBookingsBtn');
+  btn.disabled=true; btn.textContent='Checking…';
+  const changed=await checkForNewWork({force:true});
+  btn.disabled=false; btn.textContent='↻ Refresh';
+  toast(changed?'Diary updated.':'Nothing new.');
+});
 
 /* ---------------- Admin: Employees (Owner only) ----------------
    New employees get a real Supabase login behind the scenes (see empEmail/
