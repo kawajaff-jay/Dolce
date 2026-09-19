@@ -131,7 +131,12 @@
   .admin-form{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:16px;display:grid;grid-template-columns:1fr 1fr;gap:14px;}
   .admin-form.full{grid-template-columns:1fr;}
   .admin-form label{font-size:13.5px;font-weight:700;color:var(--ink-soft);display:block;margin-bottom:5px;}
-  .admin-form input,.admin-form select,.admin-form textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-size:14.5px;font-family:inherit;background:#fff;}
+  /* Text boxes fill their column — but a checkbox is not a text box. Left in
+     this rule, a checkbox was stretched to the full width of the form, which
+     shoved its label to the far right and pushed longer descriptions clean
+     outside the bordered box. */
+  .admin-form input:not([type=checkbox]):not([type=radio]),.admin-form select,.admin-form textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-size:14.5px;font-family:inherit;background:#fff;}
+  .admin-form input[type=checkbox],.admin-form input[type=radio]{width:16px;height:16px;flex:none;accent-color:var(--gold-dark);margin:0;}
   .admin-form .field{display:flex;flex-direction:column;}
   .admin-form .actions{grid-column:1/-1;display:flex;gap:10px;justify-content:flex-end;}
   .admin-empty{text-align:center;padding:34px 10px;color:var(--muted);font-size:14.5px;}
