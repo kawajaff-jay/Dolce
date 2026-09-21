@@ -3221,15 +3221,25 @@ function markBookingsFresh(){
   const el=document.getElementById('bookingFresh');
   if(el) el.textContent='· updated '+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
 }
+// Everything the Admin App shows, boiled down to one cheap string. If it is
+// the same before and after a refresh, nothing needs redrawing.
+function adminFingerprint(){
+  const ids=(list)=>(list||[]).map(x=>x.id+':'+(x.status||'')+':'+(x.n||x.name||x.t||'')+':'+(x.price||'')+':'+(x.stock||'')).join(',');
+  const svc=Object.keys(STORE.services||{}).map(b=>b+'='+ids(STORE.services[b])).join(';');
+  return [bookingsFingerprint(), svc, ids(STORE.products), ids(STORE.offers), ids(STORE.media),
+          ids(STORE.purchases), ids(STORE.productSales), ids(STORE.registerCloses),
+          ids(STORE.users), JSON.stringify(STORE.brandImages||{}).length,
+          (STORE.settings&&STORE.settings.usdToIqd)||''].join('#');
+}
 async function checkForNewWork(opts){
   if(!supa || !currentUser) return false;
   if(typeof appMode!=='undefined' && appMode!=='admin') return false;
   if(document.hidden) return false;
-  const before=bookingsFingerprint();
+  const before=adminFingerprint();
   const ok=await refreshFromCloud(opts||{});
   if(!ok) return false;
-  markBookingsFresh();
-  if(bookingsFingerprint()===before) return false;
+  markBookingsFresh(); markAllFresh();
+  if(adminFingerprint()===before) return false;
   if(someoneIsTyping()) return true;   // the data is in; the screen catches up after
   rerenderEverything();
   return true;
@@ -4028,13 +4038,84 @@ function openBookingForm(){
   });
 }
 document.getElementById('addBookingBtn').addEventListener('click',openBookingForm);
-document.getElementById('refreshBookingsBtn').addEventListener('click',async()=>{
-  const btn=document.getElementById('refreshBookingsBtn');
-  btn.disabled=true; btn.textContent='Checking…';
-  const changed=await checkForNewWork({force:true});
-  btn.disabled=false; btn.textContent='↻ Refresh';
-  toast(changed?'Diary updated.':'Nothing new.');
-});
+/* ---- A Refresh button on every Admin tab ----
+   Pulls the latest from the shared database right now, instead of waiting
+   for the automatic check every 30 seconds. Anything this device still has
+   waiting to send goes first, so a refresh never throws away unsent work. */
+function markAllFresh(){
+  const t='updated '+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  document.querySelectorAll('.fresh-note').forEach(el=>{ el.textContent=t; });
+}
+let adminRefreshBusy=false;
+async function refreshAdminNow(btn){
+  if(adminRefreshBusy) return;
+  if(!supa){ toast("Not connected to the shared database right now — you're seeing what this device has saved."); return; }
+  adminRefreshBusy=true;
+  const btns=document.querySelectorAll('.admin-refresh-btn');
+  btns.forEach(b=>{ b.disabled=true; b.textContent='Refreshing…'; });
+  try{
+    await flushOutbox();
+    if(outbox.length){
+      toast(`Still sending ${outbox.length} change${outbox.length===1?'':'s'} from this device — try again in a moment.`);
+      return;
+    }
+    if(syncFailures.length){ showSyncFailures(); }
+    const before=adminFingerprint();
+    // An automatic check may be halfway through; give it a moment to finish.
+    let ok=await refreshFromCloud({force:true});
+    if(!ok && refreshing){ await new Promise(r=>setTimeout(r,1500)); ok=await refreshFromCloud({force:true}); }
+    if(!ok){ toast("Couldn't reach the shared database — check the internet and try again."); return; }
+    markBookingsFresh(); markAllFresh();
+    const changed=adminFingerprint()!==before;
+    if(someoneIsTyping()){
+      toast(changed?'New data loaded — it will appear when you close the open form.':'Already up to date.');
+      return;
+    }
+    rerenderEverything();
+    toast(changed?'Updated with the latest from the shared database.':'Already up to date.');
+  } finally {
+    adminRefreshBusy=false;
+    document.querySelectorAll('.admin-refresh-btn').forEach(b=>{ b.disabled=false; b.textContent='↻ Refresh'; });
+  }
+}
+(function addRefreshButtons(){
+  const make=()=>{
+    const wrap=document.createElement('span');
+    wrap.style.cssText='display:inline-flex;align-items:center;gap:8px;';
+    const note=document.createElement('span');
+    note.className='fresh-note';
+    note.style.cssText='font-size:12.5px;color:var(--muted);';
+    const b=document.createElement('button');
+    b.type='button'; b.className='btn btn-ghost admin-refresh-btn'; b.textContent='↻ Refresh';
+    b.title='Load the latest from the shared database';
+    b.addEventListener('click',()=>refreshAdminNow(b));
+    wrap.appendChild(note); wrap.appendChild(b);
+    return {wrap,b};
+  };
+  // Bookings already had one — it now does the same full refresh.
+  const old=document.getElementById('refreshBookingsBtn');
+  if(old){ old.classList.add('admin-refresh-btn'); old.addEventListener('click',()=>refreshAdminNow(old)); }
+  document.querySelectorAll('#adminAuthed .admin-panel').forEach(panel=>{
+    if(panel.querySelector('.admin-refresh-btn')) return;
+    let bar=panel.querySelector('.admin-toolbar');
+    if(!bar){
+      bar=document.createElement('div');
+      bar.className='admin-toolbar';
+      bar.style.justifyContent='flex-end';
+      panel.insertBefore(bar,panel.firstChild);
+    }
+    const {wrap}=make();
+    const add=[...bar.children].find(c=>c.classList&&c.classList.contains('btn-primary'));
+    if(add){
+      const group=document.createElement('div');
+      group.style.cssText='display:flex;gap:8px;align-items:center;flex-wrap:wrap;';
+      bar.insertBefore(group,add);
+      group.appendChild(wrap); group.appendChild(add);
+    } else {
+      bar.appendChild(wrap);
+    }
+  });
+})();
 
 /* ---------------- Admin: Employees (Owner only) ----------------
    New employees get a real Supabase login behind the scenes (see empEmail/
