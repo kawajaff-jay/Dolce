@@ -4,10 +4,13 @@
 -- ============================================================================
 --
 --  WHAT THIS FILE IS
---  This is the single source of truth for the shape of the Supabase database.
---  Every table, every column and every security rule the app relies on is
---  defined here. If this file and the live database ever disagree, this file
---  is right and the database should be re-synced by running this file again.
+--  This is meant to be the single source of truth for the shape of the
+--  Supabase database -- every table, column and security rule the app
+--  relies on. In practice it has drifted from the live database more than
+--  once (see the big warning just below), so treat it as a helpful map, not
+--  as proof of what is actually running. When in doubt, check the live
+--  database directly (see the warning below for the query to run) rather
+--  than assuming this file is correct and re-running it to "fix" things.
 --
 --  HOW TO RUN IT
 --  Supabase dashboard -> SQL Editor -> New query -> paste this whole file ->
@@ -27,6 +30,33 @@
 --  'p_m4x9k2a1'). This lets a device that is temporarily offline create a
 --  record with an ID that will not collide with one created on another
 --  device, and lets the same record keep one identity everywhere.
+-- ============================================================================
+--  ⚠️ THE POLICIES BELOW ARE NOT WHAT'S ACTUALLY LIVE — READ THIS FIRST
+--
+--  On 2026-09-21 a full check of the live database found its actual security
+--  rules use different internal helper names (current_profile_brands(),
+--  current_profile_is_owner()) than the ones this file describes below
+--  (is_owner(), can_write(), my_brands(), has_tab(), can_brand(), etc). Both
+--  check the same thing -- is this person the owner, does this brand belong
+--  to them -- so nothing found was actually broken. But it means the exact
+--  CREATE POLICY statements later in this file do not match what is running.
+--
+--  Before changing or debugging any security rule, re-run this against the
+--  live database (Supabase SQL Editor -> paste -> Run) and work from what
+--  comes back, not from the text below:
+--
+--    select tablename, policyname, cmd, roles, qual, with_check
+--    from pg_policies where schemaname = 'public' order by tablename, cmd;
+--
+--  As of 2026-09-21, every table has a working "staff brand access" (ALL,
+--  scoped to brand or owner) policy plus a public-read policy, except:
+--  bookings additionally has bookings_request (anon insert, for guest
+--  booking, fixed 2026-09), and settings has the image_focus/is_owner split
+--  described near "settings (exchange rate + shared photo-position data)"
+--  further down (fixed 2026-09-21). clients only has a staff-only policy --
+--  no anonymous signup rule -- which is fine today because the client-login
+--  feature that would need it is switched off (CLIENT_LOGIN_ENABLED = false
+--  in index.html).
 -- ============================================================================
 
 
@@ -758,13 +788,23 @@ drop policy if exists brand_images_write on public.brand_images;
 create policy brand_images_write on public.brand_images for all to authenticated
   using (public.can_write('overview', brand)) with check (public.can_write('overview', brand));
 
--- ---- settings (exchange rate) ---------------------------------------------
+-- ---- settings (exchange rate + shared photo-position data) ----------------
+-- Two very different things share this table under different keys:
+--   usd_to_iqd    -- the exchange rate, owner-only (money-adjacent, deliberately narrow)
+--   image_focus   -- where every photo across the app is "aimed" when it's
+--                    shown small. Any staff member who uploads or repositions
+--                    a product/service/brand photo needs to save this, not
+--                    just the owner -- it was wrongly locked to owner-only,
+--                    which is why non-owner staff (and even an owner whose
+--                    role wasn't set yet) got "row-level security" errors
+--                    just from adding a product with a photo.
 drop policy if exists settings_read on public.settings;
 create policy settings_read on public.settings for select to anon, authenticated using (true);
 
 drop policy if exists settings_write on public.settings;
 create policy settings_write on public.settings for all to authenticated
-  using (public.is_owner()) with check (public.is_owner());
+  using (key = 'image_focus' or public.is_owner())
+  with check (key = 'image_focus' or public.is_owner());
 
 -- ---- clients ---------------------------------------------------------------
 --  A visitor signing up on the client app is not a logged-in staff member, so
