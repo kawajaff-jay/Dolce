@@ -896,8 +896,8 @@ function esc(v){
 // with localStorage so edits in the Admin App show up live in the Client App.
 const BRANDS = {
   dolce:{name:'Dolce',sub:'Aesthetic Clinic',c1:'#b38653',c2:'#7d5a33',cats:['Wellness','Fillers','Skin boosters','Botox','Facials','Dermatology','Laser hair removal','Spa','Testing','Hair loss treatments','Aesthetic gynecology']},
-  polished:{name:'Polished',sub:'Salon',c1:'#8a5b34',c2:'#4d2b16',cats:['Hair','Nails','Spa']},
-  core:{name:'Core',sub:'Yoga & Pilates',c1:'#74926a',c2:'#3a5433',cats:['Yoga','Pilates','Recovery']},
+  polished:{name:'Polished',sub:'Salon',c1:'#8a5b34',c2:'#4d2b16',cats:['Nails','Hair','Lashes','Brows','Makeup','Semi-permanent makeup']},
+  core:{name:'Core',sub:'Yoga & Pilates',c1:'#74926a',c2:'#3a5433',cats:['Reformer pilates','Mat pilates','Yoga','Duet pilates','Private Training']},
 };
 
 // Generates a small placeholder "photo" so the demo gallery has content
@@ -927,11 +927,11 @@ function defaultStore(){
       ],
       core:[
         {id:'vinyasa',n:'Vinyasa Flow Class',cat:'Yoga',dur:'60 min',price:20,desc:"A dynamic, breath-linked flow suitable for most levels.",points:['All levels welcome','Mats provided']},
-        {id:'reformer',n:'Reformer Pilates',cat:'Pilates',dur:'50 min',price:35,desc:"Full-body strength and control training on the reformer machine.",points:['Small class sizes','Great for posture & core']},
+        {id:'reformer',n:'Reformer Pilates',cat:'Reformer pilates',dur:'50 min',price:35,desc:"Full-body strength and control training on the reformer machine.",points:['Small class sizes','Great for posture & core']},
         {id:'prenatal',n:'Prenatal Yoga',cat:'Yoga',dur:'60 min',price:25,desc:"Gentle, supportive practice designed for expecting mothers.",points:['Certified prenatal instructor','Focus on breath & comfort']},
-        {id:'matpil',n:'Mat Pilates',cat:'Pilates',dur:'45 min',price:22,desc:"Bodyweight Pilates focused on core strength and alignment.",points:['No equipment needed','Beginner friendly']},
-        {id:'private',n:'Private Session',cat:'Recovery',dur:'60 min',price:60,desc:"One-on-one coaching tailored to your goals and recovery needs.",points:['Fully personalized','Choice of yoga or pilates focus']},
-        {id:'sound',n:'Sound Bath Recovery',cat:'Recovery',dur:'45 min',price:30,desc:"Guided relaxation using resonant sound for deep recovery.",points:['Deep relaxation','Great after intense training']},
+        {id:'matpil',n:'Mat Pilates',cat:'Mat pilates',dur:'45 min',price:22,desc:"Bodyweight Pilates focused on core strength and alignment.",points:['No equipment needed','Beginner friendly']},
+        {id:'private',n:'Private Session',cat:'Private Training',dur:'60 min',price:60,desc:"One-on-one coaching tailored to your goals and recovery needs.",points:['Fully personalized','Choice of yoga or pilates focus']},
+        {id:'sound',n:'Sound Bath Recovery',cat:'Yoga',dur:'45 min',price:30,desc:"Guided relaxation using resonant sound for deep recovery.",points:['Deep relaxation','Great after intense training']},
       ],
     },
     products:[
@@ -1230,6 +1230,12 @@ function saveOutbox(){ try{ localStorage.setItem(OUTBOX_KEY, JSON.stringify(outb
 // ten edits to one price still only send once, with the final value.
 function queueSync(op,kind,id,brand,opts){
   if(!CLOUD_TABLES[kind]) return;
+  // Photo positions and the exchange rate are staff settings. If nobody is
+  // signed in to the Admin App on this device, there is no point queueing
+  // one: the database will refuse it, and a customer would be shown a
+  // "not saved" warning about something that isn't theirs and doesn't
+  // matter to them. It stays saved on this device either way.
+  if(kind==='settings' && !currentUser) return;
   outbox=outbox.filter(j=>!(j.kind===kind && String(j.id)===String(id)));
   const job={op,kind,id:String(id),brand:brand||null,at:Date.now()};
   if(opts&&opts.guest) job.guest=true;
@@ -1329,6 +1335,13 @@ async function flushOutbox(){
         continue;
       }
       if(res && res.error){
+        // Same again on the way out: a settings row refused because nobody is
+        // signed in is not a lost record, it is a staff setting that can wait.
+        if(job.kind==='settings' && !signedIn){
+          outbox=outbox.filter(j=>j!==job);
+          lastSyncError='';
+          continue;
+        }
         if(isPermanentSyncError(res.error)){
           // The database refused this outright, so retrying forever would jam
           // everything behind it — it still has to leave the queue. But it is
