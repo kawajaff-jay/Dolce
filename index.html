@@ -1738,6 +1738,14 @@ if(typeof window!=='undefined'){
 }
 
 function svcList(brand){ return STORE.services[brand]; }
+/* Each service carries its position in the list (sort_order) so every device
+   shows them in the same order. Only the service being saved used to get a
+   position written, which left every other one sitting at zero — so the
+   order came back from the database shuffled, and a new service could land
+   anywhere. Saving one service now writes the whole brand's running order. */
+function resequenceBrandServices(brand){
+  (svcList(brand)||[]).forEach(s=>cloudSave('services',s.id,brand));
+}
 function swStyle(item,brand){
   const img=(item&&item.image)||STORE.brandImages[brand];
   return img
@@ -3628,7 +3636,8 @@ function renderAdminServices(){
   rows.querySelectorAll('[data-del-svc]').forEach(b=>b.addEventListener('click',()=>{
     const i=parseInt(b.dataset.delSvc); const s=list[i];
     list.splice(i,1);
-    saveStore(); cloudDelete('services',s.id,svcBrandTab); renderAdminServices(); renderAdminOffers();
+    saveStore(); cloudDelete('services',s.id,svcBrandTab); resequenceBrandServices(svcBrandTab);
+    renderAdminServices(); renderAdminOffers();
     toast(`${s.n} deleted from ${BRANDS[svcBrandTab].name} — removed from the Client App too.`);
     if(currentScreen==='services'||currentScreen==='detail'||currentScreen==='welcome') render();
   }));
@@ -3688,7 +3697,7 @@ function openServiceForm(editIndex){
       saveBtn.disabled=false; saveBtn.textContent=editing?'Save changes':'Add service';
       return;
     }
-    cloudSave('services', editing?list[editIndex].id:list[list.length-1].id, svcBrandTab);
+    resequenceBrandServices(svcBrandTab);
     cloudSave('settings','image_focus');
     document.getElementById('serviceFormWrap').innerHTML='';
     renderAdminServices();
