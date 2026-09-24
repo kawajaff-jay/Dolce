@@ -773,6 +773,85 @@
   #printArea table{width:100%;border-collapse:collapse;margin-top:6px;}
   #printArea th,#printArea td{border:1px solid #ccc;padding:5px 8px;text-align:left;font-size:13.5px;}
   #printArea th{background:#f2ede4;}
+
+  /* ================= iPad / tablet layout (native app only) =================
+     The phone layout simply stretched on an iPad: 1000px-wide rows, a giant
+     hero photo, the basket bar spanning the whole screen. body.tablet is set
+     by JavaScript when the app is running natively on a screen 700px or
+     wider (every iPad, both orientations); body.tablet-land additionally when
+     it is in landscape. Nothing here touches the iPhone layout.
+     --tab-w is how wide the content column may get on each screen; the
+     scrolling area itself stays full-width so a swipe anywhere still works. */
+  body.tablet #screen{--tab-w:720px;--tab-pad:max(32px, calc((100% - var(--tab-w)) / 2));}
+  body.tablet #screen[data-screen="welcome"]{--tab-w:780px;}
+  body.tablet #screen[data-screen="services"],
+  body.tablet #screen[data-screen="shop"]{--tab-w:1040px;}
+  body.tablet #screen[data-screen="auth"]{--tab-w:520px;}
+  body.tablet-land #screen[data-screen="detail"],
+  body.tablet-land #screen[data-screen="product"]{--tab-w:1080px;}
+  body.tablet .screen-head{padding:28px var(--tab-pad) 12px;}
+  body.native-app.tablet .phone.fullscreen .screen-head{padding-top:calc(18px + env(safe-area-inset-top,0px));}
+  body.native-app.tablet .phone.fullscreen .screen{padding-top:0;}
+  body.tablet .screen-head .title{font-size:22px;}
+  body.tablet .screen-head .title small{font-size:13px;}
+  body.tablet .screen-head .back{width:36px;height:36px;font-size:18px;}
+  body.tablet .screen-head .home-mark img{height:44px;}
+  body.tablet .screen-head .home-mark .home-tagline{font-size:12.5px;}
+  body.tablet .screen-body{padding-inline:var(--tab-pad);}
+  body.tablet .section-label{font-size:12.5px;}
+
+  /* Home */
+  body.tablet .dest-card{max-height:none;border-radius:22px;padding:30px;font-size:30px;margin-bottom:18px;}
+  body.tablet .dest-card small{font-size:14px;}
+  body.tablet .offer-chip{width:190px;padding:12px;font-size:13.5px;}
+  body.tablet .offer-chip b{font-size:15px;}
+
+  /* Services: two columns of rows */
+  body.tablet .svc-list{display:grid;grid-template-columns:1fr 1fr;column-gap:32px;align-content:start;}
+  body.tablet .svc-list > :only-child:not(.svc-row){grid-column:1/-1;}
+  body.tablet .svc-row{padding:14px 0;}
+  body.tablet .svc-row .mi.swatch{width:64px;}
+  body.tablet .cat-tabs.cat-glass button{font-size:14.5px;}
+
+  /* Service detail */
+  body.tablet .mi.detail-hero{border-radius:20px;}
+  body.tablet .detail-title{font-size:26px;}
+  body.tablet .detail-desc{font-size:15.5px;line-height:1.6;}
+  body.tablet-land #screen[data-screen="detail"] .screen-body{display:grid;grid-template-columns:1.15fr 1fr;column-gap:40px;align-content:start;}
+  body.tablet-land #screen[data-screen="detail"] .screen-body > *{grid-column:2;min-width:0;}
+  body.tablet-land #screen[data-screen="detail"] .screen-body > .mi.detail-hero{grid-column:1;grid-row:1 / span 40;position:sticky;top:0;align-self:start;margin-top:8px;}
+
+  /* Shop */
+  body.tablet .shop-filter{max-width:560px;margin-inline:auto;margin-bottom:10px;}
+  body.tablet .shop-filter button{font-size:14px;padding:10px 8px;}
+  body.tablet .shop-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;}
+  body.tablet .prod{padding:12px;border-radius:16px;}
+  body.tablet .prod .n{font-size:15px;}
+  body.tablet .prod button{padding:9px;font-size:13.5px;}
+
+  /* Product detail */
+  body.tablet .pd-gallery{margin:4px 0 0;border-radius:22px;overflow:hidden;}
+  body.tablet .mi.pd-shot{max-height:none;}
+  body.tablet .pd-title{font-size:34px;}
+  body.tablet .pd-desc{font-size:15.5px;line-height:1.65;}
+  body.tablet-land #screen[data-screen="product"] .screen-body{display:grid;grid-template-columns:1fr 1fr;column-gap:44px;align-content:start;}
+  body.tablet-land #screen[data-screen="product"] .screen-body > *{grid-column:2;min-width:0;}
+  body.tablet-land #screen[data-screen="product"] .screen-body > .pd-gallery{grid-column:1;grid-row:1 / span 40;position:sticky;top:0;align-self:start;}
+  body.tablet-land #screen[data-screen="product"] .pd-brand{margin-top:14px;}
+
+  /* Buttons that were full-phone-width look better capped on a big screen */
+  body.tablet .primary-btn{font-size:16px;padding:15px;}
+
+  /* Floating pieces */
+  body.tablet .bottom-nav{max-width:480px;}
+  body.tablet .fab-ai{right:32px;width:56px;height:56px;}
+  body.tablet .basket-pill{left:auto;right:104px;width:340px;}
+  body.tablet .basket-sheet .bs-panel{left:max(0px, calc((100% - 640px) / 2));right:max(0px, calc((100% - 640px) / 2));max-height:80%;}
+  body.tablet .ai-head,
+  body.tablet .ai-chat,
+  body.tablet .chip-row,
+  body.tablet .ai-input{padding-inline:max(24px, calc((100% - 760px) / 2));}
+  body.tablet .toast{bottom:calc(110px + env(safe-area-inset-bottom,0px));}
   @media print{
     body>*:not(#printArea){display:none!important;}
     #printArea{display:block!important;}
@@ -4038,6 +4117,7 @@ const CatGlass=(function(){
 
 function render(){
   const {title,small}=screenTitle();
+  screenEl.dataset.screen=currentScreen;
   screenEl.innerHTML=`
     <div class="screen-head">
       ${showBack()?`<button class="back" id="backBtn">‹</button>`:''}
@@ -6406,6 +6486,19 @@ flushOutbox();
 if (window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform()) {
   document.body.classList.add('native-app');
   appMode = 'client';
+  /* iPad: switch on the tablet layout (see "iPad / tablet layout" in the
+     styles) and keep it right as the iPad is rotated or split-screened. */
+  const syncTablet = () => {
+    const w = window.innerWidth, h = window.innerHeight;
+    const tab = w >= 700, land = tab && w > h && w >= 1000;
+    const changed = tab !== document.body.classList.contains('tablet') || land !== document.body.classList.contains('tablet-land');
+    document.body.classList.toggle('tablet', tab);
+    document.body.classList.toggle('tablet-land', land);
+    if (changed && typeof render === 'function' && appMode === 'client') { navDirection = 'none'; render(); }
+  };
+  syncTablet();
+  window.addEventListener('resize', syncTablet);
+  window.addEventListener('orientationchange', () => setTimeout(syncTablet, 250));
   document.getElementById('adminView').style.display = 'none';
   openFullScreen();
 
