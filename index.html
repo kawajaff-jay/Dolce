@@ -468,6 +468,83 @@
   /* Screen slides mirror in right-to-left languages. */
   html[dir="rtl"] .screen-body.enter{animation-name:screenInBack;}
   html[dir="rtl"] .screen-body.enter-back{animation-name:screenIn;}
+
+  /* ---- Shop basket ---------------------------------------------------- */
+  .basket-btn{position:relative;width:36px;height:36px;border-radius:50%;background:var(--card);border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;font-size:17px;flex:none;cursor:pointer;color:var(--ink);
+    -webkit-tap-highlight-color:transparent;transition:transform .2s;}
+  .basket-btn:active{transform:scale(.92);}
+  .basket-count{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:999px;
+    background:var(--gold);color:#fff;font:700 11px/18px system-ui,sans-serif;text-align:center;box-shadow:0 0 0 2px var(--cream);}
+  html[dir="rtl"] .basket-count{right:auto;left:-4px;}
+  .basket-count:empty,.basket-count[data-n="0"]{display:none;}
+  .bump{animation:basketBump .45s cubic-bezier(.34,1.56,.64,1);}
+  @keyframes basketBump{0%{transform:scale(1);}40%{transform:scale(1.28);}100%{transform:scale(1);}}
+  .bottom-nav .nav-badge{position:absolute;top:3px;left:calc(50% + 6px);min-width:16px;height:16px;padding:0 4px;box-sizing:border-box;
+    border-radius:999px;background:var(--gold);color:#fff;font:700 10px/16px system-ui,sans-serif;text-align:center;pointer-events:none;}
+  .bottom-nav .nav-badge[data-n="0"]{display:none;}
+  .basket-pill{position:absolute;left:22px;right:88px;bottom:98px;z-index:6;display:flex;align-items:center;gap:10px;
+    background:var(--ink);color:#fff;border:none;border-radius:999px;padding:12px 16px;font:600 14px system-ui,sans-serif;
+    box-shadow:0 12px 26px rgba(0,0,0,.22);cursor:pointer;text-align:start;
+    transform:translateY(0);opacity:1;transition:transform .35s cubic-bezier(.34,1.56,.64,1),opacity .25s;}
+  .basket-pill.hide{transform:translateY(24px);opacity:0;pointer-events:none;}
+  .basket-pill span{white-space:nowrap;}
+  .basket-pill .bp-n{background:rgba(255,255,255,.18);border-radius:999px;padding:1px 8px;font-size:12.5px;}
+  .basket-pill .bp-sum{margin-inline-start:auto;font-weight:700;}
+  .phone.fullscreen .basket-pill{bottom:calc(98px + env(safe-area-inset-bottom,0px));}
+  html[dir="rtl"] .basket-pill{left:88px;right:22px;}
+  .prod button.in{background:var(--gold);}
+  .prod button:disabled{opacity:.45;}
+
+  .basket-sheet{position:absolute;inset:0;z-index:25;pointer-events:none;overflow:hidden;visibility:hidden;transition:visibility 0s linear .45s;}
+  .basket-sheet .bs-backdrop{position:absolute;inset:0;background:rgba(40,28,14,.32);opacity:0;transition:opacity .3s ease;}
+  .basket-sheet .bs-panel{position:absolute;left:0;right:0;bottom:0;max-height:86%;display:flex;flex-direction:column;
+    background:var(--cream);border-radius:24px 24px 0 0;box-shadow:0 -12px 40px rgba(60,40,20,.18);
+    transform:translateY(105%);transition:transform .42s cubic-bezier(.22,1,.36,1);
+    padding-bottom:env(safe-area-inset-bottom,0px);}
+  .basket-sheet.open{pointer-events:auto;visibility:visible;transition:none;}
+  .basket-sheet.open .bs-backdrop{opacity:1;}
+  .basket-sheet.open .bs-panel{transform:translateY(0);}
+  .basket-sheet.instant .bs-backdrop,.basket-sheet.instant .bs-panel{transition:none;}
+  .bs-grab{width:40px;height:5px;border-radius:3px;background:rgba(125,90,51,.25);margin:9px auto 2px;flex:none;}
+  .bs-head{display:flex;align-items:center;justify-content:space-between;padding:6px 18px 10px;flex:none;}
+  .bs-head h3{margin:0;font-family:var(--display);font-size:19px;font-weight:600;}
+  .bs-head .close{width:30px;height:30px;border-radius:50%;background:var(--card);border:1px solid var(--line);font-size:14px;cursor:pointer;}
+  .bs-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 18px 18px;flex:1;overscroll-behavior:contain;}
+  .bs-group{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:12px;}
+  .bs-brand{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 2px 8px;display:flex;align-items:center;gap:7px;}
+  .bs-brand i{width:9px;height:9px;border-radius:50%;display:inline-block;}
+  .bs-line{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);}
+  .bs-line:first-of-type{border-top:none;}
+  .bs-line .mi{width:52px;height:52px;flex:none;border-radius:10px;}
+  .bs-info{flex:1;min-width:0;}
+  .bs-info .n{font-size:13.5px;font-weight:600;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word;}
+  .bs-info .p{font-size:12.5px;color:var(--muted);white-space:nowrap;}
+  .bs-info .p.bad{color:#b0442e;}
+  .bs-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:4px;}
+  .bs-line{align-items:flex-start;}
+  .bs-qty{display:flex;align-items:center;border:1px solid var(--line);border-radius:999px;background:#fff;flex:none;}
+  .bs-qty button{width:28px;height:28px;border:none;background:none;font-size:17px;cursor:pointer;color:var(--ink);}
+  .bs-qty button:disabled{opacity:.3;}
+  .bs-qty span{min-width:18px;text-align:center;font-weight:700;font-size:14px;}
+  .bs-del{border:none;background:none;color:var(--muted);font-size:15px;cursor:pointer;padding:4px;flex:none;}
+  .bs-sub{display:flex;justify-content:space-between;font-size:14px;margin:10px 2px 10px;}
+  .bs-sub b{font-size:15px;}
+  .bs-order{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;box-sizing:border-box;background:#25a35a;color:#fff;
+    border-radius:12px;padding:12px;font-weight:700;font-size:14.5px;text-decoration:none;}
+  .bs-order.off{opacity:.45;pointer-events:none;}
+  .bs-sent{display:none;width:100%;margin-top:8px;background:none;border:1px dashed var(--line);border-radius:10px;padding:9px;font-size:13px;color:var(--ink);cursor:pointer;}
+  .bs-group.sent .bs-sent{display:block;}
+  .bs-note{font-size:12px;color:var(--muted);line-height:1.5;margin:4px 4px 8px;text-align:center;}
+  .bs-total{display:flex;justify-content:space-between;align-items:baseline;padding:4px 4px 10px;font-size:15px;}
+  .bs-total b{font-family:var(--display);font-size:20px;}
+  .bs-clear{display:block;margin:0 auto;background:none;border:none;color:var(--muted);font-size:13px;text-decoration:underline;cursor:pointer;padding:6px;}
+  .bs-empty{text-align:center;padding:26px 10px 30px;}
+  .bs-empty .ic{font-size:40px;opacity:.5;}
+  .bs-empty b{display:block;margin:10px 0 4px;font-size:15.5px;}
+  .bs-empty p{margin:0 0 16px;font-size:13px;color:var(--muted);}
+  body.native-app .basket-sheet .bs-panel{max-height:calc(100% - env(safe-area-inset-top,0px) - 20px);}
+  @media (prefers-reduced-motion: reduce){ .basket-sheet .bs-panel,.basket-sheet .bs-backdrop,.basket-pill{transition:none;} .bump{animation:none;} }
   .fab-ai{position:absolute;right:22px;bottom:96px;width:52px;height:52px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;border:none;box-shadow:0 10px 20px rgba(0,0,0,.25);z-index:6;}
 
   /* destination cards */
@@ -2026,25 +2103,25 @@ let authStep='phone', authPhone='', pendingScreen=null;
 const I18N = {
   en:{heroTitle:'One Account.<br>Three Brands.',heroSubtitle:'Beauty, Aesthetics &amp; Wellness — Connected.',heroDesc:"A seamless digital ecosystem that connects Dolce Aesthetic Clinic, Polished by Dolce and Core Yoga &amp; Pilates Studio in one beautiful experience.",keyFeatures:'Key Features',f1:'Three Businesses, One App',f2:'Full Service Info &amp; Pricing',f3:'In-App &amp; WhatsApp Booking',f4:'Loyalty Points Across Brands',f5:'AI Assistant Recommendations',f6:'Products &amp; Retail Shop',f7:'Upcoming Events &amp; Offers',f8:'English, Kurdish, Arabic',tryTitle:'Try the client app',tryDesc:'This is a working demo of the core client journey. Tap through it the way a client would — choose a brand, browse services, request a booking, and chat with the AI assistant.',s1t:'Choose destination',s1d:'Dolce, Polished or Core',s2t:'Explore services &amp; pricing',s2d:'Browse by category',s3t:'View service details',s3d:"Duration, price, what's included",s4t:'Pick a time &amp; book',s4d:'In the app, or via WhatsApp',s5t:'Ask the AI Assistant',s5d:'Personalized recommendations',adminTitle:'Admin dashboard (overview)',adminSub:'One dashboard for all three businesses — bookings, customers, revenue and promotions in a single view.',statBookings:'Total Bookings',statCustomers:'Total Customers',statPoints:'Points Issued',statRevenue:'Revenue',chartBookingsTitle:'Bookings by brand',chartBookingsCap:'Share of total bookings, last 30 days',chartRevenueTitle:'Revenue trend',chartRevenueCap:'Last 6 months, all brands combined',viewAsTable:'View data as table',brand:'Brand',share:'Share',bookings:'Bookings',month:'Month',revenue:'Revenue',footerNote:'Prototype for demonstration — content, prices and translations are placeholders to be replaced with real data.',
     chooseDestination:'Choose your destination',welcomeSub:'Experience our Beauty & Wellness ecosystem',navHome:'Home',navBookings:'Bookings',navShop:'Shop',navProfile:'Profile',allServices:'All',requestBooking:'Request Booking',requestViaWhatsapp:'Also Message via WhatsApp',confirmBookingBtn:'Confirm Booking',bookedNote:"Booked! You'll see it under My Bookings, and we'll confirm shortly.",bookedTag:'Booked',whatsInc:"What's included",bookingSummary:'Booking summary',preferredDate:'Preferred Date',preferredTime:'Preferred Time',location:'Location',confirmNote:"Pick an available date and time — the same availability shown here is what WhatsApp sees too.",waSent:'Opening WhatsApp in a new tab with your booking pre-filled — a staff member confirms it there.',aiAssistant:'AI Assistant',aiSub:'Always here to help',aiGreeting:'Hello! How can I help you today?',yourPoints:'Your Points',toNextReward:'to next reward',redeem:'Redeem your points',r1:'Free Treatment',r2:'Exclusive Discount',r3:'Special Gift',r4:'Priority Booking',addToCart:'Add to Cart',added:'Added ✓',myBookings:'My Bookings',upcoming:'Upcoming',noBookings:'No upcoming bookings yet — book a service to see it here.',past:'Past',profile:'Profile & Loyalty',language:'Language',askPlaceholder:'Ask about a treatment, class or product…',beforeAfter:'Before & After',myProgress:'My Progress',
-    yourDetails:'Your details',yourName:'Your name',yourPhone:'Phone number',detailsNote:'So we can confirm your appointment.',aftercareConsent:'Send me aftercare advice about my treatment on WhatsApp',needName:'Please enter your name.',needPhone:'Please enter a phone number we can reach you on.',noServicesYet:'Nothing to show here yet — new treatments are on the way.',inStock:'In stock',aboutProduct:'About this product',fewLeft:'Only a few left',outOfStock:'Out of stock'
+    yourDetails:'Your details',yourName:'Your name',yourPhone:'Phone number',detailsNote:'So we can confirm your appointment.',aftercareConsent:'Send me aftercare advice about my treatment on WhatsApp',needName:'Please enter your name.',needPhone:'Please enter a phone number we can reach you on.',noServicesYet:'Nothing to show here yet — new treatments are on the way.',inStock:'In stock',basket:'Basket',yourBasket:'Your basket',basketEmpty:'Your basket is empty.',basketEmptySub:'Tap Add to Cart on any product and it will wait for you here.',browseShop:'Browse the shop',subtotal:'Subtotal',total:'Total',orderOnWa:'Order on WhatsApp',clearBasket:'Clear basket',sentClear:'Sent? Remove these items',orderIntro:"Hi! I'd like to order from",waOrderNote:'WhatsApp opens with your order written out — just press send. The team confirms it and arranges pickup or delivery.',unavailable:'No longer available',maxStock:'That is all we have in stock',addedToBasket:'Added to your basket',viewBasket:'View basket',remove:'Remove',basketOneBrand:'Each brand confirms its own items, so there is one order button per brand.',aboutProduct:'About this product',fewLeft:'Only a few left',outOfStock:'Out of stock'
   ,
     bookedNoteGuest:"Booked! We'll confirm shortly — we have your number."
   },
   ar:{heroTitle:'حساب واحد.<br>ثلاث علامات تجارية.',heroSubtitle:'الجمال والتجميل والعافية — متصلون.',heroDesc:'نظام رقمي متكامل يربط بين عيادة دولتشي للتجميل، وصالون بوليشد باي دولتشي، واستوديو كور لليوغا والبيلاتس في تجربة واحدة متكاملة.',keyFeatures:'أبرز المزايا',f1:'ثلاث أعمال في تطبيق واحد',f2:'معلومات كاملة عن الخدمات والأسعار',f3:'الحجز داخل التطبيق وعبر واتساب',f4:'نقاط ولاء عبر جميع العلامات',f5:'توصيات المساعد الذكي',f6:'منتجات ومتجر بيع بالتجزئة',f7:'فعاليات وعروض قادمة',f8:'الإنجليزية والكردية والعربية',tryTitle:'جرّب تطبيق العميل',tryDesc:'هذا عرض تجريبي فعلي لتجربة العميل الأساسية. تنقّل فيه كما يفعل العميل تماماً — اختر علامة تجارية، تصفح الخدمات، اطلب حجزاً، وتحدث مع المساعد الذكي.',s1t:'اختر وجهتك',s1d:'دولتشي، بوليشد أو كور',s2t:'تصفح الخدمات والأسعار',s2d:'تصفح حسب الفئة',s3t:'عرض تفاصيل الخدمة',s3d:'المدة والسعر وما يشمله',s4t:'اختر وقتاً واحجز',s4d:'داخل التطبيق أو عبر واتساب',s5t:'اسأل المساعد الذكي',s5d:'توصيات مخصصة لك',adminTitle:'لوحة تحكم الإدارة (نظرة عامة)',adminSub:'لوحة واحدة للأعمال الثلاثة — الحجوزات والعملاء والإيرادات والعروض في مكان واحد.',statBookings:'إجمالي الحجوزات',statCustomers:'إجمالي العملاء',statPoints:'النقاط الممنوحة',statRevenue:'الإيرادات',chartBookingsTitle:'الحجوزات حسب العلامة',chartBookingsCap:'نسبة الحجوزات خلال آخر 30 يوماً',chartRevenueTitle:'اتجاه الإيرادات',chartRevenueCap:'آخر 6 أشهر لجميع العلامات',viewAsTable:'عرض البيانات كجدول',brand:'العلامة',share:'النسبة',bookings:'الحجوزات',month:'الشهر',revenue:'الإيرادات',footerNote:'نموذج تجريبي للعرض فقط — المحتوى والأسعار والترجمات مؤقتة ويجب استبدالها ببيانات حقيقية.',
     chooseDestination:'اختر وجهتك',welcomeSub:'اكتشف عالمنا للجمال والعافية',navHome:'الرئيسية',navBookings:'الحجوزات',navShop:'المتجر',navProfile:'الملف الشخصي',allServices:'الكل',requestBooking:'طلب حجز',requestViaWhatsapp:'راسلنا أيضاً عبر واتساب',confirmBookingBtn:'تأكيد الحجز',bookedNote:'تم الحجز! ستراه ضمن حجوزاتي، وسنؤكده قريباً.',bookedTag:'محجوز',whatsInc:'ما يشمله',bookingSummary:'ملخص الحجز',preferredDate:'التاريخ المفضل',preferredTime:'الوقت المفضل',location:'الموقع',confirmNote:'اختر تاريخاً ووقتاً متاحَين — نفس التوفر الظاهر هنا يظهر في واتساب أيضاً.',waSent:'سيتم فتح واتساب في تبويب جديد مع تفاصيل حجزك جاهزة — يؤكدها الموظف هناك.',aiAssistant:'المساعد الذكي',aiSub:'هنا دائماً لمساعدتك',aiGreeting:'مرحباً! كيف يمكنني مساعدتك اليوم؟',yourPoints:'نقاطك',toNextReward:'حتى المكافأة التالية',redeem:'استبدل نقاطك',r1:'علاج مجاني',r2:'خصم حصري',r3:'هدية خاصة',r4:'أولوية الحجز',addToCart:'أضف إلى السلة',added:'أُضيف ✓',myBookings:'حجوزاتي',upcoming:'القادمة',noBookings:'لا توجد حجوزات قادمة بعد — احجز خدمة لتظهر هنا.',past:'السابقة',profile:'الملف الشخصي والولاء',language:'اللغة',askPlaceholder:'اسأل عن علاج أو حصة أو منتج…',beforeAfter:'قبل وبعد',myProgress:'تقدمي',
-    yourDetails:'بياناتك',yourName:'الاسم',yourPhone:'رقم الهاتف',detailsNote:'لنتمكن من تأكيد موعدك.',aftercareConsent:'أرسلوا لي نصائح العناية بعد الجلسة عبر واتساب',needName:'الرجاء إدخال اسمك.',needPhone:'الرجاء إدخال رقم هاتف يمكننا التواصل معك عليه.',noServicesYet:'لا يوجد شيء هنا بعد — خدمات جديدة قريباً.',inStock:'متوفر',aboutProduct:'عن المنتج',fewLeft:'الكمية محدودة',outOfStock:'غير متوفر'
+    yourDetails:'بياناتك',yourName:'الاسم',yourPhone:'رقم الهاتف',detailsNote:'لنتمكن من تأكيد موعدك.',aftercareConsent:'أرسلوا لي نصائح العناية بعد الجلسة عبر واتساب',needName:'الرجاء إدخال اسمك.',needPhone:'الرجاء إدخال رقم هاتف يمكننا التواصل معك عليه.',noServicesYet:'لا يوجد شيء هنا بعد — خدمات جديدة قريباً.',inStock:'متوفر',basket:'السلة',yourBasket:'سلتك',basketEmpty:'سلتك فارغة.',basketEmptySub:'اضغط «أضف إلى السلة» على أي منتج وسيبقى هنا بانتظارك.',browseShop:'تصفح المتجر',subtotal:'المجموع الفرعي',total:'المجموع',orderOnWa:'اطلب عبر واتساب',clearBasket:'إفراغ السلة',sentClear:'أرسلت الطلب؟ احذف هذه المنتجات',orderIntro:'مرحباً! أود أن أطلب من',waOrderNote:'سيفتح واتساب مع طلبك مكتوباً — فقط اضغط إرسال. سيؤكد الفريق الطلب ويرتب الاستلام أو التوصيل.',unavailable:'لم يعد متوفراً',maxStock:'هذه كل الكمية المتوفرة',addedToBasket:'أُضيف إلى سلتك',viewBasket:'عرض السلة',remove:'حذف',basketOneBrand:'كل علامة تؤكد منتجاتها بنفسها، لذلك هناك زر طلب لكل علامة.',aboutProduct:'عن المنتج',fewLeft:'الكمية محدودة',outOfStock:'غير متوفر'
   ,
     bookedNoteGuest:'تم الحجز! سنؤكده قريباً — لدينا رقمك.'
   },
   ku:{heroTitle:'یەک هەژمار.<br>سێ براند.',heroSubtitle:'جوانی، ڕازاندنەوە و تەندروستی — پەیوەستکراو.',heroDesc:'سیستەمێکی دیجیتاڵی یەکگرتوو کە کلینیکی ڕازاندنەوەی دۆلچێ، سالۆنی پۆلیشد بای دۆلچێ و ستۆدیۆی یۆگا و پیلاتێسی کۆر بە یەک ئەزموونی جوان دەبەستێتەوە.',keyFeatures:'تایبەتمەندییە سەرەکییەکان',f1:'سێ بزنس لە یەک ئەپدا',f2:'زانیاری تەواوی خزمەتگوزاری و نرخ',f3:'حجزکردن لەناو ئەپ و لە ڕێگەی واتساپ',f4:'خاڵی بەداخوازی لەسەر هەموو براندەکان',f5:'پێشنیاری یاریدەدەری AI',f6:'بەرهەم و فرۆشگای مەبەستی',f7:'ڕووداو و داشکاندنە داهاتووەکان',f8:'ئینگلیزی، کوردی و عەرەبی',tryTitle:'ئەپی کڕیار تاقی بکەوە',tryDesc:'ئەمە نموونەیەکی کارا لە ئەزموونی سەرەکی کڕیارە. وەک کڕیارێک بەردەوام بە لەسەری — براندێک هەڵبژێرە، خزمەتگوزارییەکان ببینە، داوای حجز بکە و لەگەڵ یاریدەدەری AI قسە بکە.',s1t:'ئامانجەکەت هەڵبژێرە',s1d:'دۆلچێ، پۆلیشد یان کۆر',s2t:'خزمەتگوزاری و نرخەکان ببینە',s2d:'بەپێی جۆر بگەڕێ',s3t:'وردەکاری خزمەتگوزاری ببینە',s3d:'کات، نرخ و ئەوەی تێدایە',s4t:'کاتێک هەڵبژێرە و حجز بکە',s4d:'لەناو ئەپ یان لە ڕێگەی واتساپ',s5t:'لە یاریدەدەری AI بپرسە',s5d:'پێشنیاری تایبەت بە تۆ',adminTitle:'داشبۆردی بەڕێوەبردن (گشتی)',adminSub:'یەک داشبۆرد بۆ هەر سێ بزنسەکە — حجزکردن، کڕیار، داهات و کەمپینەکان لە یەک شوێن.',statBookings:'کۆی حجزەکان',statCustomers:'کۆی کڕیارەکان',statPoints:'خاڵی دراو',statRevenue:'داهات',chartBookingsTitle:'حجزەکان بەپێی براند',chartBookingsCap:'ڕێژەی حجزەکان لە ٣٠ ڕۆژی ڕابردوودا',chartRevenueTitle:'ئاڕاستەی داهات',chartRevenueCap:'٦ مانگی ڕابردوو، هەموو براندەکان پێکەوە',viewAsTable:'وەک خشتە ببینە',brand:'براند',share:'ڕێژە',bookings:'حجزەکان',month:'مانگ',revenue:'داهات',footerNote:'نموونەیەکی نیشاندان — ناوەڕۆک، نرخ و وەرگێڕانەکان کاتین و دەبێت بە داتای ڕاستەقینە بگۆڕدرێن.',
     chooseDestination:'ئامانجەکەت هەڵبژێرە',welcomeSub:'ئەزموونی سیستەمی جوانی و تەندروستیمان بکە',navHome:'ماڵەوە',navBookings:'حجزەکان',navShop:'فرۆشگا',navProfile:'پرۆفایل',allServices:'هەموو',requestBooking:'داواکردنی حجز',requestViaWhatsapp:'هەروەها لە ڕێگەی واتساپ پەیوەندیمان پێوە بکە',confirmBookingBtn:'حجزەکە پشتڕاست بکە',bookedNote:'حجزکرا! لەژێر بەشی «حجزەکانم» دەیبینیت، بەم زووانە پشتڕاستی دەکەینەوە.',bookedTag:'حجزکراوە',whatsInc:'ئەوەی تێدایە',bookingSummary:'پوختەی حجز',preferredDate:'بەرواری دڵخواز',preferredTime:'کاتی دڵخواز',location:'شوێن',confirmNote:'بەروار و کاتێکی بەردەست هەڵبژێرە — هەمان بەردەستی کە لێرە دەیبینیت لە واتساپیشدا دەردەکەوێت.',waSent:'واتساپ لە تابێکی نوێدا دەکرێتەوە لەگەڵ وردەکاری حجزەکەت — کارمەندێک لەوێ پشتڕاستی دەکاتەوە.',aiAssistant:'یاریدەدەری AI',aiSub:'هەمیشە ئامادەیە بۆ یارمەتیدان',aiGreeting:'سڵاو! چۆن دەتوانم یارمەتیت بدەم ئەمڕۆ؟',yourPoints:'خاڵەکانت',toNextReward:'بۆ خەڵاتی داهاتوو',redeem:'خاڵەکانت بگۆڕەوە',r1:'چاککردنەوەی خۆڕایی',r2:'داشکاندنی تایبەت',r3:'دیاری تایبەت',r4:'پێشینەیی حجزکردن',addToCart:'زیادکردن بۆ سەبەتە',added:'زیادکرا ✓',myBookings:'حجزەکانم',upcoming:'داهاتوو',noBookings:'هێشتا هیچ حجزێکی داهاتوو نییە — خزمەتگوزارییەک حجز بکە تا لێرە دەربکەوێت.',past:'ڕابردوو',profile:'پرۆفایل و بەداخوازی',language:'زمان',askPlaceholder:'دەربارەی چارەسەرێک، پۆلێک یان بەرهەمێک بپرسە…',beforeAfter:'پێش و پاش',myProgress:'پێشکەوتنم',
-    yourDetails:'زانیارییەکانت',yourName:'ناوت',yourPhone:'ژمارەی تەلەفۆن',detailsNote:'بۆ ئەوەی بتوانین کاتەکەت پشتڕاست بکەینەوە.',aftercareConsent:'ئامۆژگاری چاودێری دوای چارەسەرم بۆ بنێرن لە ڕێگەی واتساپ',needName:'تکایە ناوت بنووسە.',needPhone:'تکایە ژمارەیەکی تەلەفۆن بنووسە کە پەیوەندیت پێوە بکەین.',noServicesYet:'هێشتا هیچ لێرە نییە — خزمەتگوزاری نوێ بەم زووانە دێت.',inStock:'بەردەستە',aboutProduct:'دەربارەی ئەم بەرهەمە',fewLeft:'کەمێک ماوە',outOfStock:'نەماوە'
+    yourDetails:'زانیارییەکانت',yourName:'ناوت',yourPhone:'ژمارەی تەلەفۆن',detailsNote:'بۆ ئەوەی بتوانین کاتەکەت پشتڕاست بکەینەوە.',aftercareConsent:'ئامۆژگاری چاودێری دوای چارەسەرم بۆ بنێرن لە ڕێگەی واتساپ',needName:'تکایە ناوت بنووسە.',needPhone:'تکایە ژمارەیەکی تەلەفۆن بنووسە کە پەیوەندیت پێوە بکەین.',noServicesYet:'هێشتا هیچ لێرە نییە — خزمەتگوزاری نوێ بەم زووانە دێت.',inStock:'بەردەستە',basket:'سەبەتە',yourBasket:'سەبەتەکەت',basketEmpty:'سەبەتەکەت بەتاڵە.',basketEmptySub:'لەسەر هەر بەرهەمێک «زیادکردن بۆ سەبەتە» دابگرە و لێرە چاوەڕێت دەکات.',browseShop:'سەیری فرۆشگا بکە',subtotal:'کۆی لاوەکی',total:'کۆی گشتی',orderOnWa:'داواکردن لە واتساپ',clearBasket:'بەتاڵکردنی سەبەتە',sentClear:'ناردت؟ ئەم بەرهەمانە لاببە',orderIntro:'سڵاو! دەمەوێت داوا بکەم لە',waOrderNote:'واتساپ دەکرێتەوە و داواکارییەکەت نووسراوە — تەنها بینێرە. تیمەکە پشتڕاستی دەکاتەوە و وەرگرتن یان گەیاندن ڕێکدەخات.',unavailable:'چیتر بەردەست نییە',maxStock:'ئەمە هەموو ئەوەیە کە لە کۆگادا هەیە',addedToBasket:'زیادکرا بۆ سەبەتەکەت',viewBasket:'بینینی سەبەتە',remove:'لابردن',basketOneBrand:'هەر براندێک بەرهەمەکانی خۆی پشتڕاست دەکاتەوە، بۆیە بۆ هەر براندێک دوگمەیەکی داواکردن هەیە.',aboutProduct:'دەربارەی ئەم بەرهەمە',fewLeft:'کەمێک ماوە',outOfStock:'نەماوە'
   ,
     bookedNoteGuest:'حجزکرا! بەم زووانە پشتڕاستی دەکەینەوە — ژمارەکەت لەلامانە.'
   },
 };
 
-let lang='en', currency='USD', currentBrand=null, currentScreen='welcome', currentCat='All', currentService=null, currentProduct=null, cart=0;
+let lang='en', currency='USD', currentBrand=null, currentScreen='welcome', currentCat='All', currentService=null, currentProduct=null;
 let selectedDateObj=null, selectedTime=null;
 const screenEl=document.getElementById('screen');
 
@@ -2136,6 +2213,8 @@ document.querySelectorAll('[data-currency-btn]').forEach(b=>{
    Overlays (the AI assistant, the photo lightbox) are handled first, so Back
    closes what is on top instead of jumping a whole screen. */
 function closeTopOverlay(){
+  const bs=document.getElementById('basketSheet');
+  if(bs && bs.classList.contains('open')){ closeBasket(); return true; }
   const ai=document.getElementById('aiOverlay');
   if(ai && ai.classList.contains('open')){ ai.classList.remove('open'); return true; }
   const lb=document.getElementById('lightbox');
@@ -2385,6 +2464,204 @@ function renderBookings(){
   return `<div class="section-label" style="margin-top:0;">${t('upcoming')}</div>${rows}`;
 }
 
+
+/* ---------------- Shop basket ----------------
+   "Add to Cart" puts a product into a basket that is remembered on this
+   phone (so closing the app does not lose it). The basket only stores
+   product id + quantity; name, photo, price and stock are always read fresh
+   from the live product list, so a price change or a sold-out product is
+   reflected immediately.
+
+   Ordering goes through WhatsApp, the same way bookings do: each brand
+   confirms its own products, so the basket is grouped by brand and each
+   group has its own "Order on WhatsApp" button with the order written out.
+   The WhatsApp message is always in USD (prices are stored in USD); what is
+   shown on screen follows the USD/IQD switch like the rest of the app. */
+const BASKET_KEY='odc_basket_v1';
+let basket=(function(){
+  try{ const a=JSON.parse(localStorage.getItem(BASKET_KEY)||'[]');
+       return Array.isArray(a)?a.filter(x=>x&&x.id!=null&&x.qty>0).map(x=>({id:String(x.id),qty:Math.max(1,Math.floor(x.qty))})):[]; }
+  catch(e){ return []; }
+})();
+let basketOpen=false;
+function saveBasket(){ try{ localStorage.setItem(BASKET_KEY,JSON.stringify(basket)); }catch(e){} }
+function productById(id){ return STORE.products.find(x=>String(x.id)===String(id)); }
+function basketLines(){
+  return basket.map(l=>{
+    const p=productById(l.id);
+    const stock=p?numOr0(p.stock):0;
+    return {id:l.id,qty:l.qty,p,stock,ok:!!p&&stock>0,unit:p?effectivePrice(p):0};
+  });
+}
+function basketCount(){ return basketLines().filter(l=>l.ok).reduce((a,l)=>a+Math.min(l.qty,l.stock),0); }
+function basketTotal(lines){ return (lines||basketLines()).filter(l=>l.ok).reduce((a,l)=>a+l.unit*Math.min(l.qty,l.stock),0); }
+function basketQty(id){ const l=basket.find(x=>x.id===String(id)); return l?l.qty:0; }
+function roundMoney(n){ return Math.round(n*100)/100; }
+function addToBasket(id){
+  const p=productById(id); if(!p) return false;
+  const stock=numOr0(p.stock);
+  const have=basketQty(id);
+  if(stock<=0 || have>=stock){ toast(t('maxStock')); return false; }
+  const l=basket.find(x=>x.id===String(id));
+  if(l) l.qty++; else basket.push({id:String(id),qty:1});
+  saveBasket(); updateBasketUI(true);
+  return true;
+}
+function setBasketQty(id,qty){
+  const i=basket.findIndex(x=>x.id===String(id)); if(i<0) return;
+  if(qty<=0) basket.splice(i,1); else basket[i].qty=qty;
+  saveBasket(); updateBasketUI(); paintBasketSheet();
+}
+function basketBtnHtml(){
+  const n=basketCount();
+  return `<button class="basket-btn" id="basketBtn" aria-label="${t('basket')}">🧺<span class="basket-count" data-n="${n}">${n||''}</span></button>`;
+}
+/* Refresh every basket counter in place — no full re-render, so the shop
+   does not jump or lose its scroll position when something is added. */
+function updateBasketUI(bump){
+  const n=basketCount();
+  document.querySelectorAll('#screen .basket-count, #screen .nav-badge').forEach(el=>{
+    el.dataset.n=n; el.textContent=n||'';
+    if(bump&&n){ const host=el.classList.contains('nav-badge')?el:el.parentElement; host.classList.remove('bump'); void host.offsetWidth; host.classList.add('bump'); }
+  });
+  const pill=document.getElementById('basketPill');
+  if(pill){
+    pill.classList.toggle('hide',!n);
+    const c=pill.querySelector('.bp-n'); if(c) c.textContent=n;
+    const s=pill.querySelector('.bp-sum'); if(s) s.textContent=fmtMoney(roundMoney(basketTotal()));
+  }
+  // Keep each shop card's button honest about stock.
+  document.querySelectorAll('#screen [data-add]').forEach(b=>{
+    const p=productById(b.dataset.add); const st=p?numOr0(p.stock):0;
+    const have=basketQty(b.dataset.add);
+    b.disabled=st<=0; b.classList.toggle('in',have>0);
+    if(!b.dataset.flash) b.textContent=st<=0?t('outOfStock'):(have>0?`${t('addToCart')} · ${have}`:t('addToCart'));
+  });
+}
+function basketPillHtml(){
+  if(!['shop','product'].includes(currentScreen)) return '';
+  const n=basketCount();
+  return `<button class="basket-pill ${n?'':'hide'}" id="basketPill"><span>🧺 ${t('basket')}</span><span class="bp-n">${n}</span><span class="bp-sum">${fmtMoney(roundMoney(basketTotal()))}</span></button>`;
+}
+function basketOrderText(brand,lines){
+  const g=loadGuestDetails();
+  const who=loggedInClient?{name:loggedInClient.name,phone:loggedInClient.phone}:{name:g.name,phone:g.phone};
+  const rows=lines.map(l=>{ const q=Math.min(l.qty,l.stock); return `• ${q} × ${l.p.n} — $${roundMoney(l.unit*q)}`; });
+  const sum=roundMoney(lines.reduce((a,l)=>a+l.unit*Math.min(l.qty,l.stock),0));
+  return [`${t('orderIntro')} ${BRANDS[brand].name}:`,'',...rows,'',`${t('total')}: $${sum}`,
+          ...(who.name?[`${t('yourName')}: ${who.name}`]:[]),...(who.phone?[`${t('yourPhone')}: ${who.phone}`]:[])].join('\n');
+}
+function basketSheetBodyHtml(){
+  const lines=basketLines();
+  if(!lines.length){
+    return `<div class="bs-empty"><div class="ic">🧺</div><b>${t('basketEmpty')}</b><p>${t('basketEmptySub')}</p>
+      ${currentScreen==='shop'?'':`<button class="primary-btn" id="bsBrowse" style="margin-top:0;">${t('browseShop')}</button>`}</div>`;
+  }
+  const brands=['dolce','polished','core'].filter(b=>lines.some(l=>l.p&&l.p.brand===b));
+  const gone=lines.filter(l=>!l.p);
+  const groups=brands.map(b=>{
+    const ls=lines.filter(l=>l.p&&l.p.brand===b);
+    const okLines=ls.filter(l=>l.ok);
+    const sub=roundMoney(basketTotal(ls));
+    const href=okLines.length?`https://wa.me/${BRAND_WHATSAPP[b]||BRAND_WHATSAPP.dolce}?text=${encodeURIComponent(basketOrderText(b,okLines))}`:'#';
+    return `<div class="bs-group" data-bs-brand="${b}">
+      <div class="bs-brand"><i style="background:${BRANDS[b].c1||'var(--gold)'}"></i>${esc(BRANDS[b].name)}</div>
+      ${ls.map(lineHtml).join('')}
+      <div class="bs-sub"><span>${t('subtotal')}</span><b>${fmtMoney(sub)}</b></div>
+      <a class="bs-order ${okLines.length?'':'off'}" data-bs-order="${b}" href="${href}" target="_blank" rel="noopener">💬 ${t('orderOnWa')}</a>
+      <button class="bs-sent" data-bs-sent="${b}">✓ ${t('sentClear')}</button>
+    </div>`;
+  }).join('');
+  const goneHtml=gone.length?`<div class="bs-group">${gone.map(lineHtml).join('')}</div>`:'';
+  return `${groups}${goneHtml}
+    ${brands.length>1?`<div class="bs-total"><span>${t('total')}</span><b>${fmtMoney(roundMoney(basketTotal(lines)))}</b></div>`:''}
+    <div class="bs-note">${t('waOrderNote')}${brands.length>1?' '+t('basketOneBrand'):''}</div>
+    <button class="bs-clear" id="bsClear">${t('clearBasket')}</button>`;
+  function lineHtml(l){
+    const p=l.p;
+    const img=p?mediaHtml(p.image||'','thumbnail',{fallback:brandFallback(p.brand),alt:p.n}):`<div class="mi" style="background:var(--line)"></div>`;
+    const price=!l.ok?`<div class="p bad">${!p?t('unavailable'):t('outOfStock')}</div>`
+      :`<div class="p">${fmtMoney(l.unit)}${l.qty>l.stock?` · ${t('fewLeft')}`:''}</div>`;
+    return `<div class="bs-line">${img}
+      <div class="bs-info"><div class="n">${esc(p?p.n:'—')}</div><div class="bs-row">${price}
+      ${l.ok?`<div class="bs-qty"><button data-bs-dec="${esc(l.id)}" aria-label="-">−</button><span>${Math.min(l.qty,l.stock)}</span><button data-bs-inc="${esc(l.id)}" aria-label="+" ${l.qty>=l.stock?'disabled':''}>+</button></div>`:''}</div></div>
+      <button class="bs-del" data-bs-del="${esc(l.id)}" aria-label="${t('remove')}">✕</button>
+    </div>`;
+  }
+}
+function basketSheetHtml(){
+  return `<div class="basket-sheet ${basketOpen?'open instant':''}" id="basketSheet" aria-hidden="${!basketOpen}">
+    <div class="bs-backdrop" id="bsBackdrop"></div>
+    <div class="bs-panel" role="dialog" aria-label="${t('yourBasket')}">
+      <div class="bs-grab"></div>
+      <div class="bs-head"><h3>${t('yourBasket')}</h3><button class="close" id="bsClose" aria-label="✕">✕</button></div>
+      <div class="bs-body" id="bsBody">${basketSheetBodyHtml()}</div>
+    </div>
+  </div>`;
+}
+const basketSent={};  // brands whose WhatsApp order was opened this visit
+function paintBasketSheet(){
+  const body=document.getElementById('bsBody'); if(!body) return;
+  const top=body.scrollTop;
+  body.innerHTML=basketSheetBodyHtml();
+  body.scrollTop=top;
+  Object.keys(basketSent).forEach(b=>{ const g=body.querySelector(`[data-bs-brand="${b}"]`); if(g) g.classList.add('sent'); });
+}
+function openBasket(){
+  const sh=document.getElementById('basketSheet'); if(!sh) return;
+  basketOpen=true; paintBasketSheet();
+  sh.classList.remove('instant'); void sh.offsetWidth;
+  sh.classList.add('open'); sh.setAttribute('aria-hidden','false');
+  pushNavState();
+}
+function closeBasket(){
+  const sh=document.getElementById('basketSheet');
+  basketOpen=false;
+  if(sh){ sh.classList.remove('instant','open'); sh.setAttribute('aria-hidden','true'); }
+}
+function bindBasket(){
+  const btn=document.getElementById('basketBtn'); if(btn) btn.addEventListener('click',openBasket);
+  const pill=document.getElementById('basketPill'); if(pill) pill.addEventListener('click',openBasket);
+  const sh=document.getElementById('basketSheet'); if(!sh) return;
+  const back=()=>{ if(history.state&&history.state.dolce) history.back(); else closeBasket(); };
+  document.getElementById('bsBackdrop').addEventListener('click',back);
+  document.getElementById('bsClose').addEventListener('click',back);
+  // Drag the sheet down to close it (only when its list is scrolled to the top).
+  const panel=sh.querySelector('.bs-panel'), body=document.getElementById('bsBody');
+  let d=null;
+  panel.addEventListener('pointerdown',e=>{
+    if(e.target.closest('button,a')) return;
+    if(body.contains(e.target)&&body.scrollTop>0) return;
+    d={y:e.clientY,dy:0,t:performance.now(),id:e.pointerId};
+  });
+  panel.addEventListener('pointermove',e=>{
+    if(!d||e.pointerId!==d.id) return;
+    d.dy=Math.max(0,e.clientY-d.y);
+    if(d.dy>6){ panel.style.transition='none'; panel.style.transform=`translateY(${d.dy}px)`; }
+  });
+  const up=()=>{
+    if(!d) return; const dy=d.dy, v=dy/Math.max(1,performance.now()-d.t); d=null;
+    panel.style.transition=''; panel.style.transform='';
+    if(dy>110||(dy>30&&v>.6)) back();
+  };
+  panel.addEventListener('pointerup',up); panel.addEventListener('pointercancel',up);
+  sh.addEventListener('click',e=>{
+    const inc=e.target.closest('[data-bs-inc]'), dec=e.target.closest('[data-bs-dec]'), del=e.target.closest('[data-bs-del]');
+    const order=e.target.closest('[data-bs-order]'), sent=e.target.closest('[data-bs-sent]');
+    if(inc){ const id=inc.dataset.bsInc; const p=productById(id); if(p&&basketQty(id)<numOr0(p.stock)) setBasketQty(id,basketQty(id)+1); else toast(t('maxStock')); }
+    else if(dec){ const id=dec.dataset.bsDec; setBasketQty(id,basketQty(id)-1); }
+    else if(del){ setBasketQty(del.dataset.bsDel,0); }
+    else if(order){ basketSent[order.dataset.bsOrder]=1; setTimeout(paintBasketSheet,300); }
+    else if(sent){
+      const b=sent.dataset.bsSent;
+      basket=basket.filter(l=>{ const p=productById(l.id); return !(p&&p.brand===b); });
+      delete basketSent[b]; saveBasket(); updateBasketUI(); paintBasketSheet();
+    }
+    else if(e.target.closest('#bsClear')){ basket=[]; saveBasket(); updateBasketUI(); paintBasketSheet(); }
+    else if(e.target.closest('#bsBrowse')){ closeBasket(); navTo('shop'); }
+  });
+}
+
 function renderShop(){
   const items=STORE.products.map((p,i)=>{
     const b=BRANDS[p.brand];
@@ -2392,11 +2669,11 @@ function renderShop(){
     return `<div class="prod" data-prod="${esc(String(p.id))}">
       ${mediaHtml(p.image||'','product',{cls:'sw',fallback:brandFallback(p.brand),alt:p.n,inner:shots>1?`<span class="shot-count">${shots}</span>`:''})}
       <div class="n">${esc(p.n)}</div><div class="p">${priceHtml(p)}</div>
-      <button data-add="${i}">${t('addToCart')}</button>
+      <button data-add="${esc(String(p.id))}" ${numOr0(p.stock)<=0?'disabled':''} class="${basketQty(p.id)?'in':''}">${numOr0(p.stock)<=0?t('outOfStock'):(basketQty(p.id)?`${t('addToCart')} · ${basketQty(p.id)}`:t('addToCart'))}</button>
     </div>`;
   }).join('');
   const empty=`<div style="font-size:13.5px;color:var(--muted);text-align:center;padding:20px 0;">No products yet.</div>`;
-  return `<div class="section-label" style="margin-top:0;">${t('navShop')} ${cart?`(${cart})`:''}</div><div class="shop-grid">${items}</div>${STORE.products.length?'':empty}`;
+  return `<div class="shop-grid">${items}</div>${STORE.products.length?'':empty}<div style="height:56px"></div>`;
 }
 
 /* Every photo a product has, the main one first. A product with no photo at
@@ -3698,17 +3975,20 @@ function render(){
       ${currentScreen==='welcome'
         ? `<div class="title home-mark"><img src="data:image/png;base64,${DOLCE_PLUS_MARK_B64}" alt="Dolce+"><div class="home-tagline" dir="ltr">Beauty<i>•</i>Aesthetics<i>•</i>Movement</div></div>`
         : `<div class="title">${title}${small?`<small>${small}</small>`:''}</div>`}
+      ${['shop','product'].includes(currentScreen)?basketBtnHtml():''}
     </div>
     <div class="screen-body ${navDirection==='back'?'enter-back':navDirection==='none'?'':'enter'}">${bodyHtml()}</div>
     <nav class="bottom-nav" role="tablist">
       <div class="nav-lens" aria-hidden="true"></div>
       ${[['welcome','⌂','navHome'],['bookings','🗓','navBookings'],['shop','🛍','navShop'],['profile','◎','navProfile']].map(([n,ic,key],i)=>{
         const on=navIndexFor(currentScreen)===i;
-        return `<button data-nav="${n}" role="tab" aria-selected="${on}" class="${on?'active':''}" style="--a:${on?1:0}"><span class="ic">${ic}</span>${t(key)}</button>`;
+        return `<button data-nav="${n}" role="tab" aria-selected="${on}" class="${on?'active':''}" style="--a:${on?1:0}"><span class="ic">${ic}</span>${t(key)}${n==='shop'?`<span class="nav-badge" data-n="${basketCount()}">${basketCount()||''}</span>`:''}</button>`;
       }).join('')}
     </nav>
     ${['detail','booking','auth'].includes(currentScreen) ? '' :
        `<button class="fab-ai" id="fabAI" aria-label="${t('aiAssistant')}">✨</button>`}
+    ${basketPillHtml()}
+    ${basketSheetHtml()}
     <div class="ai-overlay" id="aiOverlay">
       <div class="ai-head">
         <div>
@@ -3735,6 +4015,7 @@ function render(){
     </div>
   `;
   bindScreen();
+  bindBasket();
   if(!aiSeeded){seedAI();}
 }
 
@@ -3844,7 +4125,11 @@ function bindScreen(){
   });
   screenEl.querySelectorAll('[data-add]').forEach(el=>el.addEventListener('click',(ev)=>{
     ev.stopPropagation();          // the card itself opens the product
-    cart++;el.textContent=t('added');setTimeout(render,600);
+    if(el.disabled) return;
+    if(addToBasket(el.dataset.add)){
+      el.dataset.flash='1'; el.textContent=t('added');
+      setTimeout(()=>{ delete el.dataset.flash; updateBasketUI(); },900);
+    }
   }));
   screenEl.querySelectorAll('[data-prod]').forEach(el=>el.addEventListener('click',()=>{
     currentProduct=el.dataset.prod; goto('product');
@@ -3868,7 +4153,10 @@ function bindScreen(){
   const pdAdd=document.getElementById('pdAdd');
   if(pdAdd) pdAdd.addEventListener('click',()=>{
     if(pdAdd.disabled) return;
-    cart++; pdAdd.textContent=t('added'); setTimeout(render,700);
+    if(addToBasket(currentProduct)){
+      pdAdd.textContent=t('added');
+      clearTimeout(pdAdd._t); pdAdd._t=setTimeout(()=>{ pdAdd.textContent=t('addToCart'); },1100);
+    }
   });
   screenEl.querySelectorAll('[data-proflang]').forEach(el=>el.addEventListener('click',()=>{
     lang=el.dataset.proflang;
