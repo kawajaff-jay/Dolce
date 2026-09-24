@@ -462,6 +462,31 @@
   .cat-tabs{display:flex;gap:8px;overflow-x:auto;margin-bottom:10px;}
   .cat-tabs button{flex:none;padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);font-size:13.5px;font-weight:600;color:var(--ink-soft);}
   .cat-tabs button.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  /* Service categories: one dark pill that slides and resizes between chips
+     (driven by CatGlass). Scoped to .cat-glass so the admin brand tabs and
+     the language chips keep their plain style. */
+  .cat-tabs.cat-glass{position:relative;isolation:isolate;padding:2px 1px 4px;}
+  .cat-tabs.cat-glass button{--a:0;position:relative;background:none;border-color:transparent;
+    color:var(--ink-soft);
+    color:color-mix(in srgb, #fff calc(var(--a) * 100%), var(--ink-soft));
+    -webkit-tap-highlight-color:transparent;}
+  /* Scale the label, not the chip: a transform on the chip itself would lift
+     its background above the sliding pill and hide it. */
+  .cat-tabs.cat-glass button > span{display:inline-block;transform:scale(calc(.97 + .03 * var(--a)));}
+  .cat-glass,.svc-list{-webkit-user-select:none;user-select:none;}
+  .cat-tabs.cat-glass button.active{background:none;border-color:transparent;}
+  .cat-tabs.cat-glass button::before{content:'';position:absolute;inset:0;border-radius:999px;
+    background:var(--card);border:1px solid var(--line);z-index:-1;}
+  .cat-lens{position:absolute;top:2px;height:0;left:0;width:0;border-radius:999px;background:var(--ink);
+    box-shadow:0 2px 5px rgba(28,26,22,.16), inset 0 1px 0 rgba(255,255,255,.14);
+    will-change:transform,width;pointer-events:none;}
+  .svc-list.in-fwd{animation:listIn .28s cubic-bezier(.22,1,.36,1);}
+  .svc-list.in-back{animation:listInBack .28s cubic-bezier(.22,1,.36,1);}
+  @keyframes listIn{from{opacity:0;transform:translate3d(18px,0,0);}to{opacity:1;transform:none;}}
+  @keyframes listInBack{from{opacity:0;transform:translate3d(-18px,0,0);}to{opacity:1;transform:none;}}
+  html[dir="rtl"] .svc-list.in-fwd{animation-name:listInBack;}
+  html[dir="rtl"] .svc-list.in-back{animation-name:listIn;}
+  @media (prefers-reduced-motion: reduce){ .svc-list.in-fwd,.svc-list.in-back{animation:none;} }
   .svc-row{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);}
   .svc-row .swatch{width:52px;height:52px;border-radius:12px;flex:none;background:linear-gradient(140deg,var(--sc1,#ccc),var(--sc2,#999));background-size:cover;background-position:center;}
   .svc-row .info{flex:1;}
@@ -2107,7 +2132,10 @@ function renderWelcome(){
 function renderServices(){
   const b=BRANDS[currentBrand];
   const cats=['All',...b.cats];
-  const tabs=cats.map(c=>`<button data-cat="${c}" class="${c===currentCat?'active':''}">${c==='All'?t('allServices'):c}</button>`).join('');
+  const tabs=cats.map(c=>{
+    const on=c===currentCat;
+    return `<button data-cat="${esc(c)}" class="${on?'active':''}" style="--a:${on?1:0}"><span>${c==='All'?t('allServices'):esc(c)}</span></button>`;
+  }).join('');
   const list=svcList(currentBrand).filter(s=>currentCat==='All'||s.cat===currentCat).map(s=>`
     <div class="svc-row" data-svc="${s.id}">
       <div class="swatch" style="${swStyle(s,currentBrand)}"></div>
@@ -2118,8 +2146,8 @@ function renderServices(){
   // like the app failed to load.
   const empty=`<div style="padding:30px 6px;color:var(--muted);font-size:14px;text-align:center;">${t('noServicesYet')}</div>`;
   return `
-    <div class="cat-tabs">${tabs}</div>
-    <div>${list||empty}</div>
+    <div class="cat-tabs cat-glass" id="catRow"><div class="cat-lens" aria-hidden="true"></div>${tabs}</div>
+    <div class="svc-list ${CatGlass.listClass()}">${list||empty}</div>
   `;
 }
 
@@ -3043,6 +3071,169 @@ const NavGlass=(function(){
   return {mount,paint};
 })();
 
+/* ================= Sliding category pill =================
+   Same idea as the bottom bar: the dark pill behind the active category is
+   one object whose position is a single number (0 = "All", 1 = the first
+   category, …). Chips differ in width, so the pill interpolates BOTH its
+   left edge and its width between neighbours — it visibly reshapes as it
+   travels from "Spa" to "Aesthetic gynecology".
+   - Tap a chip: the pill springs there and the row glides it into view.
+   - Swipe the service list sideways: the pill tracks the swipe, and past
+     NAV_SWIPE_COMMIT (or with a flick) the next/previous category opens.
+   Uses the same NAV_SPRING / NAV_STRETCH / NAV_RUBBER settings as the bar,
+   so tuning one tunes both.                                              */
+const CatGlass=(function(){
+  const st={pos:null,vel:0,target:0,raf:0,last:0,dragging:false,row:null,lens:null,btns:[],
+            brand:null,scroll:0,anim:'',wasHere:false};
+  const reduceMotion=()=>{ try{ return matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; } };
+  const cats=()=>currentBrand?['All',...BRANDS[currentBrand].cats]:['All'];
+
+  function geom(p){
+    const b=st.btns, n=b.length-1; if(n<0) return {x:0,w:0};
+    const c=Math.max(0,Math.min(n,p)), lo=Math.floor(c), hi=Math.min(n,lo+1), f=c-lo;
+    let x=b[lo].offsetLeft+(b[hi].offsetLeft-b[lo].offsetLeft)*f;
+    const w=b[lo].offsetWidth+(b[hi].offsetWidth-b[lo].offsetWidth)*f;
+    if(p<0||p>n){                                  // rubber-band past the ends
+      const edge=p<0?0:n, over=p-edge;
+      const dir=(n>0&&b[1].offsetLeft<b[0].offsetLeft)?-1:1;
+      x+=over*dir*b[edge].offsetWidth;
+    }
+    return {x,w};
+  }
+  function paint(){
+    if(!st.lens||!st.btns.length||st.pos==null) return;
+    const {x,w}=geom(st.pos);
+    const grow=reduceMotion()?0:Math.min(Math.abs(st.vel)*NAV_STRETCH,.22)*w;
+    const b0=st.btns[0];
+    st.lens.style.top=b0.offsetTop+'px';
+    st.lens.style.height=b0.offsetHeight+'px';
+    st.lens.style.width=(w+grow).toFixed(1)+'px';
+    st.lens.style.transform=`translate3d(${(x-grow/2).toFixed(1)}px,0,0)`;
+    st.btns.forEach((btn,i)=>btn.style.setProperty('--a',Math.max(0,1-Math.abs(st.pos-i)).toFixed(3)));
+  }
+  function frame(t){
+    const dt=st.last?Math.min(.034,(t-st.last)/1000):1/60; st.last=t;
+    const {stiffness:k,damping:c,mass:m}=NAV_SPRING;
+    for(let left=dt;left>1e-6;left-=1/240){
+      const h=Math.min(left,1/240);
+      st.vel+=((-k*(st.pos-st.target)-c*st.vel)/m)*h; st.pos+=st.vel*h;
+    }
+    const done=Math.abs(st.vel)<.02&&Math.abs(st.pos-st.target)<.002;
+    if(done){ st.pos=st.target; st.vel=0; }
+    paint();
+    if(done){ st.raf=0; st.last=0; return; }
+    st.raf=requestAnimationFrame(frame);
+  }
+  function springTo(i,vel){
+    st.target=i; if(typeof vel==='number') st.vel=vel;
+    if(reduceMotion()){ st.pos=i; st.vel=0; paint(); return; }
+    if(!st.raf){ st.last=0; st.raf=requestAnimationFrame(frame); }
+  }
+  function stop(){ if(st.raf){ cancelAnimationFrame(st.raf); st.raf=0; st.last=0; } }
+  function reveal(i){                               // glide the chosen chip into view
+    const b=st.btns[i]; if(!b||!st.row) return;
+    try{ b.scrollIntoView({behavior:reduceMotion()?'auto':'smooth',inline:'center',block:'nearest'}); }catch(e){}
+  }
+
+  function mount(){
+    st.row=document.getElementById('catRow');
+    if(!st.row||currentScreen!=='services'){ st.row=null; st.lens=null; st.btns=[]; st.wasHere=false; st.anim=''; return; }
+    if(!st.wasHere||st.brand!==currentBrand){ st.pos=null; st.vel=0; st.scroll=0; stop(); }
+    st.wasHere=true; st.brand=currentBrand;
+    st.lens=st.row.querySelector('.cat-lens');
+    st.btns=[...st.row.querySelectorAll('[data-cat]')];
+    st.row.scrollLeft=st.scroll;                    // the row was rebuilt — keep its place
+    st.row.addEventListener('scroll',()=>{ st.scroll=st.row.scrollLeft; },{passive:true});
+    const target=Math.max(0,cats().indexOf(currentCat));
+    if(st.pos==null){ st.pos=target; st.vel=0; }
+    paint();
+    if(!st.dragging) springTo(target);
+    if(st.anim) reveal(target);
+    st.anim='';
+  }
+  // Change category: the pill springs, only the list below slides — the
+  // header and chip row stay still.
+  function select(cat,vel){
+    const list=cats(), from=Math.max(0,list.indexOf(currentCat)), to=list.indexOf(cat);
+    if(to<0) return;
+    if(typeof vel==='number') st.vel=vel;
+    if(to===from){ springTo(to); return; }
+    st.anim=to>from?'in-fwd':'in-back';
+    currentCat=cat; navDirection='none';
+    render();
+  }
+  function listClass(){ return st.anim; }
+
+  /* Swiping the service list changes category. */
+  let g=null;
+  const rtl=()=>document.documentElement.dir==='rtl';
+  function inSideScroller(el,stopAt){
+    for(let n=el;n&&n!==stopAt;n=n.parentElement){
+      if(n.scrollWidth>n.clientWidth+2){
+        const ox=getComputedStyle(n).overflowX;
+        if(ox==='auto'||ox==='scroll') return true;
+      }
+    }
+    return false;
+  }
+  function velocity(){
+    const sm=g.samples; if(sm.length<2) return 0;
+    const a=sm[0], b=sm[sm.length-1], dt=(b.t-a.t)/1000;
+    if(performance.now()-b.t>80) return 0;
+    return dt>0?(b.p-a.p)/dt:0;
+  }
+  function rubber(p){ const n=st.btns.length-1; return p<0?p*NAV_RUBBER:p>n?n+(p-n)*NAV_RUBBER:p; }
+  screenEl.addEventListener('pointerdown',e=>{
+    if(currentScreen!=='services'||!st.row) return;
+    if(e.pointerType==='mouse'&&e.button!==0) return;
+    const body=e.target.closest('.screen-body');
+    if(!body||e.target.closest('.bottom-nav')) return;
+    const ai=document.getElementById('aiOverlay'); if(ai&&ai.classList.contains('open')) return;
+    if(inSideScroller(e.target,body)) return;       // the chip row scrolls itself
+    g={id:e.pointerId,x0:e.clientX,y0:e.clientY,body,lock:null,
+       start:Math.round(st.pos==null?0:st.pos),samples:[],list:body.querySelector('.svc-list')};
+  });
+  screenEl.addEventListener('pointermove',e=>{
+    if(!g||e.pointerId!==g.id) return;
+    const dx=e.clientX-g.x0, dy=e.clientY-g.y0;
+    if(!g.lock){
+      if(Math.hypot(dx,dy)<8) return;
+      if(Math.abs(dx)>Math.abs(dy)*1.15){
+        g.lock='x'; try{ g.body.setPointerCapture(e.pointerId); }catch(_){}
+        stop(); st.dragging=true;
+        if(g.list) g.list.style.transition='none';
+      } else { g=null; return; }
+    }
+    const width=(g.body.clientWidth||320)*.9;
+    const raw=g.start-(dx*(rtl()?-1:1))/width;
+    const p=rubber(Math.max(g.start-1,Math.min(g.start+1,raw)));
+    const now=performance.now();
+    g.samples.push({t:now,p}); while(g.samples.length>2&&now-g.samples[0].t>90) g.samples.shift();
+    st.vel=velocity(); st.pos=p; paint();
+    if(g.list){
+      g.list.style.transform=`translate3d(${Math.max(-56,Math.min(56,dx*.3))}px,0,0)`;
+      g.list.style.opacity=String(1-Math.min(.25,Math.abs(dx)/(g.body.clientWidth||320)*.4));
+    }
+  });
+  function end(){
+    if(!g) return;
+    const v=g.lock==='x'?velocity():0, gg=g; g=null;
+    if(gg.lock!=='x') return;
+    st.dragging=false;
+    const n=st.btns.length-1, moved=st.pos-gg.start;
+    const flick=Math.abs(v)>1.1&&Math.sign(v)===Math.sign(moved);
+    let target=(Math.abs(moved)>NAV_SWIPE_COMMIT||flick)?gg.start+Math.sign(moved):gg.start;
+    target=Math.max(0,Math.min(n,target));
+    if(gg.list){ gg.list.style.transition='transform .32s cubic-bezier(.22,1,.36,1), opacity .32s ease';
+                 gg.list.style.transform=''; gg.list.style.opacity=''; }
+    if(target!==gg.start) select(cats()[target],v); else springTo(target,v);
+  }
+  screenEl.addEventListener('pointerup',end);
+  screenEl.addEventListener('pointercancel',()=>{ if(g&&g.lock==='x') end(); else g=null; });
+  window.addEventListener('resize',()=>paint());
+  return {mount,select,listClass,paint};
+})();
+
 function render(){
   const {title,small}=screenTitle();
   screenEl.innerHTML=`
@@ -3052,7 +3243,7 @@ function render(){
         ? `<div class="title home-mark"><img src="data:image/png;base64,${DOLCE_PLUS_MARK_B64}" alt="Dolce+"></div>`
         : `<div class="title">${title}${small?`<small>${small}</small>`:''}</div>`}
     </div>
-    <div class="screen-body ${navDirection==='back'?'enter-back':'enter'}">${bodyHtml()}</div>
+    <div class="screen-body ${navDirection==='back'?'enter-back':navDirection==='none'?'':'enter'}">${bodyHtml()}</div>
     <nav class="bottom-nav" role="tablist">
       <div class="nav-lens" aria-hidden="true"></div>
       ${[['welcome','⌂','navHome'],['bookings','🗓','navBookings'],['shop','🛍','navShop'],['profile','◎','navProfile']].map(([n,ic,key],i)=>{
@@ -3096,7 +3287,7 @@ function bindScreen(){
     const b=el.dataset.brand;
     showBrandReveal(b,()=>{ currentBrand=b; currentCat='All'; goto('services'); });
   }));
-  screenEl.querySelectorAll('[data-cat]').forEach(el=>el.addEventListener('click',()=>{currentCat=el.dataset.cat;render();}));
+  screenEl.querySelectorAll('[data-cat]').forEach(el=>el.addEventListener('click',()=>CatGlass.select(el.dataset.cat)));
   screenEl.querySelectorAll('[data-svc]').forEach(el=>el.addEventListener('click',()=>{currentService=el.dataset.svc;goto('detail');}));
   const toBooking=document.getElementById('toBooking'); if(toBooking) toBooking.addEventListener('click',()=>{selectedDateObj=null;selectedTime=null;goto('booking');});
   // The on-screen back arrow goes through history too, so it and the phone's
@@ -3288,6 +3479,7 @@ function bindScreen(){
     aiRespond(el.dataset.ask);
   }));
   NavGlass.mount();
+  CatGlass.mount();
 }
 
 /* ---------------- AI assistant (rule-based demo) ---------------- */
