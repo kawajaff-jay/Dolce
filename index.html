@@ -1921,6 +1921,12 @@ function brandPhotoStyle(brand){
    stamp plus random letters cannot collide, and IDs are never shown to
    anyone, so nothing is lost by them not being tidy. Records created before
    this change keep the IDs they already have. */
+/* Find a record by its permanent ID, never by its position. The Admin App
+   refreshes from the shared database every 30 seconds and that swaps in a
+   fresh copy of each list — possibly in a different order. Anything that
+   held on to "item number 3" or to the old list while a form was open would
+   then save into a copy nobody sees, or overwrite a different item. */
+function idxById(arr,id){ return (arr||[]).findIndex(x=>x&&String(x.id)===String(id)); }
 function nextId(prefix,arr){
   const rand=(typeof crypto!=='undefined'&&crypto.randomUUID)
     ? crypto.randomUUID().replace(/-/g,'').slice(0,8)
@@ -4423,24 +4429,25 @@ function renderAdminProducts(){
       <td>${priceHtml(p)}</td>
       <td>${stockHtml}</td>
       <td><div class="rowbtns">
-        <button class="btn btn-ghost btn-sm" data-sell-prod="${i}" ${stock<=0?'disabled':''}>Sell</button>
-        <button class="btn btn-ghost btn-sm" data-edit-prod="${i}">Edit</button>
-        <button class="btn btn-danger btn-sm" data-del-prod="${i}">Delete</button>
+        <button class="btn btn-ghost btn-sm" data-sell-prod="${esc(String(p.id))}" ${stock<=0?'disabled':''}>Sell</button>
+        <button class="btn btn-ghost btn-sm" data-edit-prod="${esc(String(p.id))}">Edit</button>
+        <button class="btn btn-danger btn-sm" data-del-prod="${esc(String(p.id))}">Delete</button>
       </div></td>
     </tr>`;
   }).join('');
-  rows.querySelectorAll('[data-edit-prod]').forEach(b=>b.addEventListener('click',()=>openProductForm(parseInt(b.dataset.editProd))));
-  rows.querySelectorAll('[data-sell-prod]').forEach(b=>b.addEventListener('click',()=>openProductSaleForm(parseInt(b.dataset.sellProd))));
+  rows.querySelectorAll('[data-edit-prod]').forEach(b=>b.addEventListener('click',()=>openProductForm(b.dataset.editProd)));
+  rows.querySelectorAll('[data-sell-prod]').forEach(b=>b.addEventListener('click',()=>openProductSaleForm(b.dataset.sellProd)));
   rows.querySelectorAll('[data-del-prod]').forEach(b=>b.addEventListener('click',()=>{
-    const p=STORE.products[parseInt(b.dataset.delProd)];
-    STORE.products.splice(parseInt(b.dataset.delProd),1);
+    const k=idxById(STORE.products,b.dataset.delProd); if(k<0){ renderAdminProducts(); return; }
+    const p=STORE.products[k];
+    STORE.products.splice(k,1);
     saveStore(); cloudDelete('products',p.id); renderAdminProducts(); renderAdminOffers();
     toast(`${p.n} deleted — removed from the Client App shop too.`);
     if(currentScreen==='shop'||currentScreen==='welcome') render();
   }));
 }
-function openProductSaleForm(productIndex){
-  const p=STORE.products[productIndex];
+function openProductSaleForm(productId){
+  const p=STORE.products[idxById(STORE.products,productId)];
   if(!p||(p.stock||0)<=0) return;
   const unitPrice=effectivePrice(p);
   document.getElementById('productSaleFormWrap').innerHTML=`
@@ -4457,8 +4464,11 @@ function openProductSaleForm(productIndex){
   document.getElementById('ps_save').addEventListener('click',()=>{
     const qty=Math.max(1,parseInt(document.getElementById('ps_qty').value)||1);
     const clientName=document.getElementById('ps_client').value.trim()||'Walk-in';
-    if(qty>p.stock){ toast(`Only ${p.stock} in stock.`); return; }
-    p.stock=p.stock-qty;
+    // Work on the product as it is in the list now, not as it was when the form opened.
+    const live=STORE.products[idxById(STORE.products,p.id)];
+    if(!live){ toast('That product was removed on another device.'); document.getElementById('productSaleFormWrap').innerHTML=''; renderAdminProducts(); return; }
+    if(qty>(live.stock||0)){ toast(`Only ${live.stock||0} in stock.`); return; }
+    live.stock=(live.stock||0)-qty;
     const sale={id:nextId('ps',STORE.productSales),productId:p.id,n:p.n,brand:p.brand,qty,unitPrice,total:unitPrice*qty,date:fmtDate(new Date()),clientName};
     STORE.productSales.push(sale);
     saveStore();
@@ -4470,9 +4480,9 @@ function openProductSaleForm(productIndex){
     toast(`Sold ${qty} × ${p.n} to ${clientName} — ${fmtMoney(unitPrice*qty)}.`);
   });
 }
-function openProductForm(editIndex){
-  const editing=editIndex!==undefined;
-  const p=editing?STORE.products[editIndex]:{n:'',price:'',discount:0,brand:userBrands(currentUser)[0],image:'',stock:0};
+function openProductForm(editId){
+  const editing=editId!==undefined && idxById(STORE.products,editId)>=0;
+  const p=editing?STORE.products[idxById(STORE.products,editId)]:{n:'',price:'',discount:0,brand:userBrands(currentUser)[0],image:'',stock:0};
   document.getElementById('productFormWrap').innerHTML=`
     <div class="admin-form">
       <div class="field"><label>Product name</label><input id="pf_name" type="text" value="${esc(p.n)}" placeholder="e.g. Rosehip Face Oil"></div>
@@ -4548,13 +4558,15 @@ function openProductForm(editIndex){
       extraShots.forEach(u=>{ if(extraMeta.has(u)) rememberMeta(u,extraMeta.get(u)); });
       const picked = pfPos ? pfPos.value() : null;
       const image = (picked && picked.url) ? picked.url : (p.image||'');
-      const base = editing ? STORE.products[editIndex] : {id:nextId('p',STORE.products)};
+      // Look the product up again now — the list may have been refreshed while the form was open.
+      const at = editing ? idxById(STORE.products,p.id) : -1;
+      const base = at>=0 ? STORE.products[at] : (editing ? p : {id:nextId('p',STORE.products)});
       const desc=document.getElementById('pf_desc').value.trim();
       const updated={...base,n,brand,price,discount,stock,image,desc,images:extraShots.slice(0,MAX_EXTRA_SHOTS)};
-      if(editing) STORE.products[editIndex]=updated; else STORE.products.push(updated);
+      if(at>=0) STORE.products[at]=updated; else STORE.products.push(updated);
       const ok=saveStore();
       if(!ok){
-        if(editing) STORE.products[editIndex]=base; else STORE.products.pop();
+        if(at>=0) STORE.products[at]=base; else STORE.products.pop();
         toast("This browser's demo storage is full — try a smaller photo.");
         saveBtn.disabled=false; saveBtn.textContent=editing?'Save changes':'Add product';
         return;
@@ -4588,15 +4600,16 @@ function renderAdminOffers(){
       <td><span class="brand-tag" style="background:${brandColor[o.brand]}">${BRANDS[o.brand].name}</span></td>
       <td>${esc(o.s)}</td>
       <td><div class="rowbtns">
-        <button class="btn btn-ghost btn-sm" data-edit-offer="${i}">Edit</button>
-        <button class="btn btn-danger btn-sm" data-del-offer="${i}">Delete</button>
+        <button class="btn btn-ghost btn-sm" data-edit-offer="${esc(String(o.id))}">Edit</button>
+        <button class="btn btn-danger btn-sm" data-del-offer="${esc(String(o.id))}">Delete</button>
       </div></td>
     </tr>`;
   }).join('') : `<tr><td colspan="4"><div class="admin-empty">No offers yet — click "Add Offer" to put one on the welcome screen.</div></td></tr>`;
-  rows.querySelectorAll('[data-edit-offer]').forEach(b=>b.addEventListener('click',()=>openOfferForm(parseInt(b.dataset.editOffer))));
+  rows.querySelectorAll('[data-edit-offer]').forEach(b=>b.addEventListener('click',()=>openOfferForm(b.dataset.editOffer)));
   rows.querySelectorAll('[data-del-offer]').forEach(b=>b.addEventListener('click',()=>{
-    const o=STORE.offers[parseInt(b.dataset.delOffer)];
-    STORE.offers.splice(parseInt(b.dataset.delOffer),1);
+    const k=idxById(STORE.offers,b.dataset.delOffer); if(k<0){ renderAdminOffers(); return; }
+    const o=STORE.offers[k];
+    STORE.offers.splice(k,1);
     saveStore(); cloudDelete('offers',o.id); renderAdminOffers();
     toast(`${o.t} deleted — removed from the Client App welcome screen too.`);
     if(currentScreen==='welcome') render();
@@ -4618,9 +4631,9 @@ function renderAdminOffers(){
     <div style="font-size:13px;color:var(--muted);margin-top:8px;">To remove one of these, clear its discount back to 0 from the Products or Services tab.</div>
   ` : '';
 }
-function openOfferForm(editIndex){
-  const editing=editIndex!==undefined;
-  const o=editing?STORE.offers[editIndex]:{t:'',s:'',brand:userBrands(currentUser)[0],image:''};
+function openOfferForm(editId){
+  const editing=editId!==undefined && idxById(STORE.offers,editId)>=0;
+  const o=editing?STORE.offers[idxById(STORE.offers,editId)]:{t:'',s:'',brand:userBrands(currentUser)[0],image:''};
   document.getElementById('offerFormWrap').innerHTML=`
     <div class="admin-form">
       <div class="field"><label>Title</label><input id="of_title" type="text" value="${esc(o.t)}" placeholder="e.g. Glow Season"></div>
@@ -4649,13 +4662,14 @@ function openOfferForm(editIndex){
     const pickedOf = ofPos ? ofPos.value() : null;
     const image = (pickedOf && pickedOf.url) ? pickedOf.url : (o.image||'');
     if(ofPos) ofPos.commit();
-    const base=editing?STORE.offers[editIndex]:{id:nextId('o',STORE.offers)};
+    const at=editing?idxById(STORE.offers,o.id):-1;
+    const base=at>=0?STORE.offers[at]:(editing?o:{id:nextId('o',STORE.offers)});
     const updated={...base,t:title,s:desc,brand,image};
     pruneFocus();
-    if(editing) STORE.offers[editIndex]=updated; else STORE.offers.push(updated);
+    if(at>=0) STORE.offers[at]=updated; else STORE.offers.push(updated);
     const ok=saveStore();
     if(!ok){
-      if(editing) STORE.offers[editIndex]=base; else STORE.offers.pop();
+      if(at>=0) STORE.offers[at]=base; else STORE.offers.pop();
       toast("This browser's demo storage is full — try a smaller photo.");
       saveBtn.disabled=false; saveBtn.textContent=editing?'Save changes':'Add offer';
       return;
@@ -4685,25 +4699,28 @@ function renderAdminServices(){
       <td>${esc(s.dur)}</td>
       <td>${priceHtml(s)}</td>
       <td><div class="rowbtns">
-        <button class="btn btn-ghost btn-sm" data-edit-svc="${i}">Edit</button>
-        <button class="btn btn-danger btn-sm" data-del-svc="${i}">Delete</button>
+        <button class="btn btn-ghost btn-sm" data-edit-svc="${esc(String(s.id))}">Edit</button>
+        <button class="btn btn-danger btn-sm" data-del-svc="${esc(String(s.id))}">Delete</button>
       </div></td>
     </tr>`).join('');
-  rows.querySelectorAll('[data-edit-svc]').forEach(b=>b.addEventListener('click',()=>openServiceForm(parseInt(b.dataset.editSvc))));
+  rows.querySelectorAll('[data-edit-svc]').forEach(b=>b.addEventListener('click',()=>openServiceForm(b.dataset.editSvc)));
   rows.querySelectorAll('[data-del-svc]').forEach(b=>b.addEventListener('click',()=>{
-    const i=parseInt(b.dataset.delSvc); const s=list[i];
-    list.splice(i,1);
+    const cur=svcList(svcBrandTab); const k=idxById(cur,b.dataset.delSvc); if(k<0){ renderAdminServices(); return; }
+    const s=cur[k];
+    cur.splice(k,1);
     saveStore(); cloudDelete('services',s.id,svcBrandTab); resequenceBrandServices(svcBrandTab);
     renderAdminServices(); renderAdminOffers();
     toast(`${s.n} deleted from ${BRANDS[svcBrandTab].name} — removed from the Client App too.`);
     if(currentScreen==='services'||currentScreen==='detail'||currentScreen==='welcome') render();
   }));
 }
-function openServiceForm(editIndex){
-  const editing=editIndex!==undefined;
-  const list=svcList(svcBrandTab);
-  const s=editing?list[editIndex]:{n:'',cat:BRANDS[svcBrandTab].cats[0],dur:'',price:'',desc:'',image:''};
-  const catOpts=BRANDS[svcBrandTab].cats.map(c=>`<option value="${c}" ${s.cat===c?'selected':''}>${c}</option>`).join('');
+function openServiceForm(editId){
+  // Remember WHICH brand and WHICH service by name/ID — not the list itself,
+  // which the 30-second refresh replaces with a fresh copy.
+  const brand=svcBrandTab;
+  const editing=editId!==undefined && idxById(svcList(brand),editId)>=0;
+  const s=editing?svcList(brand)[idxById(svcList(brand),editId)]:{n:'',cat:BRANDS[brand].cats[0],dur:'',price:'',desc:'',image:''};
+  const catOpts=BRANDS[brand].cats.map(c=>`<option value="${c}" ${s.cat===c?'selected':''}>${c}</option>`).join('');
   document.getElementById('serviceFormWrap').innerHTML=`
     <div class="admin-form">
       <div class="field"><label>Service name</label><input id="sf_name" type="text" value="${esc(s.n)}" placeholder="e.g. Microneedling"></div>
@@ -4742,25 +4759,33 @@ function openServiceForm(editIndex){
     const image = (pickedSf && pickedSf.url) ? pickedSf.url : (s.image||'');
     if(sfPos) sfPos.commit();
     pruneFocus();
-    const prevItem = editing ? {...list[editIndex]} : null;
-    if(editing){
-      list[editIndex]={...list[editIndex],n,cat,dur,price,discount,desc,image,aftercare};
+    // The live list, fetched now — this is the fix for services that said
+    // "added" but never appeared: they were going into a stale copy.
+    if(!STORE.services[brand]) STORE.services[brand]=[];
+    const list=STORE.services[brand];
+    const at=editing?idxById(list,s.id):-1;
+    const prevItem = at>=0 ? {...list[at]} : null;
+    if(at>=0){
+      list[at]={...list[at],n,cat,dur,price,discount,desc,image,aftercare};
+    } else if(editing){
+      list.push({...s,n,cat,dur,price,discount,desc,image,aftercare});   // removed elsewhere meanwhile: keep the edit
     } else {
-      list.push({id:nextId('svc_'+svcBrandTab+'_',list),n,cat,dur,price,discount,desc,image,aftercare,points:[]});
+      list.push({id:nextId('svc_'+brand+'_',list),n,cat,dur,price,discount,desc,image,aftercare,points:[]});
     }
     const ok=saveStore();
     if(!ok){
-      if(editing) list[editIndex]=prevItem; else list.pop();
+      if(at>=0) list[at]=prevItem; else list.pop();
       toast("This browser's demo storage is full — try a smaller photo.");
       saveBtn.disabled=false; saveBtn.textContent=editing?'Save changes':'Add service';
       return;
     }
-    resequenceBrandServices(svcBrandTab);
+    resequenceBrandServices(brand);
+    if(svcBrandTab!==brand){ svcBrandTab=brand; showAdminForRole(); }
     cloudSave('settings','image_focus');
     document.getElementById('serviceFormWrap').innerHTML='';
     renderAdminServices();
     renderAdminOffers();
-    toast(`${n} ${editing?'updated':'added'} — now live in the Client App → ${BRANDS[svcBrandTab].name}.${discount>0?' Also showing in Upcoming Events & Offers.':''}`);
+    toast(`${n} ${editing?'updated':'added'} — now live in the Client App → ${BRANDS[brand].name}.${discount>0?' Also showing in Upcoming Events & Offers.':''}`);
     if(currentScreen==='services'||currentScreen==='detail'||currentScreen==='welcome') render();
   });
 }
