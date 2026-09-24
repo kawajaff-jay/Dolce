@@ -344,7 +344,7 @@
   .screen-head .home-mark{display:flex;align-items:center;justify-content:center;padding:2px 0 4px;}
   .screen-head .home-mark img{height:28px;width:auto;display:block;}
   .screen-head .title small{display:block;font-family:system-ui,sans-serif;font-size:12.5px;color:var(--muted);font-weight:400;letter-spacing:.5px;text-transform:uppercase;}
-  .screen-body{flex:1;overflow-y:auto;padding:6px 16px 148px;}
+  .screen-body{flex:1;overflow-y:auto;padding:6px 16px 148px;touch-action:pan-y;}
   /* Screen changes: a short, soft slide so moving around the app feels like
      one continuous thing rather than a series of jumps. */
   .screen-body.enter{animation:screenIn .26s cubic-bezier(.22,1,.36,1);}
@@ -383,10 +383,52 @@
     .pd-track{scroll-behavior:auto;}
   }
   .screen-body::-webkit-scrollbar{width:0;}
-  .bottom-nav{position:absolute;left:12px;right:12px;bottom:12px;background:rgba(255,253,248,.92);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:18px;display:flex;justify-content:space-around;padding:7px 6px;box-shadow:0 6px 18px rgba(28,26,22,.07);}
-  .bottom-nav button{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;letter-spacing:.2px;color:var(--muted);font-weight:600;padding:2px 4px;}
-  .bottom-nav button.active{color:var(--ink);}
-  .bottom-nav .ic{font-size:17px;}
+  /* ---------------- Floating glass navigation ----------------
+     One floating object: a frosted cream pill with a lighter "lens" inside it
+     that slides between tabs. The lens position is driven from JavaScript
+     (see NavGlass) so it can follow a finger and settle on a spring.
+     Tuning knobs — change these to adjust the look: */
+  :root{
+    --nav-glass-bg: rgba(251,247,239,.62);   /* glass colour + opacity (last number: 0 = clear, 1 = solid) */
+    --nav-glass-blur: 22px;                  /* how frosted the glass is */
+    --nav-lens-bg: rgba(255,255,255,.80);    /* the sliding highlight behind the active tab */
+    --nav-radius: 28px;
+  }
+  .bottom-nav{position:absolute;left:14px;right:14px;bottom:12px;margin-inline:auto;max-width:430px;z-index:5;
+    display:grid;grid-template-columns:repeat(4,1fr);padding:6px;border-radius:var(--nav-radius);
+    background:var(--nav-glass-bg);
+    -webkit-backdrop-filter:blur(var(--nav-glass-blur)) saturate(170%);
+    backdrop-filter:blur(var(--nav-glass-blur)) saturate(170%);
+    border:.5px solid rgba(255,255,255,.62);
+    box-shadow:
+      0 14px 34px rgba(74,50,26,.15),
+      0 3px 10px rgba(74,50,26,.07),
+      inset 0 1px 0 rgba(255,255,255,.78),
+      inset 0 -1px 0 rgba(125,90,51,.05);
+    touch-action:none; isolation:isolate; user-select:none; -webkit-user-select:none;
+    transition:transform .32s cubic-bezier(.34,1.56,.64,1);}
+  /* The whole bar gives slightly under a press, like one physical thing. */
+  .bottom-nav.pressed{transform:scale(.984);transition-duration:.14s;}
+  .bottom-nav .nav-lens{position:absolute;top:6px;bottom:6px;left:0;width:25%;
+    border-radius:calc(var(--nav-radius) - 6px);background:var(--nav-lens-bg);
+    box-shadow:
+      0 4px 14px rgba(125,90,51,.13),
+      inset 0 0 0 .5px rgba(179,134,83,.20),
+      inset 0 1px 0 rgba(255,255,255,.95);
+    transform-origin:50% 50%;will-change:transform;pointer-events:none;z-index:0;}
+  .bottom-nav button{--a:0;position:relative;z-index:1;background:none;border:none;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    padding:7px 2px 6px;font-size:11px;letter-spacing:.2px;font-weight:600;
+    color:var(--muted);
+    color:color-mix(in srgb, var(--ink) calc(var(--a) * 100%), var(--muted));
+    opacity:calc(.6 + .4 * var(--a));
+    transform:scale(calc(.94 + .06 * var(--a)));
+    -webkit-tap-highlight-color:transparent;cursor:pointer;}
+  .bottom-nav .ic{font-size:17px;display:block;transform:translateY(calc(-1.5px * var(--a)));}
+  @media (prefers-reduced-motion: reduce){ .bottom-nav{transition:none;} }
+  /* Screen slides mirror in right-to-left languages. */
+  html[dir="rtl"] .screen-body.enter{animation-name:screenInBack;}
+  html[dir="rtl"] .screen-body.enter-back{animation-name:screenIn;}
   .fab-ai{position:absolute;right:22px;bottom:96px;width:52px;height:52px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;border:none;box-shadow:0 10px 20px rgba(0,0,0,.25);z-index:6;}
 
   /* destination cards */
@@ -2027,8 +2069,8 @@ function pushNavState(){
 }
 const SCREEN_ORDER=['welcome','services','detail','booking','shop','product','bookings','profile','auth'];
 let navDirection='forward';
-function goto(screen){
-  navDirection=SCREEN_ORDER.indexOf(screen)>=SCREEN_ORDER.indexOf(currentScreen)?'forward':'back';
+function goto(screen,dir){
+  navDirection=dir||(SCREEN_ORDER.indexOf(screen)>=SCREEN_ORDER.indexOf(currentScreen)?'forward':'back');
   currentScreen=screen;pushNavState();render();
 }
 (function initNavHistory(){
@@ -2776,6 +2818,231 @@ function attachPhotoPicker(inputId,hostId,existingUrl){
   return pos;
 }
 
+/* ================= Floating glass navigation =================
+   The four tabs are one object. Where the sliding lens sits is a single
+   number, `pos`: 0 = Home, 1 = Bookings, 2 = Shop, 3 = Profile, and anything
+   in between while it is moving (1.4 = 40% of the way from Bookings to Shop).
+   Every frame, the lens is drawn at `pos`, and each tab's brightness/size is
+   set from how close `pos` is to it — so icons fade and grow continuously
+   rather than switching.
+
+   `pos` is moved three ways:
+   - a tap:            it springs from where it is to the new tab;
+   - dragging the bar: it follows the finger 1:1;
+   - swiping the page: it tracks how far the swipe has got (swipe progress).
+   When the finger lifts, the finger's speed is handed to the spring, so a
+   quick flick carries through with a slight elastic overshoot.
+
+   `pos` lives out here, not in the page, because render() rebuilds the bar
+   on every screen change — the lens carries on from where it was.
+
+   TUNING — the numbers to change:                                        */
+const NAV_SPRING={
+  stiffness:520,   // higher = snappier/faster settle (≈300ms at 520)
+  damping:34,      // lower = more bounce; ~40+ = no bounce at all
+  mass:1,
+};
+const NAV_STRETCH=0.045;   // how much the lens stretches with speed (0 = rigid)
+const NAV_RUBBER=0.32;     // resistance when pulled past the first/last tab
+const NAV_SWIPE_COMMIT=0.28;  // share of a tab you must swipe the page to change tab
+const NAV_TABS=['welcome','bookings','shop','profile'];
+
+// Which tab a screen belongs to, so the lens stays put on inner pages.
+function navIndexFor(screen){
+  if(screen==='bookings') return 1;
+  if(screen==='shop'||screen==='product') return 2;
+  if(screen==='profile') return 3;
+  if(screen==='auth') return pendingScreen==='profile'?3:pendingScreen==='bookings'?1:0;
+  return 0;   // welcome, services, detail, booking
+}
+// The one place a tab change is decided — shared by taps and swipes.
+function navTo(n,dir){
+  if(n==='welcome') currentBrand=null;
+  if(!dir){ dir=NAV_TABS.indexOf(n)>=navIndexFor(currentScreen)?'forward':'back'; }
+  if((n==='bookings'||n==='profile') && !loggedInClient){ pendingScreen=n; authStep='phone'; authPhone=''; goto('auth',dir); return; }
+  goto(n,dir);
+}
+
+const NavGlass=(function(){
+  const st={pos:null,vel:0,target:0,raf:0,last:0,dragging:false,nav:null,lens:null,btns:[]};
+  const reduceMotion=()=>{ try{ return matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; } };
+
+  // Pixel offset of a (possibly fractional, possibly out-of-range) tab position.
+  // Measured from the real buttons, so it works at any width and in RTL.
+  function xAt(p){
+    const b=st.btns, n=b.length-1; if(n<0) return 0;
+    const step=n>0 ? b[1].offsetLeft-b[0].offsetLeft : 0;   // negative in RTL
+    if(p<=0) return b[0].offsetLeft+p*step;
+    if(p>=n) return b[n].offsetLeft+(p-n)*step;
+    const lo=Math.floor(p), f=p-lo;
+    return b[lo].offsetLeft+(b[lo+1].offsetLeft-b[lo].offsetLeft)*f;
+  }
+  function paint(){
+    if(!st.lens||!st.btns.length||st.pos==null) return;
+    const w=st.btns[0].offsetWidth;
+    const stretch=reduceMotion()?0:Math.min(Math.abs(st.vel)*NAV_STRETCH,0.22);
+    st.lens.style.width=w+'px';
+    st.lens.style.transform=`translate3d(${xAt(st.pos).toFixed(2)}px,0,0) scale(${(1+stretch).toFixed(3)},${(1-stretch*.35).toFixed(3)})`;
+    st.btns.forEach((btn,i)=>{
+      const a=Math.max(0,1-Math.abs(st.pos-i));
+      btn.style.setProperty('--a',a.toFixed(3));
+    });
+  }
+  // Spring physics, integrated in small fixed steps so it stays stable on
+  // slow phones and 120Hz screens alike.
+  function frame(t){
+    const dt=st.last?Math.min(.034,(t-st.last)/1000):1/60; st.last=t;
+    const {stiffness:k,damping:c,mass:m}=NAV_SPRING;
+    for(let left=dt;left>1e-6;left-=1/240){
+      const h=Math.min(left,1/240);
+      const acc=(-k*(st.pos-st.target)-c*st.vel)/m;
+      st.vel+=acc*h; st.pos+=st.vel*h;
+    }
+    const done=Math.abs(st.vel)<.02 && Math.abs(st.pos-st.target)<.002;
+    if(done){ st.pos=st.target; st.vel=0; }
+    paint();
+    if(done){ st.raf=0; st.last=0; return; }
+    st.raf=requestAnimationFrame(frame);
+  }
+  function springTo(i,vel){
+    st.target=i; if(typeof vel==='number') st.vel=vel;
+    if(reduceMotion()){ st.pos=i; st.vel=0; paint(); return; }
+    if(!st.raf){ st.last=0; st.raf=requestAnimationFrame(frame); }
+  }
+  function stop(){ if(st.raf){ cancelAnimationFrame(st.raf); st.raf=0; st.last=0; } }
+
+  // Called at the end of every render(): pick up the new bar, keep moving.
+  function mount(){
+    st.nav=screenEl.querySelector('.bottom-nav');
+    if(!st.nav){ st.lens=null; st.btns=[]; return; }
+    st.lens=st.nav.querySelector('.nav-lens');
+    st.btns=[...st.nav.querySelectorAll('[data-nav]')];
+    const target=navIndexFor(currentScreen);
+    if(st.pos==null){ st.pos=target; st.vel=0; }
+    paint();
+    if(!st.dragging) springTo(target);
+  }
+
+  /* ---------- gestures ----------
+     Pointer events cover touch and mouse. The page area is `touch-action:
+     pan-y`, so the phone keeps full control of vertical scrolling and we
+     only ever receive sideways movement. A gesture is only claimed once it
+     is clearly horizontal; anything else is left entirely alone.        */
+  let g=null, swallowClick=false;
+  const rtl=()=>document.documentElement.dir==='rtl';
+  function inSideScroller(el,stopAt){
+    for(let n=el;n&&n!==stopAt;n=n.parentElement){
+      if(n.scrollWidth>n.clientWidth+2){
+        const ox=getComputedStyle(n).overflowX;
+        if(ox==='auto'||ox==='scroll') return true;
+      }
+    }
+    return false;
+  }
+  function rubber(p){
+    const n=NAV_TABS.length-1;
+    if(p<0) return p*NAV_RUBBER;
+    if(p>n) return n+(p-n)*NAV_RUBBER;
+    return p;
+  }
+  function velocity(){   // tabs per second, from the last ~90ms of movement
+    const sm=g.samples; if(sm.length<2) return 0;
+    const a=sm[0], b=sm[sm.length-1], dt=(b.t-a.t)/1000;
+    if(performance.now()-b.t>80) return 0;   // the finger stopped before lifting: no flick
+    return dt>0?(b.p-a.p)/dt:0;
+  }
+  function posFor(e){
+    const dx=(e.clientX-g.x0)*(rtl()?-1:1);
+    if(g.onNav){
+      const step=Math.abs(st.btns.length>1?st.btns[1].offsetLeft-st.btns[0].offsetLeft:1)||1;
+      return rubber(g.start+dx/step);                     // lens under the finger
+    }
+    const width=(g.body.clientWidth||320)*.9;
+    const p=g.start-dx/width;                             // page swipe progress
+    return rubber(Math.max(g.start-1,Math.min(g.start+1,p)));
+  }
+
+  function down(e){
+    if(e.pointerType==='mouse'&&e.button!==0) return;
+    const onNav=e.target.closest('.bottom-nav');
+    const body=e.target.closest('.screen-body');
+    if(!onNav&&!body) return;
+    const ai=document.getElementById('aiOverlay');
+    if(ai&&ai.classList.contains('open')) return;
+    if(!onNav){
+      if(!NAV_TABS.includes(currentScreen)) return;      // inner pages keep their Back button
+      if(e.target.closest('input,textarea,select,[contenteditable]')) return;
+      if(inSideScroller(e.target,body)) return;          // galleries, category chips…
+    }
+    if(onNav) onNav.classList.add('pressed');
+    g={id:e.pointerId,x0:e.clientX,y0:e.clientY,onNav,body,lock:null,
+       start:Math.round(st.pos==null?navIndexFor(currentScreen):st.pos),samples:[]};
+  }
+  function move(e){
+    if(!g||e.pointerId!==g.id) return;
+    const dx=e.clientX-g.x0, dy=e.clientY-g.y0;
+    if(!g.lock){
+      if(Math.hypot(dx,dy)<8) return;
+      if(Math.abs(dx)>Math.abs(dy)*1.15){
+        g.lock='x';
+        try{ (g.onNav||g.body).setPointerCapture(e.pointerId); }catch(_){}
+        stop(); st.dragging=true;
+        if(g.body&&!g.onNav) g.body.style.transition='none';
+      } else { end(); return; }
+    }
+    const p=posFor(e);
+    const now=performance.now();
+    g.samples.push({t:now,p}); while(g.samples.length>2&&now-g.samples[0].t>90) g.samples.shift();
+    st.vel=velocity(); st.pos=p; paint();
+    if(!g.onNav&&g.body){                       // the page leans with the finger
+      const lean=Math.max(-56,Math.min(56,dx*.3));
+      g.body.style.transform=`translate3d(${lean}px,0,0)`;
+      g.body.style.opacity=String(1-Math.min(.22,Math.abs(dx)/(g.body.clientWidth||320)*.35));
+    }
+  }
+  function end(e){
+    if(!g) return;
+    const releaseVel=(g.lock==='x')?velocity():0;   // read before the gesture is cleared
+    const gg=g; g=null;
+    if(gg.onNav) gg.onNav.classList.remove('pressed');
+    if(gg.lock!=='x') return;                   // a plain tap: the click handler routes it
+    st.dragging=false;
+    if(gg.onNav) swallowClick=true;              // it was a drag, not a tap
+    const n=NAV_TABS.length-1;
+    const v=releaseVel;
+    let target;
+    if(gg.onNav){
+      target=Math.round(Math.max(0,Math.min(n,st.pos+v*.12)));   // where a flick would land
+    } else {
+      const moved=st.pos-gg.start;
+      const flick=Math.abs(v)>1.1&&Math.sign(v)===Math.sign(moved);
+      target=(Math.abs(moved)>NAV_SWIPE_COMMIT||flick)?gg.start+Math.sign(moved):gg.start;
+      target=Math.max(0,Math.min(n,target));
+      const b=gg.body;                            // let the page settle back
+      if(b){ b.style.transition='transform .32s cubic-bezier(.22,1,.36,1), opacity .32s ease';
+             b.style.transform=''; b.style.opacity=''; }
+    }
+    springTo(target,v);
+    if(target!==navIndexFor(currentScreen)){
+      navTo(NAV_TABS[target], target>navIndexFor(currentScreen)?'forward':'back');
+    }
+  }
+  function wire(){
+    screenEl.addEventListener('pointerdown',down);
+    screenEl.addEventListener('pointermove',move);
+    screenEl.addEventListener('pointerup',end);
+    screenEl.addEventListener('pointercancel',()=>{ if(g&&g.lock==='x'){ end(); } else if(g){ if(g.onNav) g.onNav.classList.remove('pressed'); g=null; } });
+    // A drag along the bar shouldn't also count as a tap on the tab it ends on.
+    screenEl.addEventListener('click',e=>{
+      if(swallowClick&&e.target.closest('.bottom-nav')){ e.stopPropagation(); e.preventDefault(); }
+      swallowClick=false;
+    },true);
+    window.addEventListener('resize',()=>paint());
+  }
+  wire();
+  return {mount,paint};
+})();
+
 function render(){
   const {title,small}=screenTitle();
   screenEl.innerHTML=`
@@ -2786,12 +3053,13 @@ function render(){
         : `<div class="title">${title}${small?`<small>${small}</small>`:''}</div>`}
     </div>
     <div class="screen-body ${navDirection==='back'?'enter-back':'enter'}">${bodyHtml()}</div>
-    <div class="bottom-nav">
-      <button data-nav="welcome" class="${currentScreen==='welcome'?'active':''}"><span class="ic">⌂</span>${t('navHome')}</button>
-      <button data-nav="bookings" class="${currentScreen==='bookings'?'active':''}"><span class="ic">🗓</span>${t('navBookings')}</button>
-      <button data-nav="shop" class="${currentScreen==='shop'?'active':''}"><span class="ic">🛍</span>${t('navShop')}</button>
-      <button data-nav="profile" class="${currentScreen==='profile'?'active':''}"><span class="ic">◎</span>${t('navProfile')}</button>
-    </div>
+    <nav class="bottom-nav" role="tablist">
+      <div class="nav-lens" aria-hidden="true"></div>
+      ${[['welcome','⌂','navHome'],['bookings','🗓','navBookings'],['shop','🛍','navShop'],['profile','◎','navProfile']].map(([n,ic,key],i)=>{
+        const on=navIndexFor(currentScreen)===i;
+        return `<button data-nav="${n}" role="tab" aria-selected="${on}" class="${on?'active':''}" style="--a:${on?1:0}"><span class="ic">${ic}</span>${t(key)}</button>`;
+      }).join('')}
+    </nav>
     ${['detail','booking','auth'].includes(currentScreen) ? '' :
        `<button class="fab-ai" id="fabAI" aria-label="${t('aiAssistant')}">✨</button>`}
     <div class="ai-overlay" id="aiOverlay">
@@ -2960,12 +3228,7 @@ function bindScreen(){
     document.querySelectorAll('[data-lang-btn]').forEach(x=>x.classList.toggle('active',x.dataset.langBtn===lang));
     applyI18n(); render();
   }));
-  screenEl.querySelectorAll('[data-nav]').forEach(el=>el.addEventListener('click',()=>{
-    const n=el.dataset.nav;
-    if(n==='welcome') currentBrand=null;
-    if((n==='bookings'||n==='profile') && !loggedInClient){ pendingScreen=n; authStep='phone'; authPhone=''; goto('auth'); return; }
-    goto(n);
-  }));
+  screenEl.querySelectorAll('[data-nav]').forEach(el=>el.addEventListener('click',()=>navTo(el.dataset.nav)));
 
   // ---- Client login / signup (phone number + demo code) ----
   const authSendCode=document.getElementById('authSendCode');
@@ -3024,6 +3287,7 @@ function bindScreen(){
     pushNavState();
     aiRespond(el.dataset.ask);
   }));
+  NavGlass.mount();
 }
 
 /* ---------------- AI assistant (rule-based demo) ---------------- */
