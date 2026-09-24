@@ -374,7 +374,11 @@
   /* Sit the sync warning above the navigation bar rather than behind it. */
   body.native-app #cloudSyncPill{bottom:calc(92px + env(safe-area-inset-bottom,0px))!important;}
   .phone.fullscreen .fab-ai{bottom:calc(96px + env(safe-area-inset-bottom,0px));}
-  .phone.fullscreen .screen-body{padding-bottom:calc(148px + env(safe-area-inset-bottom,0px));}
+  /* --content-bottom is measured by fitBottomClearance() from where the
+     floating nav, ✨ button, bag bar and purchase bar really start; the calc
+     is only the first-paint fallback (nav gap 12 + nav 62 + safe area +
+     assistant 50 + gaps). */
+  .phone.fullscreen .screen-body{padding-bottom:var(--content-bottom,calc(160px + env(safe-area-inset-bottom,0px)));}
   .phone.fullscreen .ai-input{padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));}
   .screen-head{padding:22px 18px 10px;display:flex;align-items:center;gap:10px;background:var(--cream);flex:none;}
   .screen-head .back{width:28px;height:28px;border-radius:50%;background:var(--card);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
@@ -391,7 +395,7 @@
   .home-tagline i{font-style:normal;margin:0 .55em;opacity:.8;}
   @media (max-width:340px){ .home-tagline{font-size:10px;letter-spacing:.26em;margin-right:-.26em;} }
   .screen-head .title small{display:block;font-family:system-ui,sans-serif;font-size:12.5px;color:var(--muted);font-weight:400;letter-spacing:.5px;text-transform:uppercase;}
-  .screen-body{flex:1;overflow-y:auto;padding:6px 16px 148px;touch-action:pan-y;}
+  .screen-body{flex:1;overflow-y:auto;padding:6px 16px var(--content-bottom,148px);touch-action:pan-y;}
   /* Screen changes: a short, soft slide so moving around the app feels like
      one continuous thing rather than a series of jumps. */
   .screen-body.enter{animation:screenIn .26s cubic-bezier(.22,1,.36,1);}
@@ -470,7 +474,9 @@
     opacity:calc(.6 + .4 * var(--a));
     transform:scale(calc(.94 + .06 * var(--a)));
     -webkit-tap-highlight-color:transparent;cursor:pointer;}
-  .bottom-nav .ic{font-size:17px;display:block;transform:translateY(calc(-1.5px * var(--a)));}
+  .bottom-nav .ic{display:block;width:21px;height:21px;transform:translateY(calc(-1.5px * var(--a)));}
+  .bottom-nav .ic svg{display:block;width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.6;
+    stroke-linecap:round;stroke-linejoin:round;overflow:visible;}
   @media (prefers-reduced-motion: reduce){ .bottom-nav{transition:none;} }
   /* Screen slides mirror in right-to-left languages. */
   html[dir="rtl"] .screen-body.enter{animation-name:screenInBack;}
@@ -551,7 +557,7 @@
   .bs-empty p{margin:0 0 16px;font-size:13px;color:var(--muted);}
   body.native-app .basket-sheet .bs-panel{max-height:calc(100% - env(safe-area-inset-top,0px) - 20px);}
   @media (prefers-reduced-motion: reduce){ .basket-sheet .bs-panel,.basket-sheet .bs-backdrop,.basket-pill{transition:none;} .bump{animation:none;} }
-  .fab-ai{position:absolute;right:22px;bottom:96px;width:52px;height:52px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;border:none;box-shadow:0 10px 20px rgba(0,0,0,.25);z-index:6;}
+  .fab-ai{--fab-right:22px;position:absolute;right:22px;bottom:96px;width:52px;height:52px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;border:none;box-shadow:0 10px 20px rgba(0,0,0,.25);z-index:6;}
 
   /* destination cards */
   .dest-card{border-radius:18px;padding:22px;margin-bottom:14px;color:#fff;font-family:var(--display);font-size:24px;position:relative;overflow:hidden;min-height:96px;max-height:220px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:5px;isolation:isolate;}
@@ -845,10 +851,14 @@
      The strip runs to the screen edges but pads itself back to the page
      margin, so the first card lines up with everything above it and snaps
      back there; the next card peeks in on the right. */
-  .eo-strip{display:flex;gap:12px;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;
+  /* The gap equals the page margin (16px): when a card snaps to the margin,
+     the card before it ends exactly at the screen edge, so no sliver of it
+     shows on the left. Each card is the page width minus that gap and a
+     deliberate 36px preview of the next one. */
+  .eo-strip{display:flex;gap:16px;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;
     scroll-snap-type:x mandatory;margin:0 -16px;padding:2px 16px 18px;scroll-padding-inline:16px;scrollbar-width:none;}
   .eo-strip::-webkit-scrollbar{display:none;}
-  .eo-card{flex:0 0 72%;max-width:300px;scroll-snap-align:start;display:flex;flex-direction:column;cursor:pointer;
+  .eo-card{flex:0 0 calc(100% - 52px);max-width:320px;scroll-snap-align:start;scroll-snap-stop:always;display:flex;flex-direction:column;cursor:pointer;
     background:var(--ivory);border:1px solid var(--lux-hair);border-radius:18px;overflow:hidden;
     box-shadow:0 8px 20px -14px rgba(58,42,31,.20);}
   .eo-card .mi.eo-media{border-radius:0;flex:none;}
@@ -863,6 +873,12 @@
 
   /* Shop header */
   #screen[data-screen="shop"] .screen-head{align-items:flex-start;padding-top:26px;padding-bottom:6px;}
+  /* In the iPhone app the status-bar safe area already sits above the header,
+     so the extra top gap can be much smaller there. */
+  body.native-app #screen[data-screen="shop"] .screen-head{padding-top:12px;}
+  /* On iPad the safe area sits on the header itself (see tablet layout), so
+     the Shop header must add it back rather than override it. */
+  body.native-app.tablet #screen[data-screen="shop"] .screen-head{padding-top:calc(14px + env(safe-area-inset-top,0px));}
   .screen-head .title.lux-shop-head{display:flex;flex-direction:column;gap:9px;flex:1;min-width:0;}
   .screen-head .basket-btn{flex:none;}
   .lux-h1{font-family:var(--display);font-weight:400;font-size:40px;line-height:1;margin:0;color:var(--ink);letter-spacing:-.01em;}
@@ -960,7 +976,7 @@
   .lux-chip:active{transform:scale(.96);}
   .lux-chip.on{background:var(--espresso);border-color:var(--espresso);color:#fbf5ea;}
   /* The purchase bar stays in reach at the bottom while the page scrolls. */
-  #screen[data-screen="product"] .screen-body{padding-bottom:calc(220px + env(safe-area-inset-bottom,0px));}
+  #screen[data-screen="product"] .screen-body{padding-bottom:var(--content-bottom,calc(220px + env(safe-area-inset-bottom,0px)));}
   .pd-buy{position:absolute;left:0;right:0;margin-inline:auto;width:calc(100% - 28px);max-width:560px;box-sizing:border-box;
     bottom:calc(88px + env(safe-area-inset-bottom,0px));z-index:6;display:flex;align-items:center;gap:10px;
     padding:8px;border-radius:999px;background:rgba(252,250,245,.82);-webkit-backdrop-filter:blur(18px) saturate(160%);backdrop-filter:blur(18px) saturate(160%);
@@ -998,6 +1014,11 @@
   .basket-pill svg{width:18px;height:18px;flex:none;color:var(--champagne);}
   .basket-pill .bp-n{background:rgba(195,163,106,.3);}
   #screen.scrolling .fab-ai,#screen.scrolling .basket-pill{opacity:0;transform:translateY(16px) scale(.92);pointer-events:none;}
+  /* When the page comes to rest with the ✨ button over a product title,
+     price, Add to Bag or event text, it tucks into the right edge (only a
+     small sparkle tab stays visible, outside the cards' content area). */
+  #screen.fab-tucked:not(.scrolling) .fab-ai{transform:translateX(calc(100% + var(--fab-right,22px) - 20px));}
+  #screen.fab-tucked:not(.scrolling) .fab-ai svg{transform:translateX(-14px);transition:transform .45s var(--lux-spring);}
   @media (prefers-reduced-motion: reduce){
     .dest-card .mi.dest-media{transform:none!important;}
     .fav-pop{animation:none;}
@@ -1015,6 +1036,9 @@
     .pc{padding:5px 5px 7px;}
     .pc-body{padding:10px 4px;}
   }
+  /* The website's small phone preview frame is ~296px wide, like the smallest iPhones. */
+  .phone:not(.fullscreen) .bag-btn{font-size:11px;letter-spacing:0;padding-inline:9px 3px;gap:4px;}
+  .phone:not(.fullscreen) .bag-plus{width:24px;height:24px;}
   /* ================= iPad / tablet layout (native app only) =================
      The phone layout simply stretched on an iPad: 1000px-wide rows, a giant
      hero photo, the basket bar spanning the whole screen. body.tablet is set
@@ -1099,7 +1123,7 @@
   body.tablet #screen[data-screen="product"] .pd-title{font-size:38px;}
   /* Floating pieces */
   body.tablet .bottom-nav{max-width:480px;}
-  body.tablet .fab-ai{right:32px;width:56px;height:56px;}
+  body.tablet .fab-ai{right:32px;--fab-right:32px;width:56px;height:56px;}
   body.tablet .basket-pill{left:auto;right:104px;width:340px;}
   body.tablet .basket-sheet .bs-panel{left:max(0px, calc((100% - 640px) / 2));right:max(0px, calc((100% - 640px) / 2));max-height:80%;}
   body.tablet .ai-head,
@@ -3361,7 +3385,7 @@ function setShopBrand(b){
   if(f){
     f.querySelectorAll('[data-shop-brand]').forEach(x=>{ const on=x.dataset.shopBrand===b; x.classList.toggle('on',on); x.setAttribute('aria-selected',on); });
     moveShopLens();
-    const on=f.querySelector('.on'); if(on&&on.scrollIntoView) try{ on.scrollIntoView({block:'nearest',inline:'nearest',behavior:'smooth'}); }catch(e){}
+    revealInRow(f,f.querySelector('.on'),false);
   }
   haptic();
   refreshShopGrid(to>from?'in-fwd':'in-back');
@@ -3578,12 +3602,59 @@ function bindLux(){
     });
   };
   parallax();
+  fitBottomClearance();
+  checkFabOverlap();
   body.addEventListener('scroll',()=>{
     if(!tick) tick=requestAnimationFrame(parallax);
     screenEl.classList.add('scrolling');
-    clearTimeout(idle); idle=setTimeout(()=>screenEl.classList.remove('scrolling'),650);
+    clearTimeout(idle); idle=setTimeout(()=>{ checkFabOverlap(); screenEl.classList.remove('scrolling'); },650);
   },{passive:true});
 }
+
+/* Bottom clearance, measured rather than guessed: the scroll area's bottom
+   padding is set so its last item ends 16px above whatever floats lowest on
+   screen — the glass navigation, the ✨ button, the bag bar or the product
+   purchase bar — using their real positions (which already include the
+   iPhone's safe area and any text-size differences). */
+function fitBottomClearance(){
+  const body=screenEl.querySelector('.screen-body'); if(!body) return;
+  const br=body.getBoundingClientRect(); if(!br.height) return;
+  const visBottom=Math.min(br.bottom,window.innerHeight||br.bottom);
+  let top=visBottom;
+  screenEl.querySelectorAll('.bottom-nav, .fab-ai, .basket-pill, .pd-buy').forEach(el=>{
+    // offsets ignore the hide/tuck transforms, so this is where each one rests
+    const sr=screenEl.getBoundingClientRect();
+    const t=sr.top+el.offsetTop;
+    if(el.offsetHeight && t>br.top+br.height*0.4 && t<top) top=t;
+  });
+  const clear=Math.ceil((br.bottom-top)+16);
+  if(clear>0) screenEl.style.setProperty('--content-bottom',clear+'px');
+}
+/* Tuck the ✨ button aside while it would sit on important text/buttons. */
+const FAB_AVOID='.pc-name,.pc-price,.bag-btn,.eo-title,.eo-desc,.eo-meta,.cf-title,.cf-sub,.cf-cta,.lux-link,.svc-row,.primary-btn,.lux-chip';
+function checkFabOverlap(){
+  const fab=document.getElementById('fabAI'), body=screenEl.querySelector('.screen-body');
+  if(!fab||!body){ screenEl.classList.remove('fab-tucked'); return; }
+  const sr=screenEl.getBoundingClientRect();
+  const f={l:sr.left+fab.offsetLeft-6,t:sr.top+fab.offsetTop-6,r:sr.left+fab.offsetLeft+fab.offsetWidth+6,b:sr.top+fab.offsetTop+fab.offsetHeight+6};
+  const br=body.getBoundingClientRect();
+  let hit=false;
+  for(const el of body.querySelectorAll(FAB_AVOID)){
+    const r=el.getBoundingClientRect();
+    if(r.bottom<br.top||r.top>br.bottom) continue;
+    if(r.left<f.r&&r.right>f.l&&r.top<f.b&&r.bottom>f.t){ hit=true; break; }
+  }
+  screenEl.classList.toggle('fab-tucked',hit);
+}
+window.addEventListener('resize',()=>{ fitBottomClearance(); checkFabOverlap(); });
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ fitBottomClearance(); });
+// #screen is overflow:hidden; if anything ever nudges it (focus, a script),
+// put it straight back so no screen inherits a hidden offset.
+screenEl.addEventListener('scroll',()=>{
+  const a=document.activeElement;
+  if(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return;
+  if(screenEl.scrollTop||screenEl.scrollLeft){ screenEl.scrollTop=0; screenEl.scrollLeft=0; }
+});
 
 function renderProfile(){
   const redeem=[t('r1'),t('r2'),t('r3'),t('r4')];
@@ -4473,6 +4544,23 @@ function attachPhotoPicker(inputId,hostId,existingUrl,preset,usages){
   return ed;
 }
 
+/* Bring a chip into view inside its own horizontal row ONLY.
+   scrollIntoView() was used before, but it also scrolls every ancestor that
+   can scroll — including #screen, which is overflow:hidden but still
+   scrollable by script. #screen is never re-created, so that hidden offset
+   survived into the next screen: the reason Shop could open "already
+   scrolled down". */
+function revealInRow(row,btn,center){
+  if(!row||!btn) return;
+  const r=row.getBoundingClientRect(), b=btn.getBoundingClientRect();
+  let dx=0;
+  if(center) dx=(b.left+b.width/2)-(r.left+r.width/2);
+  else if(b.left<r.left+8) dx=b.left-r.left-8;
+  else if(b.right>r.right-8) dx=b.right-r.right+8;
+  if(Math.abs(dx)<1) return;
+  try{ row.scrollBy({left:dx,behavior:(typeof reduceMotion==='function'&&reduceMotion())?'auto':'smooth'}); }catch(e){ row.scrollLeft+=dx; }
+}
+
 /* ================= Floating glass navigation =================
    The four tabs are one object. Where the sliding lens sits is a single
    number, `pos`: 0 = Home, 1 = Bookings, 2 = Shop, 3 = Profile, and anything
@@ -4759,7 +4847,7 @@ const CatGlass=(function(){
   function stop(){ if(st.raf){ cancelAnimationFrame(st.raf); st.raf=0; st.last=0; } }
   function reveal(i){                               // glide the chosen chip into view
     const b=st.btns[i]; if(!b||!st.row) return;
-    try{ b.scrollIntoView({behavior:reduceMotion()?'auto':'smooth',inline:'center',block:'nearest'}); }catch(e){}
+    revealInRow(st.row,b,true);
   }
 
   function mount(){
@@ -4861,9 +4949,24 @@ const CatGlass=(function(){
   return {mount,select,listClass,paint};
 })();
 
+/* Bottom-navigation icons: one line-icon set, one 24-unit grid, one stroke. */
+const NAV_ICONS=(()=>{
+  const svg=(d)=>`<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">${d}</svg>`;
+  return {
+    home:    svg('<path d="M4.5 10.2 12 4.2l7.5 6V19a1.3 1.3 0 0 1-1.3 1.3H14.6v-5.4H9.4v5.4H5.8A1.3 1.3 0 0 1 4.5 19z"/>'),
+    calendar:svg('<rect x="4.5" y="5.6" width="15" height="14.7" rx="2.2"/><path d="M4.5 10h15M8.6 3.7v3.6M15.4 3.7v3.6"/>'),
+    bag:     svg('<path d="M5.6 8.4h12.8l-1.05 10.6a1.4 1.4 0 0 1-1.4 1.3H8.05a1.4 1.4 0 0 1-1.4-1.3L5.6 8.4z"/><path d="M9.2 8.4V7.1a2.8 2.8 0 0 1 5.6 0v1.3"/>'),
+    person:  svg('<circle cx="12" cy="8.4" r="3.6"/><path d="M5.2 20.2c.8-3.6 3.5-5.6 6.8-5.6s6 2 6.8 5.6"/>'),
+  };
+})();
+
 function render(){
   const {title,small}=screenTitle();
   screenEl.dataset.screen=currentScreen;
+  // Every screen starts at the top: #screen itself must never carry an
+  // offset from a previous screen (see revealInRow). Each screen's own
+  // scroll area is created fresh below, so tabs never share a position.
+  screenEl.scrollTop=0; screenEl.scrollLeft=0;
   screenEl.innerHTML=`
     <div class="screen-head">
       ${showBack()?`<button class="back" id="backBtn">‹</button>`:''}
@@ -4879,7 +4982,7 @@ function render(){
     <div class="screen-body ${navDirection==='back'?'enter-back':navDirection==='none'?'':'enter'}">${bodyHtml()}</div>
     <nav class="bottom-nav" role="tablist">
       <div class="nav-lens" aria-hidden="true"></div>
-      ${[['welcome','⌂','navHome'],['bookings','🗓','navBookings'],['shop','🛍','navShop'],['profile','◎','navProfile']].map(([n,ic,key],i)=>{
+      ${[['welcome',NAV_ICONS.home,'navHome'],['bookings',NAV_ICONS.calendar,'navBookings'],['shop',NAV_ICONS.bag,'navShop'],['profile',NAV_ICONS.person,'navProfile']].map(([n,ic,key],i)=>{
         const on=navIndexFor(currentScreen)===i;
         return `<button data-nav="${n}" role="tab" aria-selected="${on}" class="${on?'active':''}" style="--a:${on?1:0}"><span class="ic">${ic}</span>${t(key)}${n==='shop'?`<span class="nav-badge" data-n="${basketCount()}">${basketCount()||''}</span>`:''}</button>`;
       }).join('')}
