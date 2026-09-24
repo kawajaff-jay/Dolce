@@ -185,6 +185,15 @@
   .mi > img{position:absolute;inset:0;width:100%;height:100%;box-sizing:border-box;display:block;
     opacity:0;transition:opacity .35s ease;-webkit-user-drag:none;user-select:none;}
   .mi > img.ld{opacity:1;}
+  /* Product frames never show the saturated brand gradient: while loading,
+     behind transparent pixels, or when a picture is missing or fails, the
+     frame is warm ivory (with the brand name, softly, if there is no picture). */
+  .mi.mi-product:not(.mi-contain){background:#f4efe6;}
+  .mi.mi-product.mi-empty,.mi.mi-product.mi-broken{background:linear-gradient(160deg,#f8f3ea,#ece3d3);}
+  .mi.mi-product.mi-empty::before,.mi.mi-product.mi-broken::before{content:var(--ph,'');position:absolute;inset:0;display:flex;
+    align-items:center;justify-content:center;font-family:var(--display);font-size:15px;letter-spacing:.16em;
+    text-transform:uppercase;color:rgba(58,42,31,.28);}
+  .mi-product > img[data-pf="0"],.mi-product > img[data-pf="wait"]{opacity:0!important;}
   /* Loading placeholder: a soft warm shimmer until the picture arrives. */
   .mi:has(> img:not(.ld))::after{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
     background:linear-gradient(100deg,rgba(255,255,255,0) 20%,rgba(255,255,255,.45) 50%,rgba(255,255,255,0) 80%);
@@ -864,10 +873,10 @@
   .eo-card .mi.eo-media{border-radius:0;flex:none;}
   .eo-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:1;
     font-family:var(--display);font-size:20px;letter-spacing:.08em;color:rgba(255,255,255,.88);}
-  .eo-body{flex:1;display:flex;flex-direction:column;gap:5px;padding:12px 14px 15px;}
+  .eo-body{flex:1;display:flex;flex-direction:column;gap:4px;padding:11px 14px 13px;}
   .eo-meta{display:flex;justify-content:space-between;gap:8px;font:500 9.5px/1.3 var(--sans);letter-spacing:.2em;text-transform:uppercase;color:var(--label);}
   .eo-meta span:last-child:not(:first-child){letter-spacing:.08em;white-space:nowrap;}
-  .eo-title{font-family:var(--display);font-weight:400;font-size:17px;line-height:1.25;margin:2px 0 0;color:var(--ink);
+  .eo-title{font-family:var(--display);font-weight:400;font-size:16.5px;line-height:1.22;margin:1px 0 0;color:var(--ink);
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
   .eo-desc{font:400 12.5px/1.45 var(--sans);color:var(--ink-soft);margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 
@@ -3318,13 +3327,15 @@ function AddToBag(p,o){
   return `<button class="bag-btn${o.cls?' '+o.cls:''}${have?' in':''}" ${o.id?`id="${o.id}"`:`data-add="${esc(String(p.id))}"`} ${st<=0?'disabled':''}>
       <span class="bag-t">${o.label||bagLabel(st,have)}</span><span class="bag-plus" aria-hidden="true">${ICONS.plus}${ICONS.check}</span></button>`;
 }
+/* The words shown in an empty or unreadable product frame. */
+function productPh(p){ const n=(BRANDS[p.brand]&&BRANDS[p.brand].name)||''; return `--ph:'${n.replace(/'/g,'')}'`; }
 function ProductCard(p){
   const id=esc(String(p.id)), st=numOr0(p.stock), fav=isFav(p.id);
   const tag=st<=0?`<span class="lux-badge muted">${t('soldOut')}</span>`
     :(hasDiscount(p)?`<span class="lux-badge">−${p.discount}%</span>`:'');
   return `<article class="pc" data-prod="${id}">
       <div class="pc-media">
-        ${mediaHtml(p.image||'','productPrimary',{cls:'pc-img',fallback:brandFallback(p.brand),alt:p.n})}
+        ${mediaHtml(p.image||'','productPrimary',{cls:'pc-img',fallback:brandFallback(p.brand),alt:p.n,style:productPh(p)})}
         <button class="fav-btn${fav?' on':''}" data-fav="${id}" aria-pressed="${fav}" aria-label="${t('favourite')}">${ICONS.heart}</button>
         ${tag}
       </div>
@@ -3499,8 +3510,8 @@ function renderProduct(){
   opts.forEach(o=>{ if(!o.values.includes(pdSel[o.name])) pdSel[o.name]=o.values[0]; });
   const shots=productShots(p);
   const slides=shots.length
-    ? shots.map((url,i)=>mediaHtml(url,'productPrimary',{cls:'pd-shot',eager:i===0,alt:p.n})).join('')
-    : mediaHtml('','productPrimary',{cls:'pd-shot',fallback:brandFallback(p.brand)});
+    ? shots.map((url,i)=>mediaHtml(url,'productPrimary',{cls:'pd-shot',eager:i===0,alt:p.n,style:productPh(p)})).join('')
+    : mediaHtml('','productPrimary',{cls:'pd-shot',fallback:brandFallback(p.brand),style:productPh(p)});
   const dots=shots.length>1
     ? `<div class="pd-dots" id="pdDots">${shots.map((_,i)=>`<i class="${i===0?'on':''}"></i>`).join('')}</div>` : '';
   const stock=numOr0(p.stock), room=pdRoom(p);
@@ -3647,6 +3658,9 @@ function checkFabOverlap(){
   screenEl.classList.toggle('fab-tucked',hit);
 }
 window.addEventListener('resize',()=>{ fitBottomClearance(); checkFabOverlap(); });
+// The iPhone app resizes the frame to the visible area after launch and when
+// the keyboard or safe areas change — re-measure whenever #screen changes size.
+if(typeof ResizeObserver!=='undefined') new ResizeObserver(()=>{ fitBottomClearance(); }).observe(screenEl);
 if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ fitBottomClearance(); });
 // #screen is overflow:hidden; if anything ever nudges it (focus, a script),
 // put it straight back so no screen inherits a hidden offset.
@@ -3950,7 +3964,7 @@ let focalQueued=false;
 function scheduleFocalPass(){
   if(focalQueued) return;
   focalQueued=true;
-  requestAnimationFrame(()=>{ focalQueued=false; applyFocalPoints(); applyMediaFocus(); });
+  requestAnimationFrame(()=>{ focalQueued=false; applyFocalPoints(); applyMediaFocus(); applyProductFit(); });
 }
 if(typeof MutationObserver!=='undefined'){
   new MutationObserver(scheduleFocalPass).observe(document.documentElement,{
@@ -4155,7 +4169,7 @@ const MEDIA_PRESETS={
              hint:'Fills the service header. Drag to keep the important part in view.'},
   homeHero: {label:'Home card',      ratio:10/3, fit:'cover',   radius:18, maxEdge:1800, minEdge:1000,
              hint:'The wide card on the home screen. Text sits on the lower left.'},
-  banner:   {label:'Event / offer cover', ratio:16/10, fit:'cover', radius:0,  maxEdge:1200, minEdge:600,
+  banner:   {label:'Event / offer cover', ratio:16/9, fit:'cover', radius:0,  maxEdge:1200, minEdge:600,
              hint:'Top of the card in "Upcoming events & offers" on the home screen.'},
   category: {label:'Category',       ratio:1,    fit:'cover',   radius:14, maxEdge:800,  minEdge:400,
              hint:'Square category thumbnail.'},
@@ -4194,6 +4208,7 @@ function mediaView(url,preset,metaOverride){
   preset=presetKey(preset);
   const P=MEDIA_PRESETS[preset]||MEDIA_PRESETS.thumbnail;
   const m=metaOverride||mediaMeta(url)||{};
+  if(preset==='product' && !metaOverride && url){ const pv=productView(url,m); if(pv) return pv; }
   const auto=url?focalCache.get(url):null;      // measured subject / logo test, once known
   let fit=m.fit||P.fit;
   if(!m.fit&&fit==='cover'&&auto&&auto.logo) fit='contain';   // never crop a wordmark
@@ -4232,12 +4247,94 @@ function mediaHtml(url,preset,o){
   if(!url) return `<div class="${cls} mi-empty" style="${box}">${o.inner||''}</div>`;
   const v=mediaView(url,preset,o.meta);
   return `<div class="${cls}${v.fit==='contain'?' mi-contain':''}${v.bg&&v.fit==='contain'&&!(o.meta||mediaMeta(url)||{}).fit&&focalCache.get(url)&&focalCache.get(url).logo?' is-logo':''}" data-preset="${preset}" style="${box}${v.bg?';--mi-bg:'+v.bg:''}">`+
-    `<img src="${attr(url)}" alt="${attr(o.alt||'')}"${o.eager?'':' loading="lazy"'} decoding="async" draggable="false" data-mi="${v.known?1:0}" style="${v.css}" onload="this.classList.add('ld')" onerror="this.parentNode.classList.add('mi-broken');this.remove()">`+
+    `<img src="${attr(url)}" alt="${attr(o.alt||'')}"${o.eager?'':' loading="lazy"'} decoding="async" draggable="false" data-mi="${v.known?1:0}"${preset==='product'&&!o.meta?` data-pf="${productFit.has(url)?1:0}"`:''} style="${v.css}" onload="this.classList.add('ld')" onerror="this.parentNode.classList.add('mi-broken');this.remove()">`+
     `${o.inner||''}</div>`;
 }
 
 /* Pictures without saved metadata (older uploads) get their subject found
    automatically, once, and are re-placed when the answer arrives. */
+/* ---------- Product image occupancy (productPrimary) ----------
+   Every product sits in the same 4:5 frame. What goes inside depends on the
+   picture itself, measured once per image on the phone and cached:
+
+   - ISOLATED product on a plain light or transparent background (a serum, a
+     mat, a jar — including photos baked at upload): shown whole ("contain"),
+     then scaled and centred on the product's own outline so the product —
+     not the canvas it was shot on — fills 80% of the frame's limiting side.
+     A tall bottle and a wide mat therefore look equally present.
+   - PHOTO (model, clothing on a person, styled scene, dark/coloured backdrop):
+     fills the frame ("cover"), centred on its measured subject.
+
+   The Admin's own choice always wins: "Lifestyle photo" forces cover, and a
+   hand-set zoom in the editor is kept exactly. Nothing is ever stretched —
+   one uniform scale factor, never separate width/height scaling. */
+const PRODUCT_OCCUPANCY=0.8;
+const productFit=new Map();          // url -> {kind:'isolated',box,bg,a} | {kind:'photo',x,y,a} | {kind:'unknown'}
+const productFitPending=new Map();
+function analyseProduct(url){
+  if(productFit.has(url)) return Promise.resolve(productFit.get(url));
+  if(productFitPending.has(url)) return productFitPending.get(url);
+  const pr=new Promise(resolve=>{
+    const img=new Image();
+    if(/^https?:/i.test(url)) img.crossOrigin='anonymous';
+    const done=(r)=>{ productFit.set(url,r); productFitPending.delete(url); resolve(r); };
+    img.onload=()=>{
+      const a=(img.naturalWidth||1)/(img.naturalHeight||1);
+      try{ sampleOf(img,8); }catch(e){ return done({kind:'unknown',a}); }   // pixels not readable (no CORS): keep the saved framing
+      const shot=detectPackshot(img);
+      if(shot){
+        const bw=shot.box.x1-shot.box.x0, bh=shot.box.y1-shot.box.y0;
+        // an "outline" that is the whole picture means it is really a photo
+        if(bw<0.985||bh<0.985) return done({kind:'isolated',box:shot.box,bg:shot.bg,a});
+      }
+      let f={x:50,y:50}; try{ f=measureFocus(img)||f; }catch(e){}
+      done({kind:'photo',x:f.x,y:f.y,a});
+    };
+    img.onerror=()=>done({kind:'unknown',a:1});
+    img.src=url;
+  });
+  productFitPending.set(url,pr);
+  return pr;
+}
+function productView(url,m){
+  const pf=productFit.get(url); if(!pf||pf.kind==='unknown') return null;
+  if(m.fit==='cover') return null;                       // Admin chose "Lifestyle photo"
+  if(m.z && m.z>1.001) return null;                      // Admin framed it by hand
+  const R=MEDIA_PRESETS.product.ratio;
+  if(pf.kind==='photo'){
+    if(m.fit==='contain') return null;                   // Admin insisted on "Product shot"
+    const x=m.x!=null&&m.x!==50?m.x:pf.x, y=m.y!=null&&m.y!==50?m.y:pf.y;
+    return {fit:'cover',x,y,z:1,pad:0,bg:'',known:true,css:`object-fit:cover;object-position:${x}% ${y}%;`};
+  }
+  // isolated product: contain, then one uniform scale about the product outline
+  const a=pf.a||1, fw=a>R?1:a/R, fh=a>R?R/a:1;          // image size inside the frame, as fractions
+  const b=pf.box, midX=(b.x0+b.x1)/2, midY=(b.y0+b.y1)/2;
+  const pw=(b.x1-b.x0)*fw, ph=(b.y1-b.y0)*fh;            // product size as fractions of the frame
+  const k=Math.max(0.5,Math.min(3.5,Math.min(PRODUCT_OCCUPANCY/pw,PRODUCT_OCCUPANCY/ph)));
+  const cx=(1-fw)/2+midX*fw, cy=(1-fh)/2+midY*fh;        // product centre in the frame
+  const bg=m.bg||pf.bg||'#ffffff';
+  const css=`object-fit:contain;object-position:50% 50%;transform-origin:${(cx*100).toFixed(2)}% ${(cy*100).toFixed(2)}%;`
+    +`transform:translate(${((0.5-cx)*100).toFixed(2)}%,${((0.5-cy)*100).toFixed(2)}%) scale(${k.toFixed(3)});`;
+  return {fit:'contain',x:50,y:50,z:1,pad:0,bg,known:true,css};
+}
+function applyProductFit(root){
+  (root||document).querySelectorAll('.mi[data-preset="product"] > img[data-pf="0"]').forEach(img=>{
+    img.dataset.pf='wait';
+    const box=img.parentNode, url=img.getAttribute('src');
+    const reveal=()=>{ if(img.dataset.pf!=='1') img.dataset.pf='1'; };
+    const t=setTimeout(reveal,1500);                     // never leave a picture hidden
+    analyseProduct(url).then(()=>{
+      clearTimeout(t);
+      if(!img.isConnected) return;
+      const v=mediaView(url,'product');
+      img.style.cssText=v.css;
+      box.classList.toggle('mi-contain',v.fit==='contain');
+      if(v.bg) box.style.setProperty('--mi-bg',v.bg); else box.style.removeProperty('--mi-bg');
+      reveal();
+    });
+  });
+}
+
 function applyMediaFocus(root){
   (root||document).querySelectorAll('.mi > img[data-mi="0"]').forEach(img=>{
     img.dataset.mi='1';
@@ -4291,7 +4388,13 @@ function detectPackshot(src){
     const tol=22;
     const isBg=(c)=>clear?c[3]<24:(c[3]>200&&Math.abs(c[0]-bg[0])<=tol&&Math.abs(c[1]-bg[1])<=tol&&Math.abs(c[2]-bg[2])<=tol);
     if(!cs.every(isBg)) return null;
-    if(!clear && (0.299*bg[0]+0.587*bg[1]+0.114*bg[2])<165) return null;   // dark "background" = a photo
+    // Only a white / near-white, colourless (or transparent) backdrop counts as
+    // a product shot. A beige studio wall, a coloured paper sweep or a green
+    // backdrop behind a model is a PHOTO and must fill the frame instead.
+    if(!clear){
+      const lum=0.299*bg[0]+0.587*bg[1]+0.114*bg[2], chroma=Math.max(bg[0],bg[1],bg[2])-Math.min(bg[0],bg[1],bg[2]);
+      if(lum<222 || chroma>28) return null;
+    }
     let border=0,hit=0;
     for(let x=0;x<w;x++){ border+=2; if(isBg(at(x,0))) hit++; if(isBg(at(x,h-1))) hit++; }
     for(let y=1;y<h-1;y++){ border+=2; if(isBg(at(0,y))) hit++; if(isBg(at(w-1,y))) hit++; }
