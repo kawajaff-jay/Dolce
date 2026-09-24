@@ -205,6 +205,8 @@
   .me-prev figure{margin:0;width:150px;} .me-prev figure.me-fig-thumbnail,.me-prev figure.me-fig-category{width:72px;}
   .me-prev figcaption{font-size:11.5px;color:var(--muted);margin-top:4px;}
   .me-hint{font-size:12.5px;color:var(--muted);margin-top:10px;}
+  .me-check{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;font-weight:600;color:var(--ink-soft);cursor:pointer;}
+  .me-check input{width:16px;height:16px;accent-color:var(--gold-dark);margin:0;}
   .me-info{font-size:12.5px;color:var(--muted);margin-top:4px;}
   .me-note{color:#8a5b20;margin-top:3px;}
   .me-busy{font-size:13px;color:var(--muted);padding:14px 0;}
@@ -474,6 +476,7 @@
   .dest-card .mi.dest-media.mi-contain{background:var(--mi-bg,var(--cream));}
   .dest-card::before{content:'';position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(0,0,0,.55) 100%);}
   .dest-card span,.dest-card small{position:relative;z-index:2;}
+  .dest-card.no-text::before,.dest-card.no-text span,.dest-card.no-text small{display:none;}
   /* A logo uploaded as the brand photo is shown whole, without the scrim or
      the name on top (the logo already carries it). */
   .dest-card:has(.mi.is-logo)::before,.dest-card:has(.mi.is-logo) span,.dest-card:has(.mi.is-logo) small{display:none;}
@@ -2162,6 +2165,15 @@ function goto(screen,dir){
   });
 })();
 
+/* A brand photo that already has the logo designed into it must not get a
+   second name printed on top. The name (and the dark shading behind it)
+   shows only on plain colour cards, or when the admin ticks "Show the brand
+   name on top of this photo" for that picture. */
+function destTextClass(brand){
+  const img=STORE.brandImages[brand];
+  if(!img) return '';
+  return (mediaMeta(img)||{}).showText ? '' : ' no-text';
+}
 function renderWelcome(){
   const allOffers=[...STORE.offers,...activeDiscountOffers()];
   const offers=allOffers.map(o=>o.image
@@ -2174,9 +2186,9 @@ function renderWelcome(){
   return `
     <div class="section-label">${t('chooseDestination')}</div>
     <div style="font-size:13.5px;color:var(--ink-soft);margin:-4px 0 12px;">${t('welcomeSub')}</div>
-    <div class="dest-card dolce" data-brand="dolce" style="aspect-ratio:${MEDIA_PRESETS.homeHero.ratio}">${STORE.brandImages['dolce']?mediaHtml(STORE.brandImages['dolce'],'homeHero',{cls:'dest-media',eager:true,alt:'Dolce'}):''}<span>Dolce</span><small>Aesthetic Clinic</small></div>
-    <div class="dest-card polished" data-brand="polished" style="aspect-ratio:${MEDIA_PRESETS.homeHero.ratio}">${STORE.brandImages['polished']?mediaHtml(STORE.brandImages['polished'],'homeHero',{cls:'dest-media',eager:true,alt:'Polished'}):''}<span>Polished</span><small>Salon</small></div>
-    <div class="dest-card core" data-brand="core" style="aspect-ratio:${MEDIA_PRESETS.homeHero.ratio}">${STORE.brandImages['core']?mediaHtml(STORE.brandImages['core'],'homeHero',{cls:'dest-media',eager:true,alt:'Core'}):''}<span>Core</span><small>Yoga &amp; Pilates</small></div>
+    <div class="dest-card dolce${destTextClass('dolce')}" data-brand="dolce" style="aspect-ratio:${MEDIA_PRESETS.homeHero.ratio}">${STORE.brandImages['dolce']?mediaHtml(STORE.brandImages['dolce'],'homeHero',{cls:'dest-media',eager:true,alt:'Dolce'}):''}<span>Dolce</span><small>Aesthetic Clinic</small></div>
+    <div class="dest-card polished${destTextClass('polished')}" data-brand="polished" style="aspect-ratio:${MEDIA_PRESETS.homeHero.ratio}">${STORE.brandImages['polished']?mediaHtml(STORE.brandImages['polished'],'homeHero',{cls:'dest-media',eager:true,alt:'Polished'}):''}<span>Polished</span><small>Salon</small></div>
+    <div class="dest-card core${destTextClass('core')}" data-brand="core" style="aspect-ratio:${MEDIA_PRESETS.homeHero.ratio}">${STORE.brandImages['core']?mediaHtml(STORE.brandImages['core'],'homeHero',{cls:'dest-media',eager:true,alt:'Core'}):''}<span>Core</span><small>Yoga &amp; Pilates</small></div>
     ${offersHtml}
   `;
 }
@@ -2933,6 +2945,7 @@ function rememberMeta(url,meta){
   ['fit','bg','w','h'].forEach(k=>{ if(meta[k]!=null&&meta[k]!=='') keep[k]=meta[k]; });
   if(meta.pad!=null) keep.pad=meta.pad;
   if(meta.packshot) keep.packshot=1;
+  if(meta.showText) keep.showText=1;    // home card: draw the brand name on top of this photo
   STORE.imageFocus[imgKey(url)]=keep;
   focalCache.delete(url);
 }
@@ -3215,9 +3228,12 @@ function mediaEditor(host,opts){
       st.manual=true; paint(); changed();
     }));
     host.querySelector('.me-reset').addEventListener('click',()=>{
-      st.meta={...st.auto}; st.manual=false; paint(); changed();
+      const keepText=st.meta.showText; st.meta={...st.auto}; if(keepText) st.meta.showText=true;
+      st.manual=false; paint(); changed();
     });
     host.querySelector('.me-replace').addEventListener('click',()=>{ if(opts.onReplace) opts.onReplace(); });
+    const tt=host.querySelector('.me-check input');
+    if(tt) tt.addEventListener('change',()=>{ st.meta.showText=tt.checked; changed(); });
   }
   function build(){
     const main=usages[0], MP=MEDIA_PRESETS[main];
@@ -3232,6 +3248,7 @@ function mediaEditor(host,opts){
           `<button type="button" class="btn btn-ghost btn-sm me-replace">Replace</button>`+
         `</div>`+
         (usages.length>1?`<div class="me-prev">${usages.slice(1).map(u=>`<figure class="me-fig-${u}">${mediaHtml(st.url,u,{meta:st.meta,eager:true})}<figcaption>${esc(MEDIA_PRESETS[u].label)} · ${ratioLabel(MEDIA_PRESETS[u].ratio)}</figcaption></figure>`).join('')}</div>`:'')+
+        (opts.textToggle?`<label class="me-check"><input type="checkbox" ${st.meta.showText?'checked':''}> ${esc(opts.textToggle)}</label>`:'')+
         `<div class="me-hint">${esc(MP.hint||'')} Drag to reposition · zoom to crop.</div>`+
         `<div class="me-info"></div>`+
       `</div>`;
@@ -5952,6 +5969,7 @@ function renderBrandPhotos(){
     if(!host||!img) return;
     const input=document.querySelector(`[data-brand-photo="${b}"]`);
     const ed=mediaEditor(host,{preset:'homeHero',usages:['homeHero','service','thumbnail'],
+      textToggle:'Show the brand name on top of this photo (leave off if the photo already has your logo in it)',
       onReplace:()=>input&&input.click(),
       onChange:()=>{
         ed.commit();
