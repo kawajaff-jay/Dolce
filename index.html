@@ -1045,6 +1045,46 @@
     .pc{padding:5px 5px 7px;}
     .pc-body{padding:10px 4px;}
   }
+  /* Showcase member profile (events) */
+  .pv-open{display:block;width:100%;margin-top:12px;padding:13px;border-radius:999px;border:1px solid var(--lux-hair);background:var(--ivory);
+    font:500 13.5px var(--sans);letter-spacing:.04em;color:var(--espresso);cursor:pointer;}
+  .pv-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 14px;padding:8px 8px 8px 14px;border-radius:999px;
+    background:var(--beige);font:600 10px var(--sans);letter-spacing:.2em;color:var(--label);}
+  .pv-banner button{border:none;background:var(--ivory);border-radius:999px;padding:7px 12px;font:500 12px var(--sans);color:var(--espresso);cursor:pointer;letter-spacing:.02em;}
+  .pv-card{display:flex;align-items:center;gap:16px;padding:18px;border-radius:var(--lux-radius);background:var(--ivory);border:1px solid var(--lux-hair);box-shadow:var(--lux-shadow);}
+  .pv-avatar{flex:none;width:62px;height:62px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(150deg,#4a3627,var(--espresso));color:#fbf5ea;font-family:var(--display);font-size:24px;box-shadow:inset 0 1px 0 rgba(255,255,255,.15);}
+  .pv-avatar i{font-style:normal;color:var(--champagne);margin-left:1px;}
+  .pv-who{min-width:0;}
+  .pv-name{font-family:var(--display);font-weight:400;font-size:24px;line-height:1.1;margin:6px 0 4px;color:var(--ink);}
+  .pv-sub{font:400 12.5px var(--sans);color:var(--ink-soft);}
+  .pv-loyalty{margin-top:14px;padding:20px;border-radius:var(--lux-radius);color:#fbf5ea;
+    background:radial-gradient(120% 140% at 100% 0%,rgba(195,163,106,.35),transparent 55%),linear-gradient(150deg,#3f2e22,#1f1712);
+    box-shadow:0 18px 34px -18px rgba(40,28,18,.6);}
+  .pv-loyalty .lux-eyebrow{color:rgba(251,245,234,.7);}
+  .pv-l-top{display:flex;justify-content:space-between;align-items:center;}
+  .pv-tier{font:600 10px var(--sans);letter-spacing:.2em;text-transform:uppercase;color:var(--champagne);border:1px solid rgba(195,163,106,.5);border-radius:999px;padding:4px 10px;}
+  .pv-pts{font-family:var(--display);font-size:40px;line-height:1;margin:14px 0 12px;}
+  .pv-pts span{font:500 13px var(--sans);letter-spacing:.1em;margin-left:8px;color:rgba(251,245,234,.7);}
+  .pv-bar{height:5px;border-radius:99px;background:rgba(251,245,234,.16);overflow:hidden;}
+  .pv-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#b8955a,var(--champagne));}
+  .pv-note{margin-top:9px;font:400 12.5px var(--sans);color:rgba(251,245,234,.75);}
+  .pv-book{padding:14px 16px;border-radius:18px;background:var(--ivory);border:1px solid var(--lux-hair);box-shadow:0 8px 20px -16px rgba(58,42,31,.25);margin-bottom:10px;}
+  .pv-book-top{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+  .pv-status{font:600 10px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--label);background:var(--beige);border-radius:999px;padding:4px 9px;}
+  .pv-status.ok{color:#4f6a45;background:rgba(116,146,106,.16);}
+  .pv-book-name{font-family:var(--display);font-size:18px;line-height:1.25;margin:8px 0 4px;color:var(--ink);}
+  .pv-book-when{font:400 12.5px var(--sans);color:var(--ink-soft);}
+  .pv-rewards{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .pv-reward{display:flex;flex-direction:column;gap:8px;padding:16px 14px;border-radius:18px;background:var(--ivory);border:1px solid var(--lux-hair);
+    font:500 13px/1.3 var(--sans);color:var(--ink);}
+  .pv-reward span{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--beige);color:var(--gold-dark);font-size:15px;}
+  .pv-favs{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px 4px;}
+  .pv-favs::-webkit-scrollbar{display:none;}
+  .pv-fav{flex:0 0 104px;border:none;background:none;padding:0;text-align:start;cursor:pointer;}
+  .pv-fav .mi{border-radius:14px;}
+  .pv-fav span{display:block;margin-top:6px;font:400 12px/1.3 var(--sans);color:var(--ink-soft);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  body.tablet .pv-favs{margin:0;padding:0 0 4px;}
   /* The website's small phone preview frame is ~296px wide, like the smallest iPhones. */
   .phone:not(.fullscreen) .bag-btn{font-size:11px;letter-spacing:0;padding-inline:9px 3px;gap:4px;}
   .phone:not(.fullscreen) .bag-plus{width:24px;height:24px;}
@@ -2839,6 +2879,7 @@ function renderClientAuth(){
         message us and our team will take care of it.
       </div>
       <a class="wa-btn" href="https://wa.me/${wa}" target="_blank" rel="noopener">💬 Message us on WhatsApp</a>
+      ${isNativeApp()?`<button class="pv-open" id="previewMemberBtn">Preview a member profile</button>`:''}
     `;
   }
   if(authStep==='phone'){
@@ -3592,6 +3633,9 @@ function bindProductDetail(){
    back a moment after scrolling stops. The destination photos drift very
    slightly for a sense of depth. */
 function bindLux(){
+  const pvb=document.getElementById('previewMemberBtn'); if(pvb) pvb.addEventListener('click',()=>{ haptic(); setPreviewMember(true); });
+  const pvx=document.getElementById('pvExit'); if(pvx) pvx.addEventListener('click',()=>setPreviewMember(false));
+  screenEl.querySelectorAll('[data-pv-bookings]').forEach(el=>el.addEventListener('click',()=>navTo('bookings')));
   bindShopCards(screenEl);
   screenEl.querySelectorAll('[data-shop-brand]').forEach(el=>el.addEventListener('click',()=>setShopBrand(el.dataset.shopBrand)));
   moveShopLens();
@@ -3642,7 +3686,7 @@ function fitBottomClearance(){
   if(clear>0) screenEl.style.setProperty('--content-bottom',clear+'px');
 }
 /* Tuck the ✨ button aside while it would sit on important text/buttons. */
-const FAB_AVOID='.pc-name,.pc-price,.bag-btn,.eo-title,.eo-desc,.eo-meta,.cf-title,.cf-sub,.cf-cta,.lux-link,.svc-row,.primary-btn,.lux-chip';
+const FAB_AVOID='.pv-book-name,.pv-book-when,.pv-status,.pv-reward,.lux-link,.pc-name,.pc-price,.bag-btn,.eo-title,.eo-desc,.eo-meta,.cf-title,.cf-sub,.cf-cta,.lux-link,.svc-row,.primary-btn,.lux-chip';
 function checkFabOverlap(){
   const fab=document.getElementById('fabAI'), body=screenEl.querySelector('.screen-body');
   if(!fab||!body){ screenEl.classList.remove('fab-tucked'); return; }
@@ -3669,6 +3713,86 @@ screenEl.addEventListener('scroll',()=>{
   if(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return;
   if(screenEl.scrollTop||screenEl.scrollLeft){ screenEl.scrollTop=0; screenEl.scrollLeft=0; }
 });
+
+/* ---------------- Showcase member profile (for events) ----------------
+   Real client logins are switched off (CLIENT_LOGIN_ENABLED=false). To show
+   the Profile and Bookings screens at an event, the INSTALLED app (never the
+   public website) offers "Preview a member profile": one sample member with
+   sample points, rewards and bookings. It is clearly labelled Preview, lives
+   only on this device, and never reads or writes client records, STORE or
+   Supabase. "Exit preview" returns everything to normal. */
+const PREVIEW_KEY='odc_preview_member';
+let previewMember=(()=>{ try{ return localStorage.getItem(PREVIEW_KEY)==='1'; }catch(e){ return false; } })();
+function isNativeApp(){ return document.body.classList.contains('native-app'); }
+function previewActive(){ return previewMember && !loggedInClient; }
+function setPreviewMember(on){
+  previewMember=!!on;
+  try{ on?localStorage.setItem(PREVIEW_KEY,'1'):localStorage.removeItem(PREVIEW_KEY); }catch(e){}
+  if(on && currentScreen==='auth') currentScreen=(typeof pendingScreen!=='undefined'&&pendingScreen==='bookings')?'bookings':'profile';
+  navDirection='none'; render();
+}
+const PREVIEW_PROFILE={name:'Dolce+ Member',tier:'Gold member',since:'2024',points:1850,goal:3000};
+/* Sample bookings built from the REAL menu, so the preview shows your actual treatments. */
+function previewBookings(){
+  const day=(n)=>{ const x=new Date(); x.setDate(x.getDate()+n); return fmtDate(x); };
+  const plan=[['dolce',2,'11:00 AM','Confirmed'],['polished',5,'4:30 PM','Requested'],['core',8,'8:00 AM','Confirmed']];
+  return plan.map(([b,n,time,status])=>{ const sv=svcList(b)[0]; return sv?{brand:b,service:sv.n,dur:sv.dur||'',date:day(n),time,status}:null; }).filter(Boolean);
+}
+function PreviewBookingCard(bk){
+  return `<div class="pv-book">
+      <div class="pv-book-top"><span class="lux-eyebrow">${esc(BRANDS[bk.brand].name)}</span><span class="pv-status ${bk.status==='Confirmed'?'ok':''}">${esc(bk.status)}</span></div>
+      <div class="pv-book-name">${esc(bk.service)}</div>
+      <div class="pv-book-when">${esc(bk.date)} · ${esc(bk.time)}${bk.dur?` · ${esc(bk.dur)}`:''}</div>
+    </div>`;
+}
+function previewBanner(){
+  return `<div class="pv-banner"><span>PREVIEW · SAMPLE MEMBER</span><button id="pvExit">Exit preview</button></div>`;
+}
+function renderPreviewProfile(){
+  const P=PREVIEW_PROFILE, pct=Math.round(P.points/P.goal*100), toGo=P.goal-P.points;
+  const bks=previewBookings();
+  const favList=STORE.products.filter(p=>p.active!==false&&isFav(p.id)).slice(0,6);
+  const rewards=[['✦',t('r1')],['%',t('r2')],['❀',t('r3')],['◷',t('r4')]];
+  return `
+    ${previewBanner()}
+    <section class="pv-card">
+      <div class="pv-avatar">D<i>+</i></div>
+      <div class="pv-who">
+        <div class="lux-eyebrow">${esc(P.tier)} · since ${esc(P.since)}</div>
+        <h2 class="pv-name">${esc(P.name)}</h2>
+        <div class="pv-sub">One account · Dolce · Polished · Core</div>
+      </div>
+    </section>
+    <section class="pv-loyalty">
+      <div class="pv-l-top"><span class="lux-eyebrow">${t('yourPoints')}</span><span class="pv-tier">${esc(P.tier)}</span></div>
+      <div class="pv-pts">${P.points.toLocaleString()}<span>pts</span></div>
+      <div class="pv-bar"><i style="width:${pct}%"></i></div>
+      <div class="pv-note">${toGo.toLocaleString()} pts ${t('toNextReward')}</div>
+    </section>
+    ${bks.length?`<section class="lux-sec">${LuxHeader(t('upcoming'))}
+      ${bks.slice(0,2).map(PreviewBookingCard).join('')}
+      <button class="lux-link" data-pv-bookings>${t('myBookings')} →</button></section>`:''}
+    <section class="lux-sec">${LuxHeader(t('redeem'))}
+      <div class="pv-rewards">${rewards.map(([ic,l])=>`<div class="pv-reward"><span>${ic}</span>${esc(l)}</div>`).join('')}</div>
+    </section>
+    ${favList.length?`<section class="lux-sec">${LuxHeader(t('favourite'))}
+      <div class="pv-favs">${favList.map(p=>`<button class="pv-fav" data-prod="${esc(String(p.id))}">${mediaHtml(p.image||'','productPrimary',{fallback:brandFallback(p.brand),alt:p.n,style:productPh(p)})}<span>${esc(p.n)}</span></button>`).join('')}</div>
+    </section>`:''}
+    <section class="lux-sec">${LuxHeader(t('language'))}
+      <div class="lux-chips">
+        <button class="lux-chip${lang==='en'?' on':''}" data-proflang="en">English</button>
+        <button class="lux-chip${lang==='ku'?' on':''}" data-proflang="ku">کوردی</button>
+        <button class="lux-chip${lang==='ar'?' on':''}" data-proflang="ar">عربي</button>
+      </div>
+    </section>`;
+}
+function renderPreviewBookings(){
+  const bks=previewBookings();
+  return `${previewBanner()}
+    <section class="lux-sec">${LuxHeader(t('upcoming'))}
+      ${bks.length?bks.map(PreviewBookingCard).join(''):`<p class="lux-lede">${t('noBookings')}</p>`}
+    </section>`;
+}
 
 function renderProfile(){
   const redeem=[t('r1'),t('r2'),t('r3'),t('r4')];
@@ -3746,10 +3870,10 @@ function bodyHtml(){
     case 'services': return renderServices();
     case 'detail': return renderDetail();
     case 'booking': return renderBooking();
-    case 'bookings': return loggedInClient?renderBookings():renderClientAuth();
+    case 'bookings': return loggedInClient?renderBookings():(previewActive()?renderPreviewBookings():renderClientAuth());
     case 'shop': return renderShop();
     case 'product': return renderProduct();
-    case 'profile': return loggedInClient?renderProfile():renderClientAuth();
+    case 'profile': return loggedInClient?renderProfile():(previewActive()?renderPreviewProfile():renderClientAuth());
     case 'auth': return renderClientAuth();
     default: return '';
   }
@@ -4705,7 +4829,7 @@ function navIndexFor(screen){
 function navTo(n,dir){
   if(n==='welcome') currentBrand=null;
   if(!dir){ dir=NAV_TABS.indexOf(n)>=navIndexFor(currentScreen)?'forward':'back'; }
-  if((n==='bookings'||n==='profile') && !loggedInClient){ pendingScreen=n; authStep='phone'; authPhone=''; goto('auth',dir); return; }
+  if((n==='bookings'||n==='profile') && !loggedInClient && !previewActive()){ pendingScreen=n; authStep='phone'; authPhone=''; goto('auth',dir); return; }
   goto(n,dir);
 }
 
