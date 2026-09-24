@@ -373,8 +373,14 @@
   /* Home screen shows the brand mark instead of a page title, centred —
      the one place centring is right, because it's a brand moment rather
      than something to be read. Every other screen stays left-aligned. */
-  .screen-head .home-mark{display:flex;align-items:center;justify-content:center;padding:2px 0 4px;}
-  .screen-head .home-mark img{height:28px;width:auto;display:block;}
+  .screen-head .home-mark{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:6px 0 8px;}
+  .screen-head .home-mark img{height:34px;width:auto;display:block;}
+  /* The brand line under the mark — wide-tracked capitals in the brown-gold. */
+  .home-tagline{font-family:system-ui,-apple-system,'Helvetica Neue',sans-serif;font-size:11.5px;font-weight:500;
+    letter-spacing:.34em;text-transform:uppercase;color:#7b6446;white-space:nowrap;
+    margin-right:-.34em;}          /* cancels the tracking after the last letter so it centres true */
+  .home-tagline i{font-style:normal;margin:0 .55em;opacity:.8;}
+  @media (max-width:340px){ .home-tagline{font-size:10px;letter-spacing:.26em;margin-right:-.26em;} }
   .screen-head .title small{display:block;font-family:system-ui,sans-serif;font-size:12.5px;color:var(--muted);font-weight:400;letter-spacing:.5px;text-transform:uppercase;}
   .screen-body{flex:1;overflow-y:auto;padding:6px 16px 148px;touch-action:pan-y;}
   /* Screen changes: a short, soft slide so moving around the app feels like
@@ -3673,7 +3679,7 @@ function render(){
     <div class="screen-head">
       ${showBack()?`<button class="back" id="backBtn">‹</button>`:''}
       ${currentScreen==='welcome'
-        ? `<div class="title home-mark"><img src="data:image/png;base64,${DOLCE_PLUS_MARK_B64}" alt="Dolce+"></div>`
+        ? `<div class="title home-mark"><img src="data:image/png;base64,${DOLCE_PLUS_MARK_B64}" alt="Dolce+"><div class="home-tagline" dir="ltr">Beauty<i>•</i>Aesthetics<i>•</i>Movement</div></div>`
         : `<div class="title">${title}${small?`<small>${small}</small>`:''}</div>`}
     </div>
     <div class="screen-body ${navDirection==='back'?'enter-back':navDirection==='none'?'':'enter'}">${bodyHtml()}</div>
