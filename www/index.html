@@ -176,6 +176,38 @@
   .upload-drop input{width:100%;}
   .img-pos{margin-top:10px;}
   .img-pos .row{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;}
+  /* ---------- Media component (see MEDIA SYSTEM in the script) ---------- */
+  .mi{position:relative;display:block;width:100%;overflow:hidden;border-radius:var(--mi-r,12px);isolation:isolate;
+    background:linear-gradient(140deg,var(--sc1,#e8dfd0),var(--sc2,#cdbfa6));}
+  .mi.mi-contain{background:var(--mi-bg,#fff);}
+  .mi.mi-broken,.mi.mi-empty{background:linear-gradient(140deg,var(--sc1,#e8dfd0),var(--sc2,#cdbfa6));}
+  .mi > img{position:absolute;inset:0;width:100%;height:100%;box-sizing:border-box;display:block;
+    opacity:0;transition:opacity .35s ease;-webkit-user-drag:none;user-select:none;}
+  .mi > img.ld{opacity:1;}
+  @media (prefers-reduced-motion: reduce){ .mi > img{transition:none;} }
+  /* Admin editor */
+  .me{margin-top:10px;max-width:560px;}
+  .me-head{font-size:13px;margin-bottom:8px;} .me-head span{color:var(--muted);}
+  .me-stage{position:relative;max-width:380px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;}
+  .me-stage.dragging{cursor:grabbing;}
+  .me-stage .mi{box-shadow:0 0 0 1px var(--line);}
+  .me-grid{position:absolute;inset:0;pointer-events:none;border-radius:var(--mi-r,12px);opacity:0;transition:opacity .2s;
+    background-image:linear-gradient(to right,rgba(255,255,255,.55) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,255,255,.55) 1px,transparent 1px);
+    background-size:33.34% 33.34%;background-position:-1px -1px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);}
+  .me-stage:hover .me-grid,.me-stage.dragging .me-grid{opacity:1;}
+  .me-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;}
+  .me-zoom{display:inline-flex;align-items:center;gap:6px;font-size:15px;color:var(--muted);}
+  .me .me-zoom input[type=range],.admin-form .me .me-zoom input[type=range]{width:150px;padding:0;border:none;background:none;accent-color:var(--gold-dark,#8a6a3f);}
+  .me-seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;}
+  .me-seg button{border:none;background:none;padding:6px 12px;font-size:12.5px;font-weight:600;color:var(--ink-soft);cursor:pointer;}
+  .me-seg button.on{background:var(--ink);color:#fff;}
+  .me-prev{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;align-items:flex-start;}
+  .me-prev figure{margin:0;width:150px;} .me-prev figure.me-fig-thumbnail,.me-prev figure.me-fig-category{width:72px;}
+  .me-prev figcaption{font-size:11.5px;color:var(--muted);margin-top:4px;}
+  .me-hint{font-size:12.5px;color:var(--muted);margin-top:10px;}
+  .me-info{font-size:12.5px;color:var(--muted);margin-top:4px;}
+  .me-note{color:#8a5b20;margin-top:3px;}
+  .me-busy{font-size:13px;color:var(--muted);padding:14px 0;}
   .img-pos .fr{background:#efece6;background-size:cover;background-repeat:no-repeat;border:1px solid var(--line);border-radius:10px;cursor:grab;touch-action:none;}
   .img-pos .fr.wide{width:255px;height:78px;}
   .img-pos .fr.sq{width:78px;height:78px;border-radius:12px;}
@@ -361,8 +393,7 @@
   .pd-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;
     -webkit-overflow-scrolling:touch;gap:0;}
   .pd-track::-webkit-scrollbar{display:none;}
-  .pd-shot{flex:0 0 100%;scroll-snap-align:center;height:260px;background-size:cover;
-    background-position:center;background-repeat:no-repeat;background-color:var(--line);}
+  .mi.pd-shot{flex:0 0 100%;scroll-snap-align:center;border-radius:0;max-height:min(100vw,560px);}
   .pd-dots{display:flex;gap:6px;justify-content:center;padding:10px 0 2px;}
   .pd-dots i{width:6px;height:6px;border-radius:50%;background:var(--line);display:block;
     transition:transform .2s ease, background .2s ease;}
@@ -432,9 +463,14 @@
   .fab-ai{position:absolute;right:22px;bottom:96px;width:52px;height:52px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;border:none;box-shadow:0 10px 20px rgba(0,0,0,.25);z-index:6;}
 
   /* destination cards */
-  .dest-card{border-radius:18px;padding:22px;margin-bottom:14px;color:#fff;font-family:var(--display);font-size:24px;position:relative;overflow:hidden;height:108px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:5px;background-size:cover;background-position:center;}
-  .dest-card::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(0,0,0,.55) 100%);}
-  .dest-card span,.dest-card small{position:relative;z-index:1;}
+  .dest-card{border-radius:18px;padding:22px;margin-bottom:14px;color:#fff;font-family:var(--display);font-size:24px;position:relative;overflow:hidden;min-height:96px;max-height:220px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:5px;isolation:isolate;}
+  .dest-card .mi.dest-media{position:absolute;inset:0;width:auto;height:auto;border-radius:0;z-index:0;background:transparent;}
+  .dest-card .mi.dest-media.mi-contain{background:var(--mi-bg,var(--cream));}
+  .dest-card::before{content:'';position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(0,0,0,.55) 100%);}
+  .dest-card span,.dest-card small{position:relative;z-index:2;}
+  /* A logo uploaded as the brand photo is shown whole, without the scrim or
+     the name on top (the logo already carries it). */
+  .dest-card:has(.mi.is-logo)::before,.dest-card:has(.mi.is-logo) span,.dest-card:has(.mi.is-logo) small{display:none;}
   .dest-card small{display:block;font-family:system-ui,sans-serif;font-size:13px;letter-spacing:1.2px;text-transform:uppercase;font-weight:600;opacity:.92;}
   /* A logo isn't a photo: it has to be seen whole, so it is fitted inside the
      card instead of filling it, and the dark scrim and brand name are dropped
@@ -453,7 +489,7 @@
   .offer-chip b{display:block;font-size:13.5px;margin-bottom:2px;white-space:normal;overflow-wrap:break-word;}
   .offer-chip span{color:var(--gold-dark);font-weight:700;}
   .offer-chip.has-photo{width:150px;padding:0;}
-  .offer-chip .offer-photo{height:64px;background-size:cover;background-position:center;}
+  .offer-chip .mi.offer-photo{border-radius:0;}
   .offer-chip .offer-body{padding:8px 9px 9px;}
   .offer-chip .offer-body b{margin-bottom:1px;}
   .section-label{font-size:12.5px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700;margin:16px 0 8px;}
@@ -488,7 +524,7 @@
   html[dir="rtl"] .svc-list.in-back{animation-name:listIn;}
   @media (prefers-reduced-motion: reduce){ .svc-list.in-fwd,.svc-list.in-back{animation:none;} }
   .svc-row{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);}
-  .svc-row .swatch{width:52px;height:52px;border-radius:12px;flex:none;background:linear-gradient(140deg,var(--sc1,#ccc),var(--sc2,#999));background-size:cover;background-position:center;}
+  .svc-row .mi.swatch{width:56px;flex:none;}
   .svc-row .info{flex:1;}
   .svc-row .info .n{font-size:15px;font-weight:700;}
   .svc-row .info .m{font-size:13px;color:var(--muted);}
@@ -500,7 +536,7 @@
   .svc-row .price{text-align:right;}
 
   /* detail */
-  .detail-hero{height:170px;border-radius:16px;margin:8px 0 14px;background:linear-gradient(140deg,var(--sc1,#ccc),var(--sc2,#999));background-size:cover;background-position:center;}
+  .mi.detail-hero{margin:8px 0 14px;}
   .detail-title{font-family:var(--display);font-size:20px;margin:0 0 2px;}
   .detail-meta{font-size:14px;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
   .detail-meta .sep{width:1px;height:13px;background:var(--line);flex:none;}
@@ -539,10 +575,13 @@
   .redeem-grid div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 8px;text-align:center;font-size:13px;font-weight:600;}
 
   /* shop */
-  .shop-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;}
+  /* Two columns on every phone (down to a 320px iPhone SE), more on tablets
+     so product photos stay a sensible size instead of growing huge. */
+  .shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(136px,1fr));gap:10px;margin-top:8px;}
   .prod{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;}
   .shot-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
-  .shot-thumb{position:relative;width:74px;height:74px;border-radius:10px;background-size:cover;
+  .shot-thumb .mi{width:74px;}
+  .shot-thumb{position:relative;width:74px;border-radius:10px;background-size:cover;
     background-position:center;border:1px solid var(--line);}
   .shot-thumb button{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;
     border:none;background:var(--ink);color:#fff;font-size:12px;line-height:1;cursor:pointer;}
@@ -550,7 +589,8 @@
   .prod .shot-count{position:absolute;right:6px;bottom:6px;background:rgba(23,21,18,.72);color:#fff;
     font-size:11px;font-weight:700;border-radius:999px;padding:2px 7px;letter-spacing:.02em;}
   .prod .shot-count::before{content:'❏ ';}
-  .prod .sw{height:64px;border-radius:10px;margin-bottom:8px;background:linear-gradient(140deg,var(--sc1,#ccc),var(--sc2,#999));background-size:cover;background-position:center;}
+  .prod .mi.sw{margin-bottom:9px;box-shadow:inset 0 0 0 1px rgba(125,90,51,.06);}
+  .prod .mi.sw .shot-count{z-index:1;}
   .prod .n{font-size:13.5px;font-weight:700;}
   .prod .p{font-size:13.5px;color:var(--gold-dark);font-weight:700;margin-bottom:6px;}
   .prod button{width:100%;background:var(--ink);color:#fff;border:none;border-radius:8px;padding:7px;font-size:12.5px;font-weight:700;}
@@ -2113,7 +2153,7 @@ function goto(screen,dir){
 function renderWelcome(){
   const allOffers=[...STORE.offers,...activeDiscountOffers()];
   const offers=allOffers.map(o=>o.image
-    ? `<div class="offer-chip has-photo"><div class="offer-photo" style="background-image:url('${o.image}')"></div><div class="offer-body"><b>${esc(o.t)}</b>${esc(o.s)}<br><span>${BRANDS[o.brand].name}</span></div></div>`
+    ? `<div class="offer-chip has-photo">${mediaHtml(o.image,'banner',{cls:'offer-photo',fallback:brandFallback(o.brand),alt:o.t})}<div class="offer-body"><b>${esc(o.t)}</b>${esc(o.s)}<br><span>${BRANDS[o.brand].name}</span></div></div>`
     : `<div class="offer-chip"><b>${esc(o.t)}</b>${esc(o.s)}<br><span>${BRANDS[o.brand].name}</span></div>`
   ).join('');
   const offersHtml=allOffers.length?`
@@ -2122,9 +2162,9 @@ function renderWelcome(){
   return `
     <div class="section-label">${t('chooseDestination')}</div>
     <div style="font-size:13.5px;color:var(--ink-soft);margin:-4px 0 12px;">${t('welcomeSub')}</div>
-    <div class="dest-card dolce" data-brand="dolce" style="${brandPhotoStyle('dolce')}"><span>Dolce</span><small>Aesthetic Clinic</small></div>
-    <div class="dest-card polished" data-brand="polished" style="${brandPhotoStyle('polished')}"><span>Polished</span><small>Salon</small></div>
-    <div class="dest-card core" data-brand="core" style="${brandPhotoStyle('core')}"><span>Core</span><small>Yoga &amp; Pilates</small></div>
+    <div class="dest-card dolce" data-brand="dolce" style="aspect-ratio:${MEDIA_PRESETS.homeHero.ratio}">${STORE.brandImages['dolce']?mediaHtml(STORE.brandImages['dolce'],'homeHero',{cls:'dest-media',eager:true,alt:'Dolce'}):''}<span>Dolce</span><small>Aesthetic Clinic</small></div>
+    <div class="dest-card polished" data-brand="polished" style="aspect-ratio:${MEDIA_PRESETS.homeHero.ratio}">${STORE.brandImages['polished']?mediaHtml(STORE.brandImages['polished'],'homeHero',{cls:'dest-media',eager:true,alt:'Polished'}):''}<span>Polished</span><small>Salon</small></div>
+    <div class="dest-card core" data-brand="core" style="aspect-ratio:${MEDIA_PRESETS.homeHero.ratio}">${STORE.brandImages['core']?mediaHtml(STORE.brandImages['core'],'homeHero',{cls:'dest-media',eager:true,alt:'Core'}):''}<span>Core</span><small>Yoga &amp; Pilates</small></div>
     ${offersHtml}
   `;
 }
@@ -2138,7 +2178,7 @@ function renderServices(){
   }).join('');
   const list=svcList(currentBrand).filter(s=>currentCat==='All'||s.cat===currentCat).map(s=>`
     <div class="svc-row" data-svc="${s.id}">
-      <div class="swatch" style="${swStyle(s,currentBrand)}"></div>
+      ${mediaHtml(s.image||STORE.brandImages[currentBrand]||'','thumbnail',{cls:'swatch',fallback:brandFallback(currentBrand),alt:s.n})}
       <div class="info"><div class="n">${esc(s.n)}</div><div class="m">${esc(s.dur)} · ${esc(s.cat)}</div></div>
       <div class="price">${priceHtml(s)}</div><div class="chev">›</div>
     </div>`).join('');
@@ -2164,7 +2204,7 @@ function renderDetail(){
         <div class="cap">${esc(m.note||'')}</div>
       </div>`).join('')}</div>` : '';
   return `
-    <div class="detail-hero" style="${swStyle(s,currentBrand)}"></div>
+    ${mediaHtml(s.image||STORE.brandImages[currentBrand]||'','service',{cls:'detail-hero',fallback:brandFallback(currentBrand),eager:true,alt:s.n})}
     <div class="detail-title">${esc(s.n)}</div>
     <div class="detail-meta"><b>${esc(s.dur)}</b><span class="sep"></span><b>${priceHtml(s)}</b></div>
     <div class="detail-desc">${esc(s.desc)}</div>
@@ -2326,7 +2366,7 @@ function renderShop(){
     const b=BRANDS[p.brand];
     const shots=productShots(p).length;
     return `<div class="prod" data-prod="${esc(String(p.id))}">
-      <div class="sw" style="${swStyle(p,p.brand)}">${shots>1?`<span class="shot-count">${shots}</span>`:''}</div>
+      ${mediaHtml(p.image||'','product',{cls:'sw',fallback:brandFallback(p.brand),alt:p.n,inner:shots>1?`<span class="shot-count">${shots}</span>`:''})}
       <div class="n">${esc(p.n)}</div><div class="p">${priceHtml(p)}</div>
       <button data-add="${i}">${t('addToCart')}</button>
     </div>`;
@@ -2347,8 +2387,8 @@ function renderProduct(){
   if(!p) return `<div style="padding:30px 6px;color:var(--muted);text-align:center;">${t('noServicesYet')}</div>`;
   const shots=productShots(p);
   const slides=shots.length
-    ? shots.map(url=>`<div class="pd-shot" style="background-image:url('${url}')"></div>`).join('')
-    : `<div class="pd-shot" style="${swStyle(p,p.brand)}"></div>`;
+    ? shots.map((url,i)=>mediaHtml(url,'product',{cls:'pd-shot',eager:i===0,alt:p.n})).join('')
+    : mediaHtml('','product',{cls:'pd-shot',fallback:brandFallback(p.brand)});
   const dots=shots.length>1
     ? `<div class="pd-dots" id="pdDots">${shots.map((_,i)=>`<i class="${i===0?'on':''}"></i>`).join('')}</div>` : '';
   const stock=numOr0(p.stock);
@@ -2552,6 +2592,7 @@ function focusFor(url){
   if(chosen){ focalCache.set(url,chosen); return Promise.resolve(chosen); }
   const p=new Promise(resolve=>{
     const img=new Image();
+    if(/^https?:/i.test(url)) img.crossOrigin='anonymous';   // cloud pictures: allow reading pixels
     img.onload=()=>{
       const lg=looksLikeLogo(img);
       const f=lg ? {logo:true,bg:lg.bg,x:50,y:50} : measureFocus(img);
@@ -2665,7 +2706,7 @@ let focalQueued=false;
 function scheduleFocalPass(){
   if(focalQueued) return;
   focalQueued=true;
-  requestAnimationFrame(()=>{ focalQueued=false; applyFocalPoints(); });
+  requestAnimationFrame(()=>{ focalQueued=false; applyFocalPoints(); applyMediaFocus(); });
 }
 if(typeof MutationObserver!=='undefined'){
   new MutationObserver(scheduleFocalPass).observe(document.documentElement,{
@@ -2713,7 +2754,7 @@ function pruneFocus(){
   const add=(u)=>{ if(u) live.add(imgKey(u)); };
   Object.keys(STORE.brandImages||{}).forEach(b=>add(STORE.brandImages[b]));
   Object.keys(STORE.services||{}).forEach(b=>(STORE.services[b]||[]).forEach(s=>add(s.image)));
-  (STORE.products||[]).forEach(p=>add(p.image));
+  (STORE.products||[]).forEach(p=>{ add(p.image); (p.images||[]).forEach(add); });
   (STORE.offers||[]).forEach(o=>add(o.image));
   (STORE.media||[]).forEach(m=>add(m.dataUrl));
   Object.keys(STORE.imageFocus).forEach(k=>{ if(!live.has(k)) delete STORE.imageFocus[k]; });
@@ -2825,25 +2866,411 @@ function photoPositioner(host,opts){
   return handle;
 }
 
-/* Wire a file input to a positioning box underneath it. */
-function attachPhotoPicker(inputId,hostId,existingUrl){
+/* ============================ MEDIA SYSTEM ============================
+   One architecture for every picture the Admin App puts in front of a client.
+
+   PRESETS  — each place an image appears has a preset: its shape (aspect
+              ratio), how it fits (fill the frame / show the whole thing),
+              corner radius, padding and how big to store it. The Admin editor
+              and the Client App both read this one table, so the preview an
+              admin sees is exactly what a client gets.
+   METADATA — per picture: focal point (x,y %), zoom, fit override, backdrop
+              colour, size. Stored in the existing `image_focus` settings row,
+              keyed by the picture itself, so no image column had to change
+              and every old picture still works.
+   STORAGE  — new uploads go to Supabase Storage (bucket "media") as real
+              files; the database keeps only the address. If the bucket isn't
+              set up or the device is offline, it falls back to the old
+              in-database copy automatically.
+   RENDER   — mediaHtml(url, preset) is the one image component. Screens call
+              it instead of styling images themselves.
+
+   To add a new kind of image: add a line to MEDIA_PRESETS, then use
+   mediaHtml(url,'yourPreset') where it is shown and
+   attachPhotoPicker(input, frame, url, 'yourPreset') where it is uploaded. */
+
+const MEDIA_BUCKET='media';
+const MEDIA_PRESETS={
+  //            shape        fit                      stored size  warn below
+  product:  {label:'Product',        ratio:1,    fit:'contain', pad:.08, bg:'#ffffff', radius:12, maxEdge:1400, minEdge:700,  trim:true,
+             hint:'Shows the whole product. Plain backgrounds are trimmed so every product appears the same size.'},
+  service:  {label:'Service page',   ratio:16/9, fit:'cover',   radius:16, maxEdge:1600, minEdge:900,
+             hint:'Fills the service header. Drag to keep the important part in view.'},
+  homeHero: {label:'Home card',      ratio:10/3, fit:'cover',   radius:18, maxEdge:1800, minEdge:1000,
+             hint:'The wide card on the home screen. Text sits on the lower left.'},
+  banner:   {label:'Offer banner',   ratio:2,    fit:'cover',   radius:0,  maxEdge:1200, minEdge:600,
+             hint:'Top of the offer card on the home screen.'},
+  category: {label:'Category',       ratio:1,    fit:'cover',   radius:14, maxEdge:800,  minEdge:400,
+             hint:'Square category thumbnail.'},
+  thumbnail:{label:'List thumbnail', ratio:1,    fit:'cover',   radius:12, maxEdge:600,  minEdge:200,
+             hint:'Small square in lists.'},
+};
+
+/* ---------- metadata ---------- */
+function mediaMeta(url){
+  if(!url) return null;
+  const m=(STORE.imageFocus||{})[imgKey(url)];
+  return (m && typeof m.x==='number') ? m : null;
+}
+function rememberMeta(url,meta){
+  if(!url) return;
+  if(!STORE.imageFocus) STORE.imageFocus={};
+  if(!meta){ delete STORE.imageFocus[imgKey(url)]; focalCache.delete(url); return; }
+  const keep={x:Math.round(meta.x??50),y:Math.round(meta.y??50)};
+  if(meta.z&&meta.z>1.001) keep.z=+(+meta.z).toFixed(3);
+  ['fit','bg','w','h'].forEach(k=>{ if(meta[k]!=null&&meta[k]!=='') keep[k]=meta[k]; });
+  if(meta.pad!=null) keep.pad=meta.pad;
+  if(meta.packshot) keep.packshot=1;
+  STORE.imageFocus[imgKey(url)]=keep;
+  focalCache.delete(url);
+}
+
+/* ---------- how a picture sits in a given preset ---------- */
+function mediaView(url,preset,metaOverride){
+  const P=MEDIA_PRESETS[preset]||MEDIA_PRESETS.thumbnail;
+  const m=metaOverride||mediaMeta(url)||{};
+  const auto=url?focalCache.get(url):null;      // measured subject / logo test, once known
+  let fit=m.fit||P.fit;
+  if(!m.fit&&fit==='cover'&&auto&&auto.logo) fit='contain';   // never crop a wordmark
+  const x=m.x!=null?m.x:(auto&&!auto.logo&&auto.x!=null?auto.x:50);
+  const y=m.y!=null?m.y:(auto&&!auto.logo&&auto.y!=null?auto.y:50);
+  const z=Math.max(1,m.z||1);
+  const pad=fit==='contain'?(m.pad!=null?m.pad:(P.pad||0)):0;
+  const bg=m.bg||(auto&&auto.logo&&auto.bg)||(fit==='contain'?(P.bg||''):'');
+  let css=`object-fit:${fit};object-position:${x}% ${y}%;`;
+  if(pad) css+=`padding:${(pad*100).toFixed(2)}%;`;
+  if(z>1) css+=`transform:scale(${z.toFixed(3)});transform-origin:${x}% ${y}%;`;
+  return {fit,x,y,z,pad,bg,css,known:!!(m.x!=null||auto)};
+}
+const attr=(v)=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+function ratioLabel(r){
+  if(!r) return 'original shape';
+  for(let d=1;d<=12;d++){ const n=r*d; if(Math.abs(n-Math.round(n))<.02) return Math.round(n)+':'+d; }
+  return r.toFixed(2)+':1';
+}
+function brandFallback(brand){
+  const b=BRANDS[brand]; return b?`--sc1:${b.c1};--sc2:${b.c2}`:'';
+}
+
+/* ---------- the one image component ----------
+   mediaHtml(url, preset, {cls, fallback, alt, eager, inner, meta, ratio, style})
+   Returns a frame with the preset's shape; the picture inside is placed by
+   its metadata. Lazy-loads, fades in, and falls back to the brand colours if
+   the picture is missing or fails to load. */
+function mediaHtml(url,preset,o){
+  o=o||{};
+  const P=MEDIA_PRESETS[preset]||MEDIA_PRESETS.thumbnail;
+  const ratio=o.ratio!==undefined?o.ratio:P.ratio;
+  const box=[ratio?`aspect-ratio:${ratio}`:'',`--mi-r:${P.radius}px`,o.fallback||'',o.style||''].filter(Boolean).join(';');
+  const cls=`mi mi-${preset}${o.cls?' '+o.cls:''}`;
+  if(!url) return `<div class="${cls} mi-empty" style="${box}">${o.inner||''}</div>`;
+  const v=mediaView(url,preset,o.meta);
+  return `<div class="${cls}${v.fit==='contain'?' mi-contain':''}${v.bg&&v.fit==='contain'&&!(o.meta||mediaMeta(url)||{}).fit&&focalCache.get(url)&&focalCache.get(url).logo?' is-logo':''}" data-preset="${preset}" style="${box}${v.bg?';--mi-bg:'+v.bg:''}">`+
+    `<img src="${attr(url)}" alt="${attr(o.alt||'')}"${o.eager?'':' loading="lazy"'} decoding="async" draggable="false" data-mi="${v.known?1:0}" style="${v.css}" onload="this.classList.add('ld')" onerror="this.parentNode.classList.add('mi-broken');this.remove()">`+
+    `${o.inner||''}</div>`;
+}
+
+/* Pictures without saved metadata (older uploads) get their subject found
+   automatically, once, and are re-placed when the answer arrives. */
+function applyMediaFocus(root){
+  (root||document).querySelectorAll('.mi > img[data-mi="0"]').forEach(img=>{
+    img.dataset.mi='1';
+    const box=img.parentNode, preset=box.dataset.preset, url=img.getAttribute('src');
+    focusFor(url).then(()=>{
+      if(!img.isConnected) return;
+      const v=mediaView(url,preset);
+      img.style.cssText=v.css+(img.classList.contains('ld')?'':'');
+      box.classList.toggle('mi-contain',v.fit==='contain');
+      if(v.bg) box.style.setProperty('--mi-bg',v.bg);
+      const f=focalCache.get(url);
+      box.classList.toggle('is-logo',!!(f&&f.logo&&!(mediaMeta(url)||{}).fit));
+    });
+  });
+}
+
+/* ---------- upload pipeline ---------- */
+function loadImageEl(src){
+  return new Promise(r=>{ const i=new Image(); if(/^https?:/i.test(src)) i.crossOrigin='anonymous';
+    i.onload=()=>r(i); i.onerror=()=>r(null); i.src=src; });
+}
+async function decodeImageFile(file){
+  // Respect the orientation a phone camera writes into the file.
+  try{ if(typeof createImageBitmap==='function') return await createImageBitmap(file,{imageOrientation:'from-image'}); }catch(e){}
+  const img=await loadImageEl(await readFileAsDataUrl(file));
+  if(!img) throw new Error('bad image');
+  return img;
+}
+function imgW(src){ return src.naturalWidth||src.width; }
+function imgH(src){ return src.naturalHeight||src.height; }
+function sampleOf(src,n){
+  const s=Math.min(1,n/Math.max(imgW(src),imgH(src)));
+  const w=Math.max(1,Math.round(imgW(src)*s)), h=Math.max(1,Math.round(imgH(src)*s));
+  const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+  const ctx=cv.getContext('2d',{willReadFrequently:true}); ctx.drawImage(src,0,0,w,h);
+  return {w,h,d:ctx.getImageData(0,0,w,h).data};
+}
+function hasTransparency(src){
+  try{ const {d}=sampleOf(src,64); for(let i=3;i<d.length;i+=4) if(d[i]<245) return true; }catch(e){}
+  return false;
+}
+/* A product shot on a plain (light or transparent) background: find the
+   background and the box the product actually occupies. */
+function detectPackshot(src){
+  try{
+    const {w,h,d}=sampleOf(src,120);
+    const at=(x,y)=>{ const p=(y*w+x)*4; return [d[p],d[p+1],d[p+2],d[p+3]]; };
+    const cs=[at(0,0),at(w-1,0),at(0,h-1),at(w-1,h-1)];
+    const clear=cs.every(c=>c[3]<24);
+    const bg=clear?[255,255,255,0]:[0,1,2].map(k=>Math.round(cs.reduce((a,c)=>a+c[k],0)/4)).concat(255);
+    const tol=22;
+    const isBg=(c)=>clear?c[3]<24:(c[3]>200&&Math.abs(c[0]-bg[0])<=tol&&Math.abs(c[1]-bg[1])<=tol&&Math.abs(c[2]-bg[2])<=tol);
+    if(!cs.every(isBg)) return null;
+    if(!clear && (0.299*bg[0]+0.587*bg[1]+0.114*bg[2])<165) return null;   // dark "background" = a photo
+    let border=0,hit=0;
+    for(let x=0;x<w;x++){ border+=2; if(isBg(at(x,0))) hit++; if(isBg(at(x,h-1))) hit++; }
+    for(let y=1;y<h-1;y++){ border+=2; if(isBg(at(0,y))) hit++; if(isBg(at(w-1,y))) hit++; }
+    if(hit/border<0.9) return null;
+    let x0=w,y0=h,x1=-1,y1=-1;
+    for(let y=0;y<h;y++) for(let x=0;x<w;x++) if(!isBg(at(x,y))){ if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; }
+    if(x1<0) return null;
+    const m=1;   // one sample pixel of breathing room so nothing is shaved off
+    return {bg:clear?null:`rgb(${bg[0]},${bg[1]},${bg[2]})`,
+      box:{x0:Math.max(0,x0-m)/w,y0:Math.max(0,y0-m)/h,x1:Math.min(w,x1+1+m)/w,y1:Math.min(h,y1+1+m)/h}};
+  }catch(e){ return null; }
+}
+function bakePackshot(src,shot,P){
+  const S=Math.min(P.maxEdge,1400);
+  const cv=document.createElement('canvas'); cv.width=S; cv.height=S;
+  const ctx=cv.getContext('2d');
+  ctx.fillStyle=shot.bg||P.bg||'#ffffff'; ctx.fillRect(0,0,S,S);
+  const W=imgW(src),H=imgH(src);
+  const sx=shot.box.x0*W, sy=shot.box.y0*H, sw=(shot.box.x1-shot.box.x0)*W, sh=(shot.box.y1-shot.box.y0)*H;
+  const inner=S*(1-2*(P.pad||0));
+  const k=Math.min(inner/sw,inner/sh);
+  const dw=sw*k, dh=sh*k;
+  ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
+  ctx.drawImage(src,sx,sy,sw,sh,(S-dw)/2,(S-dh)/2,dw,dh);
+  return cv;
+}
+function scaledCanvas(src,maxEdge){
+  const W=imgW(src),H=imgH(src), s=Math.min(1,maxEdge/Math.max(W,H));
+  const cv=document.createElement('canvas'); cv.width=Math.round(W*s); cv.height=Math.round(H*s);
+  const ctx=cv.getContext('2d'); ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
+  ctx.drawImage(src,0,0,cv.width,cv.height);
+  return cv;
+}
+function canvasBlob(cv,type,q){
+  return new Promise(r=>{ try{ cv.toBlob(b=>r(b),type,q); }catch(e){ r(null); } });
+}
+async function uploadMediaBlob(blob,preset,type){
+  if(!supa||!blob) return null;
+  try{
+    if(!(await isStaffSignedIn())) return null;
+    const ext=type==='image/png'?'png':'jpg';
+    const path=`${preset}/${new Date().toISOString().slice(0,7)}/${nextId('m',[])}.${ext}`;
+    const up=await supa.storage.from(MEDIA_BUCKET).upload(path,blob,{contentType:type,cacheControl:'31536000',upsert:false});
+    if(up.error){ console.warn('[media] cloud upload refused — keeping the picture in the database instead:',up.error.message); return null; }
+    const pub=supa.storage.from(MEDIA_BUCKET).getPublicUrl(path);
+    return (pub&&pub.data&&pub.data.publicUrl)||null;
+  }catch(e){ console.warn('[media] cloud upload failed:',e); return null; }
+}
+/* File in, finished picture out: {url, meta, where, warnings}. */
+async function processImageUpload(file,preset){
+  const P=MEDIA_PRESETS[preset]||MEDIA_PRESETS.thumbnail;
+  const src=await decodeImageFile(file);
+  const W=imgW(src),H=imgH(src);
+  const alpha=/png|webp|gif/i.test(file.type||'')&&hasTransparency(src);
+  const meta={x:50,y:50};
+  let cv=null;
+  if(P.trim){
+    const shot=detectPackshot(src);
+    if(shot){ cv=bakePackshot(src,shot,P); meta.fit='contain'; meta.pad=0; meta.bg=shot.bg||P.bg; meta.packshot=true; }
+  }
+  if(!cv) cv=scaledCanvas(src,P.maxEdge);
+  if(src.close) try{ src.close(); }catch(e){}
+  // Where is the subject? Measured now, while we still have the pixels.
+  if(!meta.packshot){
+    const lg=looksLikeLogo(cv);
+    if(lg){ if(lg.bg) meta.bg=lg.bg; if(P.fit==='cover') meta.fit='contain'; }
+    else { const f=measureFocus(cv); meta.x=f.x; meta.y=f.y; }
+  }
+  const type=(alpha&&!meta.packshot)?'image/png':'image/jpeg';
+  const blob=await canvasBlob(cv,type,.86);
+  let url=await uploadMediaBlob(blob,preset,type), where='cloud';
+  if(!url){
+    // No cloud storage available: keep a lighter copy in the database, as before.
+    const small=scaledCanvas(cv,Math.min(1080,P.maxEdge));
+    url=small.toDataURL(type,type==='image/jpeg'?.8:undefined); where='device';
+    meta.w=small.width; meta.h=small.height;
+  } else { meta.w=cv.width; meta.h=cv.height; }
+  const warnings=[];
+  if(Math.max(W,H)<(P.minEdge||0)) warnings.push(`This photo is small (${W}×${H}). It may look soft on large phones — a bigger original will look sharper.`);
+  if(meta.packshot) warnings.push('Plain background detected — trimmed and centred so it matches your other products.');
+  return {url,meta,where,warnings,src:{w:W,h:H},bytes:blob?blob.size:url.length};
+}
+
+/* ---------- the admin image editor ----------
+   Shows the picture in its real frame, plus small previews of the other
+   places it appears. Drag to reposition, zoom (slider, wheel or pinch) to
+   crop, Reset to go back to the automatic framing, Replace to pick another. */
+function mediaEditor(host,opts){
+  opts=opts||{};
+  const preset=opts.preset||'thumbnail', P=MEDIA_PRESETS[preset];
+  const usages=(opts.usages&&opts.usages.length)?opts.usages:[preset];
+  const st={url:'',meta:{x:50,y:50},auto:{x:50,y:50},dirty:false,info:null,nat:{w:0,h:0}};
+  let stage=null;
+
+  function frames(){ return [...host.querySelectorAll('.me .mi')]; }
+  function paint(){
+    frames().forEach(box=>{
+      const img=box.querySelector('img'); if(!img) return;
+      const v=mediaView(st.url,box.dataset.preset,st.meta);
+      img.style.cssText=v.css; img.classList.add('ld');
+      box.classList.toggle('mi-contain',v.fit==='contain');
+      box.style.setProperty('--mi-bg',v.bg||'');
+    });
+    const zr=host.querySelector('.me-zoom input'); if(zr) zr.value=String(st.meta.z||1);
+    host.querySelectorAll('.me-seg [data-fit]').forEach(b=>b.classList.toggle('on',(st.meta.fit||P.fit)===b.dataset.fit));
+  }
+  function info(){
+    const el=host.querySelector('.me-info'); if(!el) return;
+    const i=st.info, bits=[];
+    if(i&&i.src) bits.push(`Original ${i.src.w}×${i.src.h}`);
+    const w=(st.meta.w||st.nat.w), h=(st.meta.h||st.nat.h);
+    if(w) bits.push(`saved at ${w}×${h}`);
+    if(i&&i.bytes) bits.push(`${Math.max(1,Math.round(i.bytes/1024))} KB`);
+    if(i) bits.push(i.where==='cloud'?'stored in the cloud':'stored in the database (cloud storage not set up)');
+    let warn=(i&&i.warnings)||[];
+    if(!i&&Math.max(st.nat.w,st.nat.h)&&Math.max(st.nat.w,st.nat.h)<(P.minEdge||0))
+      warn=[`This photo is only ${st.nat.w}×${st.nat.h}, so it may look soft on large phones. Re-upload the original to sharpen it.`];
+    el.innerHTML=bits.join(' · ')+warn.map(w=>`<div class="me-note">${esc(w)}</div>`).join('');
+  }
+  function changed(){ st.dirty=true; if(opts.onChange) opts.onChange(handle.value()); }
+
+  function wire(){
+    stage=host.querySelector('.me-stage');
+    const mainBox=stage.querySelector('.mi');
+    const pts=new Map(); let from=null, pinch=null;
+    const over=()=>{                      // how far the picture hangs outside the frame
+      const fw=mainBox.clientWidth||1, fh=mainBox.clientHeight||1;
+      const nw=st.nat.w||fw, nh=st.nat.h||fh, z=st.meta.z||1;
+      const fit=(st.meta.fit||P.fit);
+      const k=(fit==='contain'?Math.min(fw/nw,fh/nh):Math.max(fw/nw,fh/nh))*z;
+      return {x:Math.max(0,nw*k-fw), y:Math.max(0,nh*k-fh)};
+    };
+    stage.addEventListener('pointerdown',e=>{
+      if(!st.url) return;
+      pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+      try{ stage.setPointerCapture(e.pointerId); }catch(_){}
+      stage.classList.add('dragging');
+      if(pts.size===1) from={x:e.clientX,y:e.clientY,fx:st.meta.x,fy:st.meta.y};
+      if(pts.size===2){ const [a,b]=[...pts.values()]; pinch={d:Math.hypot(a.x-b.x,a.y-b.y)||1,z:st.meta.z||1}; from=null; }
+      e.preventDefault();
+    });
+    stage.addEventListener('pointermove',e=>{
+      if(!pts.has(e.pointerId)) return;
+      pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+      if(pinch&&pts.size>=2){
+        const [a,b]=[...pts.values()];
+        st.meta.z=Math.max(1,Math.min(3,pinch.z*(Math.hypot(a.x-b.x,a.y-b.y)/pinch.d)));
+        st.manual=true; paint(); return;
+      }
+      if(!from) return;
+      const o=over();
+      // Drag right = see more of the left side = smaller position.
+      const nx=o.x>0?from.fx-((e.clientX-from.x)/o.x)*100:st.meta.x;
+      const ny=o.y>0?from.fy-((e.clientY-from.y)/o.y)*100:st.meta.y;
+      st.meta.x=Math.max(0,Math.min(100,nx)); st.meta.y=Math.max(0,Math.min(100,ny));
+      st.manual=true; paint();
+    });
+    const up=e=>{
+      if(!pts.has(e.pointerId)) return;
+      pts.delete(e.pointerId);
+      if(pts.size<2) pinch=null;
+      if(pts.size===0){ stage.classList.remove('dragging'); if(from||st.manual){ from=null; changed(); } }
+    };
+    stage.addEventListener('pointerup',up); stage.addEventListener('pointercancel',up);
+    stage.addEventListener('wheel',e=>{
+      if(!st.url) return; e.preventDefault();
+      st.meta.z=Math.max(1,Math.min(3,(st.meta.z||1)*(e.deltaY>0?.95:1.05)));
+      st.manual=true; paint(); clearTimeout(stage._t); stage._t=setTimeout(changed,250);
+    },{passive:false});
+    const zr=host.querySelector('.me-zoom input');
+    zr.addEventListener('input',()=>{ st.meta.z=+zr.value; st.manual=true; paint(); });
+    zr.addEventListener('change',changed);
+    host.querySelectorAll('.me-seg [data-fit]').forEach(b=>b.addEventListener('click',()=>{
+      st.meta.fit=b.dataset.fit; if(b.dataset.fit==='cover') st.meta.pad=0; else if(!st.meta.packshot) delete st.meta.pad;
+      st.manual=true; paint(); changed();
+    }));
+    host.querySelector('.me-reset').addEventListener('click',()=>{
+      st.meta={...st.auto}; st.manual=false; paint(); changed();
+    });
+    host.querySelector('.me-replace').addEventListener('click',()=>{ if(opts.onReplace) opts.onReplace(); });
+  }
+  function build(){
+    const main=usages[0], MP=MEDIA_PRESETS[main];
+    host.innerHTML=
+      `<div class="me">`+
+        `<div class="me-head"><b>${esc(MP.label)}</b> <span>${ratioLabel(MP.ratio)} · shown exactly as clients will see it</span></div>`+
+        `<div class="me-stage">${mediaHtml(st.url,main,{meta:st.meta,eager:true,cls:'me-main'})}<div class="me-grid" aria-hidden="true"></div></div>`+
+        `<div class="me-tools">`+
+          `<label class="me-zoom" title="Zoom to crop tighter"><span>−</span><input type="range" min="1" max="3" step="0.01" value="${st.meta.z||1}"><span>+</span></label>`+
+          (preset==='product'?`<div class="me-seg"><button type="button" data-fit="contain">Whole product</button><button type="button" data-fit="cover">Fill frame</button></div>`:'')+
+          `<button type="button" class="btn btn-ghost btn-sm me-reset">Reset</button>`+
+          `<button type="button" class="btn btn-ghost btn-sm me-replace">Replace</button>`+
+        `</div>`+
+        (usages.length>1?`<div class="me-prev">${usages.slice(1).map(u=>`<figure class="me-fig-${u}">${mediaHtml(st.url,u,{meta:st.meta,eager:true})}<figcaption>${esc(MEDIA_PRESETS[u].label)} · ${ratioLabel(MEDIA_PRESETS[u].ratio)}</figcaption></figure>`).join('')}</div>`:'')+
+        `<div class="me-hint">${esc(MP.hint||'')} Drag to reposition · zoom to crop.</div>`+
+        `<div class="me-info"></div>`+
+      `</div>`;
+    wire(); paint(); info();
+  }
+  async function load(url,keepSaved,processed){
+    st.url=url||''; st.info=processed||null; st.dirty=!!processed; st.manual=false;
+    if(!url){ host.innerHTML=''; return; }
+    const img=await loadImageEl(url);
+    st.nat={w:img?img.naturalWidth:0,h:img?img.naturalHeight:0};
+    let auto={x:50,y:50};
+    if(processed&&processed.meta) auto={...processed.meta};
+    else if(img){
+      const lg=looksLikeLogo(img);
+      if(lg){ auto={x:50,y:50}; if(lg.bg) auto.bg=lg.bg; if(P.fit==='cover') auto.fit='contain'; }
+      else { const f=measureFocus(img); auto={x:f.x,y:f.y}; }
+    }
+    st.auto=auto;
+    const saved=keepSaved?mediaMeta(url):null;
+    st.meta=saved?{...saved}:{...auto};
+    build();
+  }
+  const handle={
+    load,
+    value:()=>({url:st.url,meta:{...st.meta},focus:{x:st.meta.x,y:st.meta.y},manual:!!st.manual,dirty:st.dirty}),
+    commit(){ if(st.url) rememberMeta(st.url,{...st.meta,w:st.meta.w||st.nat.w,h:st.meta.h||st.nat.h}); },
+    settled:()=>Promise.resolve(),
+  };
+  return handle;
+}
+
+/* Wire a file input to the editor underneath it. Same shape as before, plus
+   the preset (what the picture is for) and the other places it appears. */
+function attachPhotoPicker(inputId,hostId,existingUrl,preset,usages){
   const input=document.getElementById(inputId), host=document.getElementById(hostId);
   if(!input||!host) return null;
-  const pos=photoPositioner(host,{});
-  if(existingUrl) pos.load(existingUrl,true);
-  input.addEventListener('change',async()=>{
-    const file=input.files[0];
-    if(!file){ return; }
-    host.innerHTML='<div class="hint" style="font-size:12.5px;color:var(--muted);">Reading photo…</div>';
-    try{
-      const url=await resizeImageFile(file);
-      await pos.load(url,false);
-    }catch(e){
-      host.innerHTML='';
-      toast('Could not read that photo — try a different file.');
-    }
+  preset=preset||'thumbnail';
+  const ed=mediaEditor(host,{preset,usages:usages||[preset],onReplace:()=>input.click()});
+  let pending=Promise.resolve();
+  if(existingUrl) pending=ed.load(existingUrl,true);
+  input.addEventListener('change',()=>{
+    const file=input.files[0]; if(!file) return;
+    host.innerHTML='<div class="me-busy">Preparing photo — sizing it for where it will appear…</div>';
+    pending=(async()=>{
+      try{ const r=await processImageUpload(file,preset); await ed.load(r.url,false,r); }
+      catch(e){ host.innerHTML=''; toast('Could not read that photo — try a different file.'); }
+      finally{ input.value=''; }
+    })();
   });
-  return pos;
+  ed.settled=()=>pending;
+  return ed;
 }
 
 /* ================= Floating glass navigation =================
@@ -4071,14 +4498,17 @@ function openProductForm(editIndex){
         <button class="btn btn-primary" id="pf_save">${editing?'Save changes':'Add product'}</button>
       </div>
     </div>`;
-  const pfPos=attachPhotoPicker('pf_image','pf_frame',p.image||'');
+  const pfPos=attachPhotoPicker('pf_image','pf_frame',p.image||'','product',['product','thumbnail']);
   // Extra photos live in a small list under the main one: add several at
   // once, remove any with the ✕, and they save with the product.
   let extraShots=Array.isArray(p.images)?p.images.slice(0,MAX_EXTRA_SHOTS):[];
+  const extraMeta=new Map();          // framing worked out for each newly added photo
+  let shotsPending=Promise.resolve();
   function drawShots(){
     const grid=document.getElementById('pf_shotGrid'); if(!grid) return;
+    // Previewed with the product preset, so these look exactly as in the app.
     grid.innerHTML=extraShots.map((url,i)=>`
-      <div class="shot-thumb" style="background-image:url('${url}')">
+      <div class="shot-thumb">${mediaHtml(url,'product',{meta:extraMeta.get(url),eager:true})}
         <button type="button" data-drop-shot="${i}" title="Remove this photo">✕</button>
       </div>`).join('')
       +(extraShots.length?'':'<div style="font-size:13px;color:var(--muted);">No extra photos yet.</div>');
@@ -4093,12 +4523,14 @@ function openProductForm(editIndex){
     if(!files.length) return;
     const room=MAX_EXTRA_SHOTS-extraShots.length;
     if(room<=0){ toast(`That is the limit — ${MAX_EXTRA_SHOTS} extra photos per product.`); shotInput.value=''; return; }
-    for(const f of files.slice(0,room)){
-      try{ extraShots.push(await resizeImageFile(f,900,0.72)); }
-      catch(e){ toast('Could not read one of those photos — try a different file.'); }
-    }
-    if(files.length>room) toast(`Only the first ${room} were added — ${MAX_EXTRA_SHOTS} is the limit.`);
-    shotInput.value=''; drawShots();
+    shotsPending=(async()=>{
+      for(const f of files.slice(0,room)){
+        try{ const r=await processImageUpload(f,'product'); extraShots.push(r.url); extraMeta.set(r.url,r.meta); drawShots(); }
+        catch(e){ toast('Could not read one of those photos — try a different file.'); }
+      }
+      if(files.length>room) toast(`Only the first ${room} were added — ${MAX_EXTRA_SHOTS} is the limit.`);
+      shotInput.value=''; drawShots();
+    })();
   });
   document.getElementById('pf_cancel').addEventListener('click',()=>{document.getElementById('productFormWrap').innerHTML='';});
   document.getElementById('pf_save').addEventListener('click',async()=>{
@@ -4110,6 +4542,10 @@ function openProductForm(editIndex){
     if(!n){ document.getElementById('pf_name').focus(); return; }
     const saveBtn=document.getElementById('pf_save'); saveBtn.disabled=true; saveBtn.textContent='Saving…';
     try{
+      // A photo may still be being prepared — wait for it rather than saving without it.
+      if(pfPos) await pfPos.settled();
+      await shotsPending;
+      extraShots.forEach(u=>{ if(extraMeta.has(u)) rememberMeta(u,extraMeta.get(u)); });
       const picked = pfPos ? pfPos.value() : null;
       const image = (picked && picked.url) ? picked.url : (p.image||'');
       const base = editing ? STORE.products[editIndex] : {id:nextId('p',STORE.products)};
@@ -4201,7 +4637,7 @@ function openOfferForm(editIndex){
         <button class="btn btn-primary" id="of_save">${editing?'Save changes':'Add offer'}</button>
       </div>
     </div>`;
-  const ofPos=attachPhotoPicker('of_image','of_frame',o.image||'');
+  const ofPos=attachPhotoPicker('of_image','of_frame',o.image||'','banner',['banner']);
   document.getElementById('of_cancel').addEventListener('click',()=>{document.getElementById('offerFormWrap').innerHTML='';});
   document.getElementById('of_save').addEventListener('click',async()=>{
     const title=document.getElementById('of_title').value.trim();
@@ -4209,6 +4645,7 @@ function openOfferForm(editIndex){
     const desc=document.getElementById('of_desc').value.trim();
     if(!title){ document.getElementById('of_title').focus(); return; }
     const saveBtn=document.getElementById('of_save'); saveBtn.disabled=true; saveBtn.textContent='Saving…';
+    if(ofPos) await ofPos.settled();
     const pickedOf = ofPos ? ofPos.value() : null;
     const image = (pickedOf && pickedOf.url) ? pickedOf.url : (o.image||'');
     if(ofPos) ofPos.commit();
@@ -4288,7 +4725,7 @@ function openServiceForm(editIndex){
         <button class="btn btn-primary" id="sf_save">${editing?'Save changes':'Add service'}</button>
       </div>
     </div>`;
-  const sfPos=attachPhotoPicker('sf_image','sf_frame',s.image||'');
+  const sfPos=attachPhotoPicker('sf_image','sf_frame',s.image||'','service',['service','thumbnail']);
   document.getElementById('sf_cancel').addEventListener('click',()=>{document.getElementById('serviceFormWrap').innerHTML='';});
   document.getElementById('sf_save').addEventListener('click',async()=>{
     const n=document.getElementById('sf_name').value.trim();
@@ -4300,6 +4737,7 @@ function openServiceForm(editIndex){
     const aftercare=document.getElementById('sf_aftercare').value.trim();
     if(!n){ document.getElementById('sf_name').focus(); return; }
     const saveBtn=document.getElementById('sf_save'); saveBtn.disabled=true; saveBtn.textContent='Saving…';
+    if(sfPos) await sfPos.settled();
     const pickedSf = sfPos ? sfPos.value() : null;
     const image = (pickedSf && pickedSf.url) ? pickedSf.url : (s.image||'');
     if(sfPos) sfPos.commit();
@@ -4465,7 +4903,9 @@ function openMediaForm(){
     const saveBtn=document.getElementById('mf_save'); saveBtn.disabled=true; saveBtn.textContent='Saving…';
     try{
       const isVideo=file.type.startsWith('video/');
-      const dataUrl = isVideo ? await readFileAsDataUrl(file) : await resizeImageFile(file);
+      // Client before/after photos stay in the protected database (never the public
+      // picture bucket) — just sharper than before (1080px instead of 480px).
+      const dataUrl = isVideo ? await readFileAsDataUrl(file) : await resizeImageFile(file,1080,0.8);
       const item={
         id:nextId('m',STORE.media),
         brand:document.getElementById('mf_brand').value,
@@ -5446,8 +5886,12 @@ function renderBrandPhotos(){
   wrap.querySelectorAll('[data-brand-photo]').forEach(inp=>inp.addEventListener('change',async()=>{
     const brand=inp.dataset.brandPhoto;
     const file=inp.files[0]; if(!file) return;
+    const host=document.getElementById('bp_frame_'+brand);
+    if(host) host.innerHTML='<div class="me-busy">Preparing photo — sizing it for the home screen…</div>';
     try{
-      const image=await resizeImageFile(file,640,0.75);
+      const processed=await processImageUpload(file,'homeHero');
+      const image=processed.url;
+      rememberMeta(image,processed.meta);
       const prev=STORE.brandImages[brand];
       STORE.brandImages[brand]=image;
       const ok=saveStore();
@@ -5467,19 +5911,24 @@ function renderBrandPhotos(){
       toast('Could not read that photo — try a different file.');
     }
   }));
-  // A brand photo is saved the moment it is chosen, so its position is saved
-  // the moment it is dragged too — there is no Save button to wait for.
+  // A brand photo is saved the moment it is chosen, so its framing is saved
+  // the moment it is adjusted too — there is no Save button to wait for.
+  // Previews: the home card, plus the service pages and lists that fall back
+  // to the brand photo when a service has none of its own.
   Object.keys(BRANDS).forEach(b=>{
     const host=document.getElementById('bp_frame_'+b);
     const img=STORE.brandImages[b];
     if(!host||!img) return;
-    const pos=photoPositioner(host,{onChange:()=>{
-      pos.commit();
-      pruneFocus(); saveStore(); cloudSave('settings','image_focus');
-      applyBrandImages();
-      if(currentScreen==='welcome'||currentScreen==='services'||currentScreen==='detail'||currentScreen==='shop') render();
-    }});
-    pos.load(img,true);
+    const input=document.querySelector(`[data-brand-photo="${b}"]`);
+    const ed=mediaEditor(host,{preset:'homeHero',usages:['homeHero','service','thumbnail'],
+      onReplace:()=>input&&input.click(),
+      onChange:()=>{
+        ed.commit();
+        pruneFocus(); saveStore(); cloudSave('settings','image_focus');
+        applyBrandImages();
+        if(currentScreen==='welcome'||currentScreen==='services'||currentScreen==='detail'||currentScreen==='shop') render();
+      }});
+    ed.load(img,true);
   });
 }
 function applyBrandImages(){
