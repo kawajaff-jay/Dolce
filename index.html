@@ -1188,7 +1188,7 @@
   body.tablet .cf-title{font-size:28px;}
   body.tablet .shop-grid.lux-grid{grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:20px;}
   body.tablet .pc-name{font-size:18px;}
-  body.tablet #screen[data-screen="product"] .pd-gallery{max-width:560px;margin-inline:auto;}
+  body.tablet #screen[data-screen="product"] .pd-gallery{max-width:min(560px, calc(60dvh * 0.8));margin-inline:auto;}  /* 4:5 photo never taller than ~60% of the screen, so the name & price stay visible on shorter tablets */
   body.tablet-land #screen[data-screen="product"] .pd-gallery{max-width:none;margin-inline:0;width:100%;}  /* auto margins shrank it to 0 inside the 2-column grid */
   body.tablet-land #screen[data-screen="product"] .screen-body > .pd-gallery{width:min(100%, calc((100dvh - 124px - var(--content-bottom,180px)) * 0.8));justify-self:center;}  /* same 4:5 photo, sized to fit above the Add to Bag bar */
   body.tablet #screen[data-screen="product"] .pd-title{font-size:38px;}
@@ -8066,11 +8066,13 @@ flushOutbox();
 if (window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform()) {
   document.body.classList.add('native-app');
   appMode = 'client';
-  /* iPad: switch on the tablet layout (see "iPad / tablet layout" in the
+  /* iPad & Android tablets (Huawei MatePad…): switch on the tablet layout (see "iPad / tablet layout" in the
      styles) and keep it right as the iPad is rotated or split-screened. */
   const syncTablet = () => {
     const w = window.innerWidth, h = window.innerHeight;
-    const tab = w >= 700, land = tab && w > h && w >= 1000;
+    // 600px+ covers every iPad and the smaller Android tablets too (e.g.
+    // Huawei MatePad T10 is ~600px wide upright, ~960px sideways).
+    const tab = Math.min(w, h) >= 500 && w >= 600, land = tab && w > h && w >= 900;
     const changed = tab !== document.body.classList.contains('tablet') || land !== document.body.classList.contains('tablet-land');
     document.body.classList.toggle('tablet', tab);
     document.body.classList.toggle('tablet-land', land);
