@@ -152,7 +152,7 @@ stable
 security definer
 set search_path = public, pg_temp
 as $$
-  select coalesce(array_agg(c.id), '{}'::text[]) from public.clients c
+  select coalesce(array_agg(c.id::text), '{}'::text[]) from public.clients c
    where auth.uid() is not null and c.user_id = auth.uid();
 $$;
 
@@ -171,7 +171,7 @@ create policy clients_self_read on public.clients for select to authenticated
 drop policy if exists bookings_client_read on public.bookings;
 create policy bookings_client_read on public.bookings for select to authenticated
   using (
-    client_id = any(public.my_client_ids())
+    client_id::text = any(public.my_client_ids())
     or (public.my_phone10() <> ''
         and right(regexp_replace(coalesce(client_phone, ''), '\D', '', 'g'), 10) = public.my_phone10())
   );
@@ -183,7 +183,7 @@ create policy bookings_client_request on public.bookings for insert to authentic
   with check (
     not public.is_staff()
     and status = 'Requested'
-    and (client_id is null or client_id = any(public.my_client_ids()))
+    and (client_id is null or client_id::text = any(public.my_client_ids()))
   );
 
 -- A visitor who is not logged in can still request a booking, but can no
@@ -222,26 +222,25 @@ begin
   end if;
 
   -- Already linked?
-  select c.id into found_id from public.clients c where c.user_id = uid limit 1;
+  select c.id::text into found_id from public.clients c where c.user_id = uid limit 1;
   if found_id is not null then
     if nm is not null then
-      update public.clients set name = nm, updated_at = now()
-       where id = found_id and coalesce(btrim(name), '') = '';
+      update public.clients set name = nm
+       where id::text = found_id and coalesce(btrim(name), '') = '';
     end if;
-    return query select * from public.clients where id = found_id;
+    return query select * from public.clients where id::text = found_id;
     return;
   end if;
 
   -- Added by reception with the same number, not linked to anyone yet?
-  select c.id into found_id from public.clients c
+  select c.id::text into found_id from public.clients c
    where c.user_id is null
-     and right(regexp_replace(coalesce(c.phone, ''), '\D', '', 'g'), 10) = right(ph, 10)
-   order by c.created_at
+     and right(regexp_replace(coalesce(c.phone::text, ''), '\D', '', 'g'), 10) = right(ph, 10)
    limit 1
    for update;
   if found_id is not null then
-    update public.clients set user_id = uid, updated_at = now() where id = found_id;
-    return query select * from public.clients where id = found_id;
+    update public.clients set user_id = uid where id::text = found_id;
+    return query select * from public.clients where id::text = found_id;
     return;
   end if;
 
@@ -249,10 +248,13 @@ begin
   if nm is null then
     return;
   end if;
-  insert into public.clients (id, phone, name, points, user_id)
-  values ('cu' || substr(replace(gen_random_uuid()::text, '-', ''), 1, 14), ph, nm, 0, uid)
-  returning id into found_id;
-  return query select * from public.clients where id = found_id;
+  -- The id is written as a plain quoted value so it fits whether the id
+  -- column is text or uuid in this database.
+  execute format(
+    'insert into public.clients (id, phone, name, points, user_id) values (%L, %L, %L, 0, %L) returning id::text',
+    gen_random_uuid()::text, ph, nm, uid)
+  into found_id;
+  return query select * from public.clients where id::text = found_id;
 end;
 $$;
 
@@ -268,7 +270,7 @@ begin
   if auth.uid() is null or nm is null then
     raise exception 'Name required' using errcode = '22023';
   end if;
-  update public.clients set name = nm, updated_at = now() where user_id = auth.uid();
+  update public.clients set name = nm where user_id = auth.uid();
 end;
 $$;
 
@@ -291,7 +293,7 @@ begin
     raise exception 'Staff logins are removed by the owner' using errcode = '42501';
   end if;
   update public.bookings set client_id = null
-   where client_id in (select id from public.clients where user_id = uid);
+   where client_id::text in (select id::text from public.clients where user_id = uid);
   delete from public.clients where user_id = uid;
   delete from auth.users where id = uid;
 end;
@@ -306,8 +308,18 @@ grant execute on function public.delete_my_client_account()    to authenticated;
 
 -- The on/off switch for client login lives in the settings table under the
 -- key 'client_login' ('on' / 'off'). Owner-only to change (rule above).
-insert into public.settings (key, value) values ('client_login', 'off')
-  on conflict (key) do nothing;
+-- (Written so it works whether the settings "value" column is text or JSON.)
+do $$
+declare vtype text;
+begin
+  select data_type into vtype from information_schema.columns
+   where table_schema = 'public' and table_name = 'settings' and column_name = 'value';
+  if vtype in ('json', 'jsonb') then
+    execute $q$insert into public.settings (key, value) values ('client_login', to_jsonb('off'::text)) on conflict (key) do nothing$q$;
+  else
+    execute $q$insert into public.settings (key, value) values ('client_login', 'off') on conflict (key) do nothing$q$;
+  end if;
+end $$;
 
 notify pgrst, 'reload schema';
 
