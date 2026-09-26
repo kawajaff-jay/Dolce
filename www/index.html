@@ -1047,6 +1047,23 @@
     .pc-body{padding:10px 4px;}
   }
   /* Showcase member profile (events) */
+  /* Client login (WhatsApp) & account */
+  .cl-auth{max-width:440px;margin:0 auto;padding-top:4px;}
+  .cl-auth .lux-h2{margin-bottom:2px;}
+  .cl-label{display:block;margin:6px 0 8px;font:500 11px var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--label,var(--muted));}
+  .cl-input{width:100%;box-sizing:border-box;border:1px solid var(--lux-hair);border-radius:14px;background:var(--ivory);
+    padding:14px 16px;font:400 17px var(--sans);color:var(--ink);outline:none;-webkit-appearance:none;}
+  .cl-input:focus{border-color:var(--champagne,#c8a96a);box-shadow:0 0 0 3px rgba(200,169,106,.18);}
+  .cl-input.cl-code{text-align:center;letter-spacing:.5em;font-size:24px;padding-inline:8px;}
+  .cl-auth .wa-btn,.cl-auth .primary-btn{margin-top:14px;border-radius:999px;padding:14px;}
+  .cl-auth .wa-btn[disabled],.cl-auth .primary-btn[disabled]{opacity:.6;}
+  .cl-row{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .cl-row .lux-link[disabled]{opacity:.5;}
+  .cl-note{font:400 12.5px/1.5 var(--sans);color:var(--muted);margin:12px 0 0;}
+  .cl-account .ghost-btn{border-radius:999px;margin-top:12px;}
+  .cl-danger{display:block;width:100%;margin-top:8px;padding:11px;border-radius:999px;border:1px solid transparent;background:none;
+    font:600 13.5px var(--sans);color:#a3413a;}
+  .cl-danger.armed{background:#a3413a;color:#fff;}
   .pv-open{display:block;width:100%;margin-top:12px;padding:13px;border-radius:999px;border:1px solid var(--lux-hair);background:var(--ivory);
     font:500 13.5px var(--sans);letter-spacing:.04em;color:var(--espresso);cursor:pointer;}
   .pv-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 14px;padding:8px 8px 8px 14px;border-radius:999px;
@@ -1329,6 +1346,7 @@
 
     <div class="admin-panel active" id="adminOverview">
       <div id="currencySettingsWrap"></div>
+      <div id="clientLoginWrap"></div>
       <div id="brandPhotosWrap"></div>
       <div class="stat-row">
         <div class="stat"><div class="lbl">Total Bookings</div><div class="val">1,256</div></div>
@@ -1923,6 +1941,8 @@ const CLOUD_TABLES={
       ? {key:'image_focus',value:JSON.stringify(STORE.imageFocus||{})}
       : id==='destinations'
       ? {key:'destinations',value:JSON.stringify(STORE.destinations||{})}
+      : id==='client_login'
+      ? {key:'client_login',value:STORE.settings.clientLogin==='on'?'on':'off'}
       : {key:'usd_to_iqd',value:String(STORE.settings.usdToIqd||1450)},
     row:(x)=>x,
   },
@@ -1948,6 +1968,7 @@ function queueSync(op,kind,id,brand,opts){
   outbox=outbox.filter(j=>!(j.kind===kind && String(j.id)===String(id)));
   const job={op,kind,id:String(id),brand:brand||null,at:Date.now()};
   if(opts&&opts.guest) job.guest=true;
+  if(opts&&opts.clientAuth) job.clientAuth=true;
   outbox.push(job);
   saveOutbox(); updateSyncBadge();
   flushOutbox();
@@ -2049,14 +2070,16 @@ async function flushOutbox(){
           // A customer's booking goes out with no login attached, so the
           // database judges it as a customer request. Everything else goes
           // as whoever is signed in.
-          const client = job.guest ? (anonSupa()||supa) : supa;
+          // A logged-in client's booking goes with THEIR login, so the database
+          // can check it really is theirs.
+          const client = job.guest ? (anonSupa()||supa) : job.clientAuth ? (clientSupa()||anonSupa()||supa) : supa;
           // A newer app can know about a field (an event's dates, a product's
           // sizes) before the matching column has been added to the database.
           // Rather than refusing the whole record, send it without that field
           // and remember the column is missing — nothing that already worked
           // stops working while the migration is still waiting to be run.
           for(let tries=0;tries<8;tries++){
-            res = (job.guest || !signedIn)
+            res = (job.guest || job.clientAuth || !signedIn)
               ? await client.from(spec.table).insert(payload)
               : await client.from(spec.table).upsert(payload,{onConflict:keyCol});
             const miss=missingColumnIn(res&&res.error);
@@ -2300,7 +2323,7 @@ async function pullCatalog(){
       supa.from('products').select('*'),
       supa.from('offers').select('*'),
       supa.from('brand_images').select('*'),
-      supa.from('settings').select('*').in('key',['usd_to_iqd','image_focus','destinations']),
+      supa.from('settings').select('*').in('key',['usd_to_iqd','image_focus','destinations','client_login']),
     ]);
     if(svc.error||prod.error||off.error) return false;
 
@@ -2327,6 +2350,9 @@ async function pullCatalog(){
       // Hand-chosen photo positions, so a picture framed on one device is
       // framed the same way on all of them.
       // Home-screen destination settings (subtitle, order, shown/hidden, logo).
+      // Client login on/off (Admin → Overview). Missing row = off.
+      const loginRow=row('client_login');
+      STORE.settings.clientLogin=(loginRow&&loginRow.value==='on')?'on':'off';
       const destRow=row('destinations');
       if(destRow && destRow.value){
         try{ const d=JSON.parse(destRow.value); if(d && typeof d==='object') STORE.destinations=d; }catch(e){}
@@ -2561,46 +2587,150 @@ function activeDiscountOffers(){
   return out;
 }
 
-/* ---------------- Client App login (phone number + demo code) ----------------
-   Separate from `users` (the employee/Admin App accounts). One account per
-   phone number, shared across Dolce, Polished and Core — browsing is open to
-   anyone, but confirming a booking, My Bookings and Profile all require this.
-   Same caveat as the Admin App login: this is a demo of the flow, not real
-   verification — there's no SMS gateway behind it, so the code is shown on
-   screen rather than actually texted. */
-const CLIENT_KEY='odc_current_client';
-const DEMO_OTP='1234';
-/* Customer self-login is OFF until real sign-in is built (Apple/Google, which
-   needs an Apple Developer account).
-   Why this switch exists: the login below is a DEMO — the code is always 1234
-   and it's printed on the screen. Client records (real names, phone numbers,
-   loyalty points) sync to the shared Supabase database, and this same file is
-   published publicly on GitHub Pages. So while this is on, anyone on the
-   internet could type a customer's phone number, enter 1234, and read that
-   customer's details and booking history. Harmless while there are no real
-   customers in the database; a genuine privacy hole the moment reception
-   starts adding them.
-   With it off, browsing still works exactly as before — only the account
-   screens are closed, and customers are pointed at WhatsApp to book, which is
-   how they book today anyway.
-   To turn real sign-in back on later, set this to true once the demo login has
-   actually been replaced. Do not set it to true while the code is still 1234. */
-const CLIENT_LOGIN_ENABLED=false;
-function normalizedPhone(p){ return (p||'').replace(/\D/g,''); }
+/* ---------------- Client App login (WhatsApp code) ----------------
+   Separate from the staff/Admin App logins. One account per phone number,
+   shared across Dolce, Polished and Core. Browsing and booking stay open to
+   everyone; My Bookings and Profile need an account.
+
+   How it works:
+   1. The client types their number. Supabase creates a 6-digit code and
+      calls our "send-whatsapp-otp" Edge Function, which delivers it with
+      the approved WhatsApp template (the WhatsApp token lives only on the
+      server, never in this file).
+   2. The client types the code; Supabase checks it and logs them in.
+   3. claim_my_client_account() (database) links the login to their client
+      record — the one reception already made for that number, if any, so
+      their points and past bookings come with them.
+   What a client can see is enforced by the database rules in
+   supabase_migration_client_whatsapp_login.sql: only their own record and
+   their own bookings.
+
+   The owner switches this on in Admin → Overview → "Client login" once the
+   WhatsApp setup is done. Until then the app shows the old "message us on
+   WhatsApp" card. The client's login is kept in its own storage slot, so it
+   never mixes with a staff login on the same device. */
+const CLIENT_KEY='odc_current_client';          // the retired demo login (cleared below)
+const CLIENT_CACHE_KEY='odc_client_cache_v1';   // last known name/points, for offline starts
+function clientLoginOn(){ return !!(supa && STORE.settings && STORE.settings.clientLogin==='on'); }
+let clientAuthClient=null;
+function clientSupa(){
+  if(clientAuthClient) return clientAuthClient;
+  try{
+    if(window.supabase) clientAuthClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,
+      {auth:{storageKey:'dolce-client-auth',persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
+  }catch(e){ clientAuthClient=null; }
+  return clientAuthClient;
+}
+function normalizedPhone(p){ return latinDigits(p).replace(/\D/g,''); }
 function findClientByPhone(p){ return STORE.clients.find(c=>c.phone===normalizedPhone(p)); }
-let loggedInClient=null;
-try{
-  if(!CLIENT_LOGIN_ENABLED){
-    // Sign out anyone still holding a session from the old demo login, so
-    // turning the switch off actually closes the door rather than only
-    // hiding the sign-in screen from new visitors.
-    localStorage.removeItem(CLIENT_KEY);
-  } else {
-    const savedClientId=localStorage.getItem(CLIENT_KEY);
-    if(savedClientId) loggedInClient=STORE.clients.find(c=>c.id===savedClientId)||null;
+// Arabic-Indic (٠١٢) and Persian/Kurdish (۰۱۲) digits → 0-9, so a number typed
+// on a Kurdish or Arabic keyboard works.
+function latinDigits(s){
+  return String(s||'').replace(/[٠-٩]/g,c=>String(c.charCodeAt(0)-1632)).replace(/[۰-۹]/g,c=>String(c.charCodeAt(0)-1776));
+}
+/* The number in international form without "+" (9647501234567), or '' if it
+   is not a usable mobile number. Local Iraqi formats are understood:
+   0750 123 4567 · 750 123 4567 · +964 750 123 4567 · 00964… */
+function toLoginPhone(raw){
+  const s=latinDigits(raw).trim();
+  const intl=/^(\+|00)/.test(s);
+  let d=s.replace(/\D/g,'');
+  if(d.startsWith('00')) d=d.slice(2);
+  if(!intl && !d.startsWith('964')){
+    if(d.startsWith('0')) d='964'+d.slice(1);
+    else if(d.length===10 && d.startsWith('7')) d='964'+d;
   }
-}catch(e){}
-let authStep='phone', authPhone='', pendingScreen=null;
+  if(d.startsWith('964')) return /^9647\d{9}$/.test(d)?d:'';
+  return (intl && d.length>=8 && d.length<=15)?d:'';
+}
+function clientPhoneText(p){
+  let d=normalizedPhone(p);
+  if(/^07\d{9}$/.test(d)) d='964'+d.slice(1);
+  if(/^9647\d{9}$/.test(d)) return `+964 ${d.slice(3,6)} ${d.slice(6,9)} ${d.slice(9)}`;
+  return d?'+'+d:'';
+}
+let loggedInClient=null, clientBookings=[];
+// Logged in AND client login currently switched on.
+function clientIn(){ return !!loggedInClient && clientLoginOn(); }
+let authStep='phone', authPhone='', pendingScreen=null, authBusy=false, authResendAt=0, deleteArmed=false, authFlowStarted=false;
+try{ localStorage.removeItem(CLIENT_KEY); }catch(e){}
+
+function setLoggedInClient(row){
+  loggedInClient={id:row.id,name:row.name||'',phone:row.phone||'',points:Number(row.points)||0};
+  try{ localStorage.setItem(CLIENT_CACHE_KEY,JSON.stringify(loggedInClient)); }catch(e){}
+}
+function clearClientState(){
+  loggedInClient=null; clientBookings=[]; deleteArmed=false;
+  try{ localStorage.removeItem(CLIENT_CACHE_KEY); }catch(e){}
+}
+/* After a successful code check (or on start-up with a saved login): link
+   the login to its client record. 'ok' | 'needName' | 'staff' | 'offline' | 'error' */
+async function clientAfterLogin(name){
+  const cs=clientSupa(); if(!cs) return 'error';
+  let res;
+  try{ res=await cs.rpc('claim_my_client_account',{p_name:name||null}); }
+  catch(e){ return 'offline'; }
+  if(res.error){
+    const m=String(res.error.message||'');
+    if(/staff login/i.test(m)){ try{ await cs.auth.signOut({scope:'local'}); }catch(e){} return 'staff'; }
+    if(/fetch|network|failed to fetch/i.test(m)) return 'offline';
+    return 'error';
+  }
+  const row=Array.isArray(res.data)?res.data[0]:res.data;
+  if(!row||!row.id) return 'needName';
+  setLoggedInClient(row);
+  await loadMyBookings();
+  return 'ok';
+}
+async function loadMyBookings(){
+  const cs=clientSupa(); if(!cs||!loggedInClient) return;
+  try{
+    const {data,error}=await cs.from('bookings').select('*').order('created_at',{ascending:false});
+    if(!error && data) clientBookings=data.map(CLOUD_TABLES.bookings.app);
+  }catch(e){}
+}
+// On start-up (and after the catalog/settings refresh): pick up a saved login.
+let clientRestoreDone=false;
+async function restoreClientSession(){
+  if(clientRestoreDone || !clientLoginOn()) return;
+  const cs=clientSupa(); if(!cs) return;
+  clientRestoreDone=true;
+  let session=null;
+  try{ const {data}=await cs.auth.getSession(); session=data&&data.session; }catch(e){}
+  if(!session) return;
+  // Show the last known details straight away (works offline too)…
+  try{ const c=JSON.parse(localStorage.getItem(CLIENT_CACHE_KEY)||'null'); if(c&&c.id&&!loggedInClient) loggedInClient=c; }catch(e){}
+  // …then refresh them from the database. (If the person started logging in
+  // by hand meanwhile, that flow wins and this result is ignored.)
+  const cached=loggedInClient;
+  const r=await clientAfterLogin();
+  if(authFlowStarted && loggedInClient!==cached) return;
+  if(r==='needName' && !authFlowStarted){ loggedInClient=null; authStep='name'; }
+  if(r==='staff'){ clearClientState(); }
+  if(['profile','bookings','auth'].includes(currentScreen)) render();
+}
+function clientAuthError(err){
+  const m=String((err&&err.message)||'');
+  const st=Number(err&&err.status)||0;
+  if(st===429||/after \d+ seconds|rate limit|too many/i.test(m)) return t('waitMinute');
+  if(/fetch|network/i.test(m)) return t('offline');
+  return t('sendFailed');
+}
+async function sendClientCode(phone){
+  const cs=clientSupa(); if(!cs){ toast(t('offline')); return false; }
+  let res;
+  try{ res=await cs.auth.signInWithOtp({phone:'+'+phone,options:{shouldCreateUser:true,data:{lang}}}); }
+  catch(e){ toast(t('offline')); return false; }
+  if(res.error){ toast(clientAuthError(res.error)); return false; }
+  authResendAt=Date.now()+60000; authFlowStarted=true; clientRestoreDone=true;
+  return true;
+}
+function finishClientLogin(isNew){
+  toast(`${isNew?t('accountCreated'):t('welcomeBack')} ${loggedInClient.name}`);
+  authStep='phone'; authPhone='';
+  const next=pendingScreen; pendingScreen=null;
+  goto(next||'profile');
+}
 
 const I18N = {
   en:{heroTitle:'One Account.<br>Three Brands.',heroSubtitle:'Beauty, Aesthetics &amp; Wellness — Connected.',heroDesc:"A seamless digital ecosystem that connects Dolce Aesthetic Clinic, Polished by Dolce and Core Yoga &amp; Pilates Studio in one beautiful experience.",keyFeatures:'Key Features',f1:'Three Businesses, One App',f2:'Full Service Info &amp; Pricing',f3:'In-App &amp; WhatsApp Booking',f4:'Loyalty Points Across Brands',f5:'AI Assistant Recommendations',f6:'Products &amp; Retail Shop',f7:'Upcoming Events &amp; Offers',f8:'English, Kurdish, Arabic',tryTitle:'Try the client app',tryDesc:'This is a working demo of the core client journey. Tap through it the way a client would — choose a brand, browse services, request a booking, and chat with the AI assistant.',s1t:'Choose destination',s1d:'Dolce, Polished or Core',s2t:'Explore services &amp; pricing',s2d:'Browse by category',s3t:'View service details',s3d:"Duration, price, what's included",s4t:'Pick a time &amp; book',s4d:'In the app, or via WhatsApp',s5t:'Ask the AI Assistant',s5d:'Personalized recommendations',adminTitle:'Admin dashboard (overview)',adminSub:'One dashboard for all three businesses — bookings, customers, revenue and promotions in a single view.',statBookings:'Total Bookings',statCustomers:'Total Customers',statPoints:'Points Issued',statRevenue:'Revenue',chartBookingsTitle:'Bookings by brand',chartBookingsCap:'Share of total bookings, last 30 days',chartRevenueTitle:'Revenue trend',chartRevenueCap:'Last 6 months, all brands combined',viewAsTable:'View data as table',brand:'Brand',share:'Share',bookings:'Bookings',month:'Month',revenue:'Revenue',footerNote:'Prototype for demonstration — content, prices and translations are placeholders to be replaced with real data.',
@@ -2622,6 +2752,71 @@ const I18N = {
     bookedNoteGuest:'حجزکرا! بەم زووانە پشتڕاستی دەکەینەوە — ژمارەکەت لەلامانە.'
   },
 };
+
+// Client login (WhatsApp) and account screens.
+Object.assign(I18N.en,{
+  loginTitle:'Log in with WhatsApp',
+  loginLede:"We'll send a 6-digit code to your WhatsApp. One account for Dolce, Polished and Core.",
+  phoneLabel:'Your WhatsApp number',sendCode:'Send code on WhatsApp',sending:'Sending…',
+  phoneInvalid:'Please enter a valid mobile number, e.g. 0750 123 4567.',
+  codeTitle:'Enter your code',codeSentTo:'We sent a 6-digit code on WhatsApp to',codeLabel:'6-digit code',
+  verify:'Log in',verifying:'Checking…',
+  codeWrong:"That code isn't right or has expired. Try again or ask for a new one.",
+  resendIn:'New code in',resend:'Send a new code',changeNumber:'Use a different number',
+  nameTitle:'Welcome to Dolce+',nameLede:'What should we call you?',continueBtn:'Continue',
+  waitMinute:'Please wait a minute before asking for another code.',
+  sendFailed:"We couldn't send the code right now. Please try again, or message us on WhatsApp.",
+  offline:'No internet connection. Please try again.',
+  staffLogin:'This number belongs to a staff login. Please use the Admin App.',
+  welcomeBack:'Welcome back,',accountCreated:'Your account is ready. Welcome,',
+  oneAccount:'One account · Dolce · Polished · Core',account:'Account',logOut:'Log out',
+  deleteAccount:'Delete my account',deleteConfirm:'Tap again to permanently delete your account',
+  deleteNote:'Removes your login, name, number and points. Past appointments stay in our diary as business records.',
+  deleted:'Your account has been deleted.',loggedOut:'Logged out.',past:'Past',member:'Member',
+  loginPrivacy:'We only use your number to log you in and to contact you about your appointments.'
+});
+Object.assign(I18N.ar,{
+  loginTitle:'تسجيل الدخول عبر واتساب',
+  loginLede:'سنرسل رمزاً من 6 أرقام إلى واتساب الخاص بك. حساب واحد لـ Dolce و Polished و Core.',
+  phoneLabel:'رقم واتساب الخاص بك',sendCode:'أرسل الرمز عبر واتساب',sending:'جارٍ الإرسال…',
+  phoneInvalid:'يرجى إدخال رقم هاتف صحيح، مثل 0750 123 4567.',
+  codeTitle:'أدخل الرمز',codeSentTo:'أرسلنا رمزاً من 6 أرقام عبر واتساب إلى',codeLabel:'الرمز المكوّن من 6 أرقام',
+  verify:'تسجيل الدخول',verifying:'جارٍ التحقق…',
+  codeWrong:'الرمز غير صحيح أو انتهت صلاحيته. حاول مرة أخرى أو اطلب رمزاً جديداً.',
+  resendIn:'رمز جديد بعد',resend:'أرسل رمزاً جديداً',changeNumber:'استخدم رقماً آخر',
+  nameTitle:'أهلاً بك في Dolce+',nameLede:'ما الاسم الذي تحب أن نناديك به؟',continueBtn:'متابعة',
+  waitMinute:'يرجى الانتظار دقيقة قبل طلب رمز آخر.',
+  sendFailed:'تعذّر إرسال الرمز الآن. حاول مرة أخرى أو راسلنا على واتساب.',
+  offline:'لا يوجد اتصال بالإنترنت. حاول مرة أخرى.',
+  staffLogin:'هذا الرقم مرتبط بحساب موظف. يرجى استخدام تطبيق الإدارة.',
+  welcomeBack:'أهلاً بعودتك،',accountCreated:'حسابك جاهز. أهلاً بك،',
+  oneAccount:'حساب واحد · Dolce · Polished · Core',account:'الحساب',logOut:'تسجيل الخروج',
+  deleteAccount:'حذف حسابي',deleteConfirm:'اضغط مرة أخرى لحذف حسابك نهائياً',
+  deleteNote:'يحذف تسجيل دخولك واسمك ورقمك ونقاطك. تبقى مواعيدك السابقة في سجلاتنا كسجلات عمل.',
+  deleted:'تم حذف حسابك.',loggedOut:'تم تسجيل الخروج.',past:'السابقة',member:'عضو',
+  loginPrivacy:'نستخدم رقمك فقط لتسجيل دخولك وللتواصل معك بخصوص مواعيدك.'
+});
+Object.assign(I18N.ku,{
+  loginTitle:'چوونەژوورەوە بە واتساپ',
+  loginLede:'کۆدێکی ٦ ژمارەیی بۆ واتساپەکەت دەنێرین. یەک هەژمار بۆ Dolce و Polished و Core.',
+  phoneLabel:'ژمارەی واتساپەکەت',sendCode:'ناردنی کۆد بە واتساپ',sending:'دەنێردرێت…',
+  phoneInvalid:'تکایە ژمارەیەکی دروست بنووسە، وەک 0750 123 4567.',
+  codeTitle:'کۆدەکە بنووسە',codeSentTo:'کۆدێکی ٦ ژمارەییمان بە واتساپ نارد بۆ',codeLabel:'کۆدی ٦ ژمارەیی',
+  verify:'چوونەژوورەوە',verifying:'پشکنین…',
+  codeWrong:'کۆدەکە هەڵەیە یان بەسەرچووە. دووبارە هەوڵ بدەرەوە یان کۆدێکی نوێ داوا بکە.',
+  resendIn:'کۆدی نوێ دوای',resend:'ناردنی کۆدێکی نوێ',changeNumber:'ژمارەیەکی تر بەکاربهێنە',
+  nameTitle:'بەخێربێیت بۆ Dolce+',nameLede:'حەز دەکەیت بە چ ناوێک بانگت بکەین؟',continueBtn:'بەردەوامبە',
+  waitMinute:'تکایە خولەکێک چاوەڕێ بکە پێش داواکردنی کۆدێکی تر.',
+  sendFailed:'ئێستا نەمانتوانی کۆدەکە بنێرین. دووبارە هەوڵ بدەرەوە یان لە واتساپ نامەمان بۆ بنێرە.',
+  offline:'ئینتەرنێت نییە. تکایە دووبارە هەوڵ بدەرەوە.',
+  staffLogin:'ئەم ژمارەیە هی هەژماری کارمەندێکە. تکایە ئەپی بەڕێوەبردن بەکاربهێنە.',
+  welcomeBack:'بەخێربێیتەوە،',accountCreated:'هەژمارەکەت ئامادەیە. بەخێربێیت،',
+  oneAccount:'یەک هەژمار · Dolce · Polished · Core',account:'هەژمار',logOut:'چوونەدەرەوە',
+  deleteAccount:'سڕینەوەی هەژمارەکەم',deleteConfirm:'دووبارە دابگرە بۆ سڕینەوەی هەمیشەیی هەژمارەکەت',
+  deleteNote:'چوونەژوورەوە، ناو، ژمارە و خاڵەکانت دەسڕێتەوە. کاتە پێشووەکانت وەک تۆماری کار لەلامان دەمێننەوە.',
+  deleted:'هەژمارەکەت سڕایەوە.',loggedOut:'چوویتە دەرەوە.',past:'پێشوو',member:'ئەندام',
+  loginPrivacy:'ژمارەکەت تەنها بۆ چوونەژوورەوە و پەیوەندیکردن سەبارەت بە کاتەکانت بەکاردەهێنین.'
+});
 
 let lang='en', currency='USD', currentBrand=null, currentScreen='welcome', currentCat='All', currentService=null, currentProduct=null;
 let selectedDateObj=null, selectedTime=null;
@@ -2830,7 +3025,7 @@ function renderBooking(){
     <div class="section-label">${t('preferredTime')}</div>
     <div class="time-chip-grid">${timeChips}</div>
     ${!canBook?`<div style="font-size:13px;color:#b23b3b;margin-top:8px;">No open times that day — try another date.</div>`:''}
-    ${loggedInClient?'':guestDetailsHtml()}
+    ${clientIn()?'':guestDetailsHtml()}
     <div style="font-size:13px;color:var(--muted);margin-top:10px;">${t('confirmNote')}</div>
     <button class="primary-btn" id="confirmBooking" ${canBook?'':'disabled style="opacity:.5;"'}>${t('confirmBookingBtn')}</button>
     <a class="wa-btn" id="sendWA" href="${waHref}" target="_blank" rel="noopener">💬 ${t('requestViaWhatsapp')}</a>
@@ -2892,7 +3087,7 @@ function readGuestDetails(){
 }
 
 function renderClientAuth(){
-  if(!CLIENT_LOGIN_ENABLED){
+  if(!clientLoginOn()){
     const wa=BRAND_WHATSAPP[currentBrand]||BRAND_WHATSAPP.dolce;
     return `
       <div class="section-label" style="margin-top:0;">Booking history is coming soon</div>
@@ -2905,49 +3100,73 @@ function renderClientAuth(){
       ${isNativeApp()?`<button class="pv-open" id="previewMemberBtn">Preview a member profile</button>`:''}
     `;
   }
-  if(authStep==='phone'){
-    return `
-      <div class="section-label" style="margin-top:0;">Log in or create an account</div>
-      <div style="font-size:13.5px;color:var(--ink-soft);margin-bottom:14px;">One account works across Dolce, Polished and Core. Enter your phone number to continue.</div>
-      <div class="book-card">
-        <label style="font-size:13px;font-weight:700;color:var(--ink-soft);display:block;margin-bottom:6px;">Phone number</label>
-        <input id="authPhoneInput" type="tel" inputmode="tel" placeholder="+964 750 123 4567" style="width:100%;border:1px solid var(--line);border-radius:9px;padding:10px 12px;font-size:15px;box-sizing:border-box;">
-      </div>
-      <button class="primary-btn" id="authSendCode">Send Code</button>
-    `;
+  if(authStep==='name'){
+    return `<section class="cl-auth">
+      <div class="lux-eyebrow"><bdi>Dolce+</bdi></div>
+      <h2 class="lux-h2">${t('nameTitle')}</h2>
+      <p class="lux-lede">${t('nameLede')}</p>
+      <label class="cl-label" for="authNameInput">${t('yourName')}</label>
+      <input class="cl-input" id="authNameInput" type="text" autocomplete="name" maxlength="80">
+      <button class="primary-btn" id="authSaveName">${t('continueBtn')}</button>
+    </section>`;
   }
-  const existing=findClientByPhone(authPhone);
-  return `
-    <div class="section-label" style="margin-top:0;">Enter the code</div>
-    <div style="font-size:13.5px;color:var(--ink-soft);margin-bottom:8px;">We sent a code to <b>${authPhone}</b>.</div>
-    <div class="login-note" style="display:block;margin-bottom:14px;">Demo login — no real SMS is sent. Your code is <b>${DEMO_OTP}</b>.</div>
-    <div class="book-card">
-      <label style="font-size:13px;font-weight:700;color:var(--ink-soft);display:block;margin-bottom:6px;">Verification code</label>
-      <input id="authCodeInput" type="text" inputmode="numeric" maxlength="4" placeholder="4-digit code" style="width:100%;border:1px solid var(--line);border-radius:9px;padding:10px 12px;font-size:15px;letter-spacing:4px;text-align:center;box-sizing:border-box;">
-      ${existing?`<div style="font-size:13.5px;color:var(--ink-soft);margin-top:10px;">Welcome back, <b>${esc(existing.name)}</b>.</div>`:`
-      <label style="font-size:13px;font-weight:700;color:var(--ink-soft);display:block;margin:12px 0 6px;">Your name</label>
-      <input id="authNameInput" type="text" placeholder="e.g. Lana H." style="width:100%;border:1px solid var(--line);border-radius:9px;padding:10px 12px;font-size:15px;box-sizing:border-box;">`}
-    </div>
-    <button class="primary-btn" id="authVerify">${existing?'Log In':'Create Account'}</button>
-    <button class="ghost-btn" id="authBack">‹ Use a different number</button>
-  `;
+  if(authStep==='code'){
+    const wait=Math.max(0,Math.ceil((authResendAt-Date.now())/1000));
+    return `<section class="cl-auth">
+      <div class="lux-eyebrow">WhatsApp</div>
+      <h2 class="lux-h2">${t('codeTitle')}</h2>
+      <p class="lux-lede">${t('codeSentTo')} <b dir="ltr" style="white-space:nowrap;">${esc(clientPhoneText(authPhone))}</b></p>
+      <label class="cl-label" for="authCodeInput">${t('codeLabel')}</label>
+      <input class="cl-input cl-code" id="authCodeInput" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" dir="ltr" placeholder="••••••">
+      <button class="primary-btn" id="authVerify">${t('verify')}</button>
+      <div class="cl-row">
+        <button class="lux-link" id="authResend" ${wait?'disabled':''}>${wait?`${t('resendIn')} <span id="authResendN">${wait}</span>s`:t('resend')}</button>
+        <button class="lux-link" id="authBack">${t('changeNumber')}</button>
+      </div>
+    </section>`;
+  }
+  return `<section class="cl-auth">
+    <div class="lux-eyebrow"><bdi>Dolce+</bdi></div>
+    <h2 class="lux-h2">${t('loginTitle')}</h2>
+    <p class="lux-lede">${t('loginLede')}</p>
+    <label class="cl-label" for="authPhoneInput">${t('phoneLabel')}</label>
+    <input class="cl-input" id="authPhoneInput" type="tel" inputmode="tel" autocomplete="tel" dir="ltr" placeholder="0750 123 4567" value="${attr(authPhone?clientPhoneText(authPhone):'')}">
+    <button class="wa-btn" id="authSendCode">${t('sendCode')}</button>
+    <p class="cl-note">${t('loginPrivacy')}</p>
+    ${isNativeApp()?`<button class="pv-open" id="previewMemberBtn">Preview a member profile</button>`:''}
+  </section>`;
 }
 
+/* The client's own bookings: what the database returned for their account,
+   plus any request made on this phone that has not reached the database yet. */
+function myBookingList(){
+  if(!loggedInClient) return [];
+  const seen=new Set(clientBookings.map(b=>String(b.id)));
+  const local=STORE.bookings.filter(b=>b.clientId===loggedInClient.id && !seen.has(String(b.id)));
+  const all=[...local,...clientBookings];
+  const when=b=>{ const d=new Date(`${b.date} ${String(b.time||'').replace(/\s*(AM|PM)$/i,' $1')}`); return isNaN(d)?0:d.getTime(); };
+  return all.sort((a,b)=>when(a)-when(b));
+}
+function bookingCardData(b){
+  const sv=(svcList(b.brand)||[]).find(x=>x.id===b.serviceId);
+  return {brand:b.brand,service:b.serviceName||(sv&&sv.n)||'',dur:sv?sv.dur||'':'',date:b.date,time:b.time,status:b.status||'Requested'};
+}
+function splitBookings(list){
+  const today=new Date(); today.setHours(0,0,0,0);
+  const up=[],past=[];
+  list.forEach(b=>{
+    const d=new Date(b.date); const isPast=(!isNaN(d)&&d<today)||b.status==='Completed'||b.status==='Cancelled';
+    (isPast?past:up).push(b);
+  });
+  return {up,past:past.reverse()};
+}
 function renderBookings(){
-  const mine=loggedInClient?STORE.bookings.filter(b=>b.clientId===loggedInClient.id):[];
-  if(!mine.length){
-    return `
-      <div class="section-label" style="margin-top:0;">${t('upcoming')}</div>
-      <div style="font-size:13.5px;color:var(--muted);padding:20px 0;text-align:center;">${t('noBookings')}</div>
-    `;
-  }
-  const rows=mine.slice().reverse().map(b=>`
-    <div class="book-card" style="margin-top:8px;">
-      <div class="book-row"><span class="k">${BRANDS[b.brand].name}</span><span class="v">${esc(b.serviceName)}</span></div>
-      <div class="book-row"><span class="k">${t('preferredDate')}</span><span class="v">${esc(b.date)}, ${esc(b.time)}</span></div>
-      <div class="book-row"><span class="k">Status</span><span class="v"><span class="status-badge ${esc(b.status)}">${esc(b.status)}</span></span></div>
-    </div>`).join('');
-  return `<div class="section-label" style="margin-top:0;">${t('upcoming')}</div>${rows}`;
+  const {up,past}=splitBookings(myBookingList().filter(b=>BRANDS[b.brand]));
+  return `
+    <section class="lux-sec">${LuxHeader(t('upcoming'))}
+      ${up.length?up.map(b=>PreviewBookingCard(bookingCardData(b))).join(''):`<p class="lux-lede">${t('noBookings')}</p>`}
+    </section>
+    ${past.length?`<section class="lux-sec">${LuxHeader(t('past'))}${past.slice(0,20).map(b=>PreviewBookingCard(bookingCardData(b))).join('')}</section>`:''}`;
 }
 
 
@@ -3214,7 +3433,7 @@ function basketPillHtml(){
 }
 function basketOrderText(brand,lines){
   const g=loadGuestDetails();
-  const who=loggedInClient?{name:loggedInClient.name,phone:loggedInClient.phone}:{name:g.name,phone:g.phone};
+  const who=clientIn()?{name:loggedInClient.name,phone:loggedInClient.phone}:{name:g.name,phone:g.phone};
   const rows=lines.map(l=>{ const q=Math.min(l.qty,l.stock); return `• ${q} × ${l.p.n}${l.opt?` (${l.opt})`:''} — $${roundMoney(l.unit*q)}`; });
   const sum=roundMoney(lines.reduce((a,l)=>a+l.unit*Math.min(l.qty,l.stock),0));
   return [`${t('orderIntro')} ${BRANDS[brand].name}:`,'',...rows,'',`${t('total')}: $${sum}`,
@@ -3738,7 +3957,7 @@ screenEl.addEventListener('scroll',()=>{
 });
 
 /* ---------------- Showcase member profile (for events) ----------------
-   Real client logins are switched off (CLIENT_LOGIN_ENABLED=false). To show
+   Useful while client login is switched off (Admin → Overview). To show
    the Profile and Bookings screens at an event, the INSTALLED app (never the
    public website) offers "Preview a member profile": one sample member with
    sample points, rewards and bookings. It is clearly labelled Preview, lives
@@ -3747,7 +3966,7 @@ screenEl.addEventListener('scroll',()=>{
 const PREVIEW_KEY='odc_preview_member';
 let previewMember=(()=>{ try{ return localStorage.getItem(PREVIEW_KEY)==='1'; }catch(e){ return false; } })();
 function isNativeApp(){ return document.body.classList.contains('native-app'); }
-function previewActive(){ return previewMember && !loggedInClient; }
+function previewActive(){ return previewMember && !clientIn(); }
 function setPreviewMember(on){
   previewMember=!!on;
   try{ on?localStorage.setItem(PREVIEW_KEY,'1'):localStorage.removeItem(PREVIEW_KEY); }catch(e){}
@@ -3818,40 +4037,51 @@ function renderPreviewBookings(){
 }
 
 function renderProfile(){
-  const redeem=[t('r1'),t('r2'),t('r3'),t('r4')];
-  const progress=STORE.media.filter(m=>m.visibility==='private');
-  const progressHtml=progress.length?`
-    <div class="section-label">${t('myProgress')}</div>
-    ${progress.map(m=>`
-      <div class="progress-row" data-media="${m.id}">
-        <div class="th ${m.type==='video'?'video':''}" style="background-image:url('${m.dataUrl}')"></div>
-        <div><div class="n">${BRANDS[m.brand].name} — ${esc(m.note||'')}</div><div class="m">${esc(m.clientName||'You')}</div></div>
-      </div>`).join('')}` : '';
-  const pts=loggedInClient?loggedInClient.points:0;
+  const c=loggedInClient||{name:'',phone:'',points:0};
   const REWARD_GOAL=3000;
-  const toGo=Math.max(0,REWARD_GOAL-pts);
+  const pts=Number(c.points)||0, pct=Math.min(100,Math.round(pts/REWARD_GOAL*100)), toGo=Math.max(0,REWARD_GOAL-pts);
+  const {up}=splitBookings(myBookingList().filter(b=>BRANDS[b.brand]));
+  const favList=STORE.products.filter(p=>p.active!==false&&isFav(p.id)).slice(0,6);
+  const rewards=[['✦',t('r1')],['%',t('r2')],['❀',t('r3')],['◷',t('r4')]];
+  const initial=(String(c.name||'').trim().charAt(0)||'D').toUpperCase();
   return `
-    <div class="section-label" style="margin-top:0;">${t('profile')}</div>
-    <div class="book-card" style="display:flex;justify-content:space-between;align-items:center;">
-      <div><div style="font-weight:700;font-size:14.5px;">${esc(loggedInClient?loggedInClient.name:'')}</div><div style="font-size:13px;color:var(--muted);">${esc(loggedInClient?loggedInClient.phone:'')}</div></div>
-      <button id="clientLogout" style="border:none;background:var(--ink);color:#fff;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:700;">Log out</button>
-    </div>
-    <div class="loyalty-card">
-      <div style="font-size:13px;opacity:.8;">${t('yourPoints')}</div>
-      <div class="pts">${pts.toLocaleString()} <span style="font-size:14.5px;">pts</span></div>
-      <div class="bar"><i style="width:${Math.min(100,pts/REWARD_GOAL*100)}%;"></i></div>
-      <div style="font-size:12.5px;opacity:.8;">${toGo.toLocaleString()} pts ${t('toNextReward')}</div>
-    </div>
-    <div class="section-label">${t('redeem')}</div>
-    <div class="redeem-grid">${redeem.map(r=>`<div>${r}</div>`).join('')}</div>
-    ${progressHtml}
-    <div class="section-label">${t('language')}</div>
-    <div class="cat-tabs">
-      <button data-proflang="en" class="${lang==='en'?'active':''}">EN</button>
-      <button data-proflang="ku" class="${lang==='ku'?'active':''}">کوردی</button>
-      <button data-proflang="ar" class="${lang==='ar'?'active':''}">عربي</button>
-    </div>
-  `;
+    <section class="pv-card">
+      <div class="pv-avatar">${esc(initial)}<i>+</i></div>
+      <div class="pv-who">
+        <div class="lux-eyebrow">${t('member')}</div>
+        <h2 class="pv-name">${esc(c.name)}</h2>
+        <div class="pv-sub" dir="ltr" style="text-align:start;">${esc(clientPhoneText(c.phone))}</div>
+      </div>
+    </section>
+    <section class="pv-loyalty">
+      <div class="pv-l-top"><span class="lux-eyebrow">${t('yourPoints')}</span></div>
+      <div class="pv-pts">${pts.toLocaleString()}<span>pts</span></div>
+      <div class="pv-bar"><i style="width:${pct}%"></i></div>
+      <div class="pv-note">${toGo.toLocaleString()} pts ${t('toNextReward')}</div>
+    </section>
+    <section class="lux-sec">${LuxHeader(t('upcoming'))}
+      ${up.length?up.slice(0,2).map(b=>PreviewBookingCard(bookingCardData(b))).join(''):`<p class="lux-lede">${t('noBookings')}</p>`}
+      <button class="lux-link" data-pv-bookings>${t('myBookings')} →</button>
+    </section>
+    <section class="lux-sec">${LuxHeader(t('redeem'))}
+      <div class="pv-rewards">${rewards.map(([ic,l])=>`<div class="pv-reward"><span>${ic}</span>${esc(l)}</div>`).join('')}</div>
+    </section>
+    ${favList.length?`<section class="lux-sec">${LuxHeader(t('favourite'))}
+      <div class="pv-favs">${favList.map(p=>`<button class="pv-fav" data-prod="${esc(String(p.id))}">${mediaHtml(p.image||'','productPrimary',{fallback:brandFallback(p.brand),alt:p.n,style:productPh(p)})}<span>${esc(p.n)}</span></button>`).join('')}</div>
+    </section>`:''}
+    <section class="lux-sec">${LuxHeader(t('language'))}
+      <div class="lux-chips">
+        <button class="lux-chip${lang==='en'?' on':''}" data-proflang="en">English</button>
+        <button class="lux-chip${lang==='ku'?' on':''}" data-proflang="ku">کوردی</button>
+        <button class="lux-chip${lang==='ar'?' on':''}" data-proflang="ar">عربي</button>
+      </div>
+    </section>
+    <section class="lux-sec cl-account">${LuxHeader(t('account'))}
+      <div class="pv-sub">${t('oneAccount')}</div>
+      <button class="ghost-btn" id="clientLogout">${t('logOut')}</button>
+      <button class="cl-danger${deleteArmed?' armed':''}" id="clientDelete">${deleteArmed?t('deleteConfirm'):t('deleteAccount')}</button>
+      <p class="cl-note">${t('deleteNote')}</p>
+    </section>`;
 }
 
 /* The Dolce+ mark that sits at the top of the home screen, in place of the
@@ -3942,10 +4172,10 @@ function bodyHtml(){
     case 'services': return renderServices();
     case 'detail': return renderDetail();
     case 'booking': return renderBooking();
-    case 'bookings': return loggedInClient?renderBookings():(previewActive()?renderPreviewBookings():renderClientAuth());
+    case 'bookings': return clientIn()?renderBookings():(previewActive()?renderPreviewBookings():renderClientAuth());
     case 'shop': return renderShop();
     case 'product': return renderProduct();
-    case 'profile': return (loggedInClient?renderProfile():(previewActive()?renderPreviewProfile():renderClientAuth()))+AgencyCredit({mode:'client'});
+    case 'profile': return (clientIn()?renderProfile():(previewActive()?renderPreviewProfile():renderClientAuth()))+AgencyCredit({mode:'client'});
     case 'auth': return renderClientAuth()+(pendingScreen==='profile'?AgencyCredit({mode:'client'}):'');
     default: return '';
   }
@@ -4901,7 +5131,7 @@ function navIndexFor(screen){
 function navTo(n,dir){
   if(n==='welcome') currentBrand=null;
   if(!dir){ dir=NAV_TABS.indexOf(n)>=navIndexFor(currentScreen)?'forward':'back'; }
-  if((n==='bookings'||n==='profile') && !loggedInClient && !previewActive()){ pendingScreen=n; authStep='phone'; authPhone=''; goto('auth',dir); return; }
+  if((n==='bookings'||n==='profile') && !clientIn() && !previewActive()){ pendingScreen=n; authStep='phone'; authPhone=''; goto('auth',dir); return; }
   goto(n,dir);
 }
 
@@ -5371,7 +5601,7 @@ function bindScreen(){
     // No account needed: a name and a number are enough for reception to
     // confirm, which is exactly what they would ask for over the phone.
     let guest=null;
-    if(!loggedInClient){
+    if(!clientIn()){
       guest=readGuestDetails();
       if(!guest) return;
     }
@@ -5384,11 +5614,12 @@ function bindScreen(){
          date:dateStr,time:selectedTime,status:'Requested',clientName:guest.name,
          phone:guest.phone,aftercareOk:guest.consent}
       : {id:nextId('b',STORE.bookings),brand:currentBrand,serviceId:currentService,serviceName:s.n,
-         date:dateStr,time:selectedTime,status:'Requested',clientName:loggedInClient.name,clientId:loggedInClient.id};
+         date:dateStr,time:selectedTime,status:'Requested',clientName:loggedInClient.name,clientId:loggedInClient.id,
+         phone:loggedInClient.phone};
     STORE.bookings.push(req);
     const ok=saveStore();
     if(!ok){ STORE.bookings.pop(); toast("This browser's demo storage is full."); return; }
-    cloudSave('bookings',req.id,null,{guest:!!guest});
+    cloudSave('bookings',req.id,null,guest?{guest:true}:{clientAuth:true});
     const note=document.getElementById('waNote');
     note.style.display='block';
     // A guest has no account, so there is no "My Bookings" for them to look in.
@@ -5403,14 +5634,14 @@ function bindScreen(){
   if(sendWA) sendWA.addEventListener('click',(e)=>{
     if(!selectedTime){ e.preventDefault(); return; }
     let waGuest=null;
-    if(!loggedInClient){
+    if(!clientIn()){
       waGuest=readGuestDetails();
       if(!waGuest){ e.preventDefault(); return; }
     }
     const b=BRANDS[currentBrand]; const s=svcList(currentBrand).find(x=>x.id===currentService);
     const dateStr=fmtDate(selectedDateObj);
     const already=STORE.bookings.some(bk=>bk.brand===currentBrand&&bk.date===dateStr&&bk.time===selectedTime
-      && (loggedInClient ? bk.clientId===loggedInClient.id : bk.phone===waGuest.phone)
+      && (clientIn() ? bk.clientId===loggedInClient.id : bk.phone===waGuest.phone)
       && bk.status!=='Cancelled');
     if(!already){
       const waReq=waGuest
@@ -5418,9 +5649,10 @@ function bindScreen(){
            date:dateStr,time:selectedTime,status:'Requested',clientName:waGuest.name,
            phone:waGuest.phone,aftercareOk:waGuest.consent}
         : {id:nextId('b',STORE.bookings),brand:currentBrand,serviceId:currentService,serviceName:s.n,
-           date:dateStr,time:selectedTime,status:'Requested',clientName:loggedInClient.name,clientId:loggedInClient.id};
+           date:dateStr,time:selectedTime,status:'Requested',clientName:loggedInClient.name,clientId:loggedInClient.id,
+           phone:loggedInClient.phone};
       STORE.bookings.push(waReq);
-      saveStore(); cloudSave('bookings',waReq.id,null,{guest:!!waGuest});
+      saveStore(); cloudSave('bookings',waReq.id,null,waGuest?{guest:true}:{clientAuth:true});
     }
     const note=document.getElementById('waNote');
     note.style.display='block';
@@ -5450,44 +5682,106 @@ function bindScreen(){
   }));
   screenEl.querySelectorAll('[data-nav]').forEach(el=>el.addEventListener('click',()=>navTo(el.dataset.nav)));
 
-  // ---- Client login / signup (phone number + demo code) ----
+  // ---- Client login (WhatsApp code) ----
+  const busyBtn=(btn,label)=>{ if(btn){ btn.disabled=true; btn.dataset.label=btn.innerHTML; btn.innerHTML=label; } };
+  const freeBtn=(btn)=>{ if(btn&&btn.isConnected){ btn.disabled=false; if(btn.dataset.label) btn.innerHTML=btn.dataset.label; } };
   const authSendCode=document.getElementById('authSendCode');
-  if(authSendCode) authSendCode.addEventListener('click',()=>{
-    const val=document.getElementById('authPhoneInput').value.trim();
-    if(normalizedPhone(val).length<7){ toast('Enter a valid phone number.'); return; }
-    authPhone=val; authStep='code'; render();
+  if(authSendCode) authSendCode.addEventListener('click',async()=>{
+    if(authBusy) return;
+    const phone=toLoginPhone(document.getElementById('authPhoneInput').value);
+    if(!phone){ toast(t('phoneInvalid')); return; }
+    authBusy=true; busyBtn(authSendCode,t('sending'));
+    const ok=await sendClientCode(phone);
+    authBusy=false; freeBtn(authSendCode);
+    if(!ok) return;
+    authPhone=phone; authStep='code'; render();
+    const ci=document.getElementById('authCodeInput'); if(ci) ci.focus();
   });
-  const authBackBtn=document.getElementById('authBack');
-  if(authBackBtn) authBackBtn.addEventListener('click',()=>{ authStep='phone'; authPhone=''; render(); });
+  const authPhoneInput=document.getElementById('authPhoneInput');
+  if(authPhoneInput) authPhoneInput.addEventListener('keydown',e=>{ if(e.key==='Enter') authSendCode&&authSendCode.click(); });
   const authVerify=document.getElementById('authVerify');
-  if(authVerify) authVerify.addEventListener('click',()=>{
-    const code=document.getElementById('authCodeInput').value.trim();
-    if(code!==DEMO_OTP){ toast(`Incorrect code — try ${DEMO_OTP} for this demo.`); return; }
-    let client=findClientByPhone(authPhone);
-    if(!client){
-      const nameInput=document.getElementById('authNameInput');
-      const name=nameInput?nameInput.value.trim():'';
-      if(!name){ toast('Enter your name to create an account.'); return; }
-      client={id:nextId('c',STORE.clients),phone:normalizedPhone(authPhone),name,points:100};
-      STORE.clients.push(client);
-      const ok=saveStore();
-      if(!ok){ STORE.clients.pop(); toast("This browser's demo storage is full."); return; }
-      cloudSave('clients',client.id);
-      toast(`Account created — ${name}, welcome! 100 pts added.`);
-    } else {
-      toast(`Logged in as ${client.name}.`);
+  const authCodeInput=document.getElementById('authCodeInput');
+  const doVerify=async()=>{
+    if(authBusy||!authVerify) return;
+    const code=latinDigits(authCodeInput.value).replace(/\D/g,'');
+    if(code.length!==6){ toast(t('codeWrong')); return; }
+    const cs=clientSupa(); if(!cs){ toast(t('offline')); return; }
+    authBusy=true; busyBtn(authVerify,t('verifying'));
+    let res;
+    try{ res=await cs.auth.verifyOtp({phone:'+'+authPhone,token:code,type:'sms'}); }
+    catch(e){ res={error:{message:'fetch'}}; }
+    if(res.error){
+      authBusy=false; freeBtn(authVerify);
+      toast(/fetch|network/i.test(String(res.error.message))?t('offline'):t('codeWrong'));
+      if(authCodeInput.isConnected){ authCodeInput.value=''; authCodeInput.focus(); }
+      return;
     }
-    loggedInClient=client;
-    try{ localStorage.setItem(CLIENT_KEY, client.id); }catch(e){}
-    authStep='phone'; authPhone='';
-    const next=pendingScreen; pendingScreen=null;
-    goto(next||'profile');
+    const r=await clientAfterLogin();
+    authBusy=false;
+    if(r==='ok') return finishClientLogin(false);
+    if(r==='needName'){ authStep='name'; render(); const ni=document.getElementById('authNameInput'); if(ni) ni.focus(); return; }
+    freeBtn(authVerify);
+    toast(r==='staff'?t('staffLogin'):r==='offline'?t('offline'):t('sendFailed'));
+    if(r==='staff'){ authStep='phone'; authPhone=''; render(); }
+  };
+  if(authVerify) authVerify.addEventListener('click',doVerify);
+  if(authCodeInput) authCodeInput.addEventListener('input',()=>{
+    const v=latinDigits(authCodeInput.value).replace(/\D/g,'').slice(0,6);
+    if(authCodeInput.value!==v) authCodeInput.value=v;
+    if(v.length===6) doVerify();          // a pasted / auto-filled code logs straight in
+  });
+  const authResend=document.getElementById('authResend');
+  if(authResend){
+    const n=document.getElementById('authResendN');
+    if(n){
+      const tick=setInterval(()=>{
+        const left=Math.ceil((authResendAt-Date.now())/1000);
+        if(!authResend.isConnected){ clearInterval(tick); return; }
+        if(left>0){ n.textContent=left; return; }
+        clearInterval(tick); authResend.disabled=false; authResend.textContent=t('resend');
+      },1000);
+    }
+    authResend.addEventListener('click',async()=>{
+      if(authBusy||Date.now()<authResendAt) return;
+      authBusy=true;
+      const ok=await sendClientCode(authPhone);
+      authBusy=false;
+      if(ok) render();
+    });
+  }
+  const authBackBtn=document.getElementById('authBack');
+  if(authBackBtn) authBackBtn.addEventListener('click',()=>{ authStep='phone'; render(); });
+  const authSaveName=document.getElementById('authSaveName');
+  if(authSaveName) authSaveName.addEventListener('click',async()=>{
+    if(authBusy) return;
+    const name=(document.getElementById('authNameInput').value||'').trim();
+    if(!name){ toast(t('needName')); return; }
+    authBusy=true; busyBtn(authSaveName,'…');
+    const r=await clientAfterLogin(name);
+    authBusy=false;
+    if(r==='ok') return finishClientLogin(true);
+    freeBtn(authSaveName);
+    toast(r==='offline'?t('offline'):t('sendFailed'));
   });
   const clientLogout=document.getElementById('clientLogout');
-  if(clientLogout) clientLogout.addEventListener('click',()=>{
-    loggedInClient=null;
-    try{ localStorage.removeItem(CLIENT_KEY); }catch(e){}
-    toast('Logged out.');
+  if(clientLogout) clientLogout.addEventListener('click',async()=>{
+    const cs=clientSupa();
+    try{ if(cs) await cs.auth.signOut({scope:'local'}); }catch(e){}
+    clearClientState(); authStep='phone'; authPhone='';
+    toast(t('loggedOut'));
+    goto('welcome');
+  });
+  const clientDelete=document.getElementById('clientDelete');
+  if(clientDelete) clientDelete.addEventListener('click',async()=>{
+    if(!deleteArmed){ deleteArmed=true; render(); setTimeout(()=>{ if(deleteArmed){ deleteArmed=false; if(currentScreen==='profile') render(); } },6000); return; }
+    const cs=clientSupa(); if(!cs){ toast(t('offline')); return; }
+    busyBtn(clientDelete,'…');
+    let res;
+    try{ res=await cs.rpc('delete_my_client_account'); }catch(e){ res={error:{message:'fetch'}}; }
+    if(res.error){ deleteArmed=false; freeBtn(clientDelete); toast(/fetch|network/i.test(String(res.error.message))?t('offline'):t('sendFailed')); return; }
+    try{ await cs.auth.signOut({scope:'local'}); }catch(e){}
+    clearClientState(); authStep='phone'; authPhone='';
+    toast(t('deleted'));
     goto('welcome');
   });
   document.getElementById('lbClose').addEventListener('click',()=>document.getElementById('lightbox').classList.remove('open'));
@@ -6237,7 +6531,7 @@ function showAdminForRole(){
   });
   if(!canSeeBrand(currentUser,svcBrandTab)) svcBrandTab=userBrands(currentUser)[0];
   document.querySelectorAll('#svcBrandTabs [data-svc-brand-tab]').forEach(x=>x.classList.toggle('active',x.dataset.svcBrandTab===svcBrandTab));
-  renderAdminProducts(); renderAdminServices(); renderAdminOffers(); renderAdminGallery(); renderAdminBookings(); renderBrandPhotos(); renderCurrencySettings(); renderAdminEmployees(); renderAdminPurchases(); renderAdminReports();
+  renderAdminProducts(); renderAdminServices(); renderAdminOffers(); renderAdminGallery(); renderAdminBookings(); renderBrandPhotos(); renderCurrencySettings(); renderClientLoginSetting(); renderAdminEmployees(); renderAdminPurchases(); renderAdminReports();
 }
 
 /* ---------------- Full-screen client app ---------------- */
@@ -7837,6 +8131,30 @@ function openPurchaseForm(){
 }
 document.getElementById('addPurchaseBtn').addEventListener('click',openPurchaseForm);
 
+/* ---------------- Admin: Client login switch (owner only) ----------------
+   Turns the WhatsApp client login on or off for every copy of the app at
+   once (stored in the shared settings table as 'client_login'). Leave it off
+   until the WhatsApp setup is finished and a test login has worked. */
+function renderClientLoginSetting(){
+  const wrap=document.getElementById('clientLoginWrap'); if(!wrap) return;
+  if(!currentUser || !currentUser.isOwner){ wrap.innerHTML=''; return; }
+  const on=STORE.settings.clientLogin==='on';
+  wrap.innerHTML=`
+    <div class="section-label" style="margin:0 0 10px;">Client login (WhatsApp)</div>
+    <div class="admin-form" style="max-width:460px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <span class="status-badge ${on?'Confirmed':'Requested'}">${on?'On':'Off'}</span>
+      <button class="btn btn-sm ${on?'':'btn-primary'}" id="cl_toggle">${on?'Turn off':'Turn on'}</button>
+    </div>
+    <div style="font-size:13px;color:var(--muted);margin:6px 0 22px;max-width:460px;">${on
+      ?'Clients can log in with a code sent to their WhatsApp and see their own bookings and points.'
+      :'Clients book as guests and are pointed to WhatsApp for their booking history. Turn this on only after the WhatsApp setup is finished and you have tested a login.'}</div>`;
+  document.getElementById('cl_toggle').addEventListener('click',()=>{
+    STORE.settings.clientLogin=on?'off':'on';
+    saveStore(); cloudSave('settings','client_login');
+    toast(on?'Client login turned off.':'Client login turned on.');
+    renderClientLoginSetting(); render();
+  });
+}
 /* ---------------- Admin: Brand photos ---------------- */
 /* ---------------- Admin: Currency settings (USD/IQD exchange rate) ----------------
    All prices are entered and stored in USD everywhere in the app — this rate
@@ -8041,7 +8359,9 @@ render();
 // quietly refresh from the shared Supabase database in the background —
 // so it's never blank/waiting on a slow connection, but still ends up
 // showing everyone the same live catalog a moment later.
+restoreClientSession();   // a saved client login, using the last known on/off setting
 loadCatalogFromSupabase().then(ok=>{
+  restoreClientSession();
   if(ok){
     applyBrandImages();
     if(['welcome','services','detail','shop'].indexOf(currentScreen)!==-1) render();

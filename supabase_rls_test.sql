@@ -98,8 +98,10 @@ select pg_temp.expect('anon CAN request a booking',
   pg_temp.try($$insert into bookings (id,brand,service_name,status,client_name) values ('bk_anon','dolce','Botox','Requested','Walk-in')$$), true);
 select pg_temp.expect('anon CANNOT self-confirm a booking',
   pg_temp.try($$insert into bookings (id,brand,service_name,status,client_name) values ('bk_bad','dolce','Botox','Confirmed','Walk-in')$$), false);
-select pg_temp.expect('anon CAN sign up as a customer',
-  pg_temp.try($$insert into clients (id,phone,name) values ('c_new','9647511111111','New')$$), true);
+select pg_temp.expect('anon CANNOT write to the customer list directly (client accounts use WhatsApp login)',
+  pg_temp.try($$insert into clients (id,phone,name) values ('c_new','9647511111111','New')$$), false);
+select pg_temp.expect('anon CANNOT attach a booking to someone else''s account',
+  pg_temp.try($$insert into bookings (id,brand,service_name,status,client_name,client_id) values ('bk_spoof','dolce','Botox','Requested','X','c_1')$$), false);
 reset role;
 
 -- ===================== SARA — Dolce reception, bookings only =================
