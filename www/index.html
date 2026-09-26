@@ -1047,6 +1047,7 @@
     .pc-body{padding:10px 4px;}
   }
   /* Showcase member profile (events) */
+  .cat-manager .btn[disabled]{opacity:.35;cursor:not-allowed;}
   /* Client login (WhatsApp) & account */
   .cl-auth{max-width:440px;margin:0 auto;padding-top:4px;}
   .cl-auth .lux-h2{margin-bottom:2px;}
@@ -1408,8 +1409,12 @@
           <button data-svc-brand-tab="polished">Polished</button>
           <button data-svc-brand-tab="core">Core</button>
         </div>
-        <button class="btn btn-primary" id="addServiceBtn">+ Add Service</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-ghost" id="manageCatsBtn">Categories</button>
+          <button class="btn btn-primary" id="addServiceBtn">+ Add Service</button>
+        </div>
       </div>
+      <div id="catManagerWrap"></div>
       <div id="serviceFormWrap"></div>
       <div class="admin-table-wrap">
         <table class="admin-table">
@@ -1604,7 +1609,7 @@ function esc(v){
 const BRANDS = {
   dolce:{name:'Dolce',sub:'Aesthetic Clinic',c1:'#b38653',c2:'#7d5a33',cats:['Wellness','Fillers','Skin boosters','Botox','Facials','Dermatology','Laser hair removal','Spa','Testing','Hair loss treatments','Aesthetic gynecology']},
   polished:{name:'Polished',sub:'Salon',c1:'#8a5b34',c2:'#4d2b16',cats:['Nails','Hair','Lashes','Brows','Makeup','Semi-permanent makeup']},
-  core:{name:'Core',sub:'Yoga & Pilates',c1:'#74926a',c2:'#3a5433',cats:['Reformer pilates','Mat pilates','Yoga','Duet pilates','Private Training']},
+  core:{name:'Core',sub:'Yoga & Pilates',c1:'#74926a',c2:'#3a5433',cats:['Reformer pilates','Mat pilates','Yoga','Duet Private Training','Private Training']},
 };
 
 // Generates a small placeholder "photo" so the demo gallery has content
@@ -1831,6 +1836,17 @@ function numOr0(v){ const n=Number(v); return isFinite(n)?n:0; }
 // Photos are stored inside the record itself, so a sensible ceiling keeps
 // both the database row and this browser's storage a reasonable size.
 const MAX_EXTRA_SHOTS=5;
+// Categories that were renamed: services saved under an old name still land
+// in the right tab. (Core asked for "Duet pilates" → "Duet Private Training".)
+const CAT_RENAMES={'Duet pilates':'Duet Private Training'};
+function renamedCat(c){ return CAT_RENAMES[c]||c; }
+/* A brand's service categories, in order. Edited in Admin → Services →
+   Categories and shared through the settings table ('categories:<brand>');
+   until someone edits them, the built-in list in BRANDS is used. */
+function catsFor(b){
+  const own=STORE.categories&&STORE.categories[b];
+  return (Array.isArray(own)&&own.length)?own:((BRANDS[b]&&BRANDS[b].cats)||[]);
+}
 const CLOUD_TABLES={
   services:{
     table:'services',
@@ -1839,7 +1855,7 @@ const CLOUD_TABLES={
       price_usd:numOr0(s.price),discount_percent:numOr0(s.discount),description:s.desc||'',
       points:s.points||[],image:s.image||'',aftercare:s.aftercare||'',
       sort_order:(STORE.services[job.brand]||[]).indexOf(s)}),
-    app:(r)=>({id:r.id,n:r.name,cat:r.category,dur:r.duration,price:Number(r.price_usd),
+    app:(r)=>({id:r.id,n:r.name,cat:renamedCat(r.category),dur:r.duration,price:Number(r.price_usd),
       discount:r.discount_percent||0,desc:r.description||'',points:r.points||[],image:r.image||'',
       aftercare:r.aftercare||''}),
   },
@@ -1943,6 +1959,8 @@ const CLOUD_TABLES={
       ? {key:'destinations',value:JSON.stringify(STORE.destinations||{})}
       : id==='client_login'
       ? {key:'client_login',value:STORE.settings.clientLogin==='on'?'on':'off'}
+      : String(id).startsWith('categories:')
+      ? {key:id,value:JSON.stringify(catsFor(String(id).slice(11)))}
       : {key:'usd_to_iqd',value:String(STORE.settings.usdToIqd||1450)},
     row:(x)=>x,
   },
@@ -2323,7 +2341,7 @@ async function pullCatalog(){
       supa.from('products').select('*'),
       supa.from('offers').select('*'),
       supa.from('brand_images').select('*'),
-      supa.from('settings').select('*').in('key',['usd_to_iqd','image_focus','destinations','client_login']),
+      supa.from('settings').select('*').in('key',['usd_to_iqd','image_focus','destinations','client_login','categories:dolce','categories:polished','categories:core']),
     ]);
     if(svc.error||prod.error||off.error) return false;
 
@@ -2345,6 +2363,14 @@ async function pullCatalog(){
     if(!img.error && img.data) img.data.forEach(r=>{ if(r.image_url) STORE.brandImages[r.brand]=r.image_url; });
     if(!set.error && set.data){
       const row=(k)=>set.data.find(r=>r.key===k);
+      // Service categories edited in Admin (one row per brand).
+      ['dolce','polished','core'].forEach(b=>{
+        const cr=row('categories:'+b); if(!cr||cr.value==null) return;
+        try{
+          const arr=typeof cr.value==='string'?JSON.parse(cr.value):cr.value;
+          if(Array.isArray(arr)&&arr.length){ STORE.categories=STORE.categories||{}; STORE.categories[b]=arr.map(String); }
+        }catch(e){}
+      });
       const rateRow=row('usd_to_iqd');
       if(rateRow && rateRow.value){ const rate=Number(rateRow.value); if(rate>0) STORE.settings.usdToIqd=rate; }
       // Hand-chosen photo positions, so a picture framed on one device is
@@ -2954,7 +2980,8 @@ function destTextClass(brand){
 }
 function renderServices(){
   const b=BRANDS[currentBrand];
-  const cats=['All',...b.cats];
+  const cats=['All',...catsFor(currentBrand)];
+  if(!cats.includes(currentCat)) currentCat='All';   // its category was renamed or removed
   const tabs=cats.map(c=>{
     const on=c===currentCat;
     return `<button data-cat="${esc(c)}" class="${on?'active':''}" style="--a:${on?1:0}"><span>${c==='All'?t('allServices'):esc(c)}</span></button>`;
@@ -5330,7 +5357,7 @@ const CatGlass=(function(){
   const st={pos:null,vel:0,target:0,raf:0,last:0,dragging:false,row:null,lens:null,btns:[],
             brand:null,scroll:0,anim:'',wasHere:false};
   const reduceMotion=()=>{ try{ return matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; } };
-  const cats=()=>currentBrand?['All',...BRANDS[currentBrand].cats]:['All'];
+  const cats=()=>currentBrand?['All',...catsFor(currentBrand)]:['All'];
 
   function geom(p){
     const b=st.btns, n=b.length-1; if(n<0) return {x:0,w:0};
@@ -5979,7 +6006,7 @@ const AI_TOPICS=[
         ku:'ئامادە لە خەو هەستە — ئەم مکیاجە نیمچە هەمیشەییانە چەند مانگێک دەمێننەوە.'}},
 
   // ---------------- CORE — yoga & pilates ----------------
-  {id:'reformer', brand:'core', cats:['Reformer pilates','Duet pilates'],
+  {id:'reformer', brand:'core', cats:['Reformer pilates','Duet Private Training'],
    keys:['reformer','pilates','machine pilates','tone','toning','toned','sculpt','core strength','strong core','abs','abdominal','posture','glutes','booty','lean','strength','strengthen','workout','exercise','fitness','train','training','gym','duet','partner','couple','friend class',
          'ريفورمر','بيلاتس','بلاتس','شد الجسم','عضلات البطن','قوام','تمارين','رياضة','لياقة','تقوية','ثنائي',
          'ڕیفۆرمەر','ریفۆرمەر','پیلاتس','پیلاتیس','وەرزش','ڕاهێنان','لەشجوانی','ماسولکە','زگ','ڕێکی لەش','جووت'],
@@ -6003,8 +6030,8 @@ const AI_TOPICS=[
    say:{en:'Take a breath — these Core yoga sessions help you slow down, sleep better and feel balanced.',
         ar:'خذي نفساً عميقاً — جلسات اليوغا في كور تساعدك على الهدوء والنوم بشكل أفضل والشعور بالتوازن.',
         ku:'هەناسەیەک بدە — ئەم وانانەی یۆگای کۆر یارمەتیت دەدەن ئارام بیت و باشتر بخەویت.'}},
-  {id:'private', brand:'core', cats:['Private Training'],
-   keys:['private','private session','one on one','one-on-one','1:1','1 on 1','personal','personal trainer','personal training','coach','injury','injured','rehab','rehabilitation','recovery','recover','back pain','neck pain','knee','shoulder','scoliosis','physio','postnatal','post natal','after pregnancy','diastasis','beginner','first time','never done','new to',
+  {id:'private', brand:'core', cats:['Private Training','Duet Private Training'],
+   keys:['duet','duo','partner','couple','with a friend','two people','private','private session','one on one','one-on-one','1:1','1 on 1','personal','personal trainer','personal training','coach','injury','injured','rehab','rehabilitation','recovery','recover','back pain','neck pain','knee','shoulder','scoliosis','physio','postnatal','post natal','after pregnancy','diastasis','beginner','first time','never done','new to',
          'خاص','جلسة خاصة','مدرب خاص','مدرب شخصي','اصابة','إصابة','تأهيل','الم الظهر','ألم الظهر','ألم الرقبة','ركبة','كتف','بعد الولادة','مبتدئة','مبتدئ','اول مرة',
          'تایبەت','وانەی تایبەت','ڕاهێنەری تایبەت','ڕاهێنەری کەسی','برین','ئازاری پشت','ئازاری مل','ئەژنۆ','شان','دوای منداڵبوون','سەرەتا','یەکەم جار'],
    terms:['private','personal','one','rehab','session'],
@@ -6956,6 +6983,7 @@ document.getElementById('addOfferBtn').addEventListener('click',()=>openOfferFor
 
 /* ---------------- Admin: Services ---------------- */
 function renderAdminServices(){
+  renderCategoryManager();
   const list=svcList(svcBrandTab);
   const rows=document.getElementById('serviceRows');
   if(!list.length){
@@ -6989,8 +7017,10 @@ function openServiceForm(editId){
   // which the 30-second refresh replaces with a fresh copy.
   const brand=svcBrandTab;
   const editing=editId!==undefined && idxById(svcList(brand),editId)>=0;
-  const s=editing?svcList(brand)[idxById(svcList(brand),editId)]:{n:'',cat:BRANDS[brand].cats[0],dur:'',price:'',desc:'',image:''};
-  const catOpts=BRANDS[brand].cats.map(c=>`<option value="${c}" ${s.cat===c?'selected':''}>${c}</option>`).join('');
+  const s=editing?svcList(brand)[idxById(svcList(brand),editId)]:{n:'',cat:catsFor(brand)[0],dur:'',price:'',desc:'',image:''};
+  // A service whose category was deleted keeps it here, so saving never moves it by accident.
+  const catList=catsFor(brand).includes(s.cat)||!s.cat?catsFor(brand):[...catsFor(brand),s.cat];
+  const catOpts=catList.map(c=>`<option value="${attr(c)}" ${s.cat===c?'selected':''}>${esc(c)}</option>`).join('');
   document.getElementById('serviceFormWrap').innerHTML=`
     <div class="admin-form">
       <div class="field"><label>Service name</label><input id="sf_name" type="text" value="${esc(s.n)}" placeholder="e.g. Microneedling"></div>
@@ -7060,6 +7090,105 @@ function openServiceForm(editId){
   });
 }
 document.getElementById('addServiceBtn').addEventListener('click',()=>openServiceForm());
+
+/* ---------------- Admin: service categories (per brand) ----------------
+   Add, rename, reorder and remove the category tabs clients see on a
+   brand's page. Renaming moves every service in that category with it.
+   A category that still has services cannot be removed until they are
+   moved, so no service ever goes missing from the app. */
+var catManagerOpen=false, catRenaming=null;
+function saveCategories(brand,list){
+  STORE.categories=STORE.categories||{};
+  STORE.categories[brand]=list;
+  saveStore(); cloudSave('settings','categories:'+brand);
+}
+function renderCategoryManager(){
+  const wrap=document.getElementById('catManagerWrap'); if(!wrap) return;
+  if(!catManagerOpen){ wrap.innerHTML=''; return; }
+  const brand=svcBrandTab, cats=catsFor(brand).slice();
+  const count=c=>svcList(brand).filter(s=>s.cat===c).length;
+  wrap.innerHTML=`
+    <div class="admin-form cat-manager" style="display:block;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;">
+        <b>${esc(BRANDS[brand].name)} categories</b>
+        <button class="btn btn-ghost btn-sm" id="cm_close">Done</button>
+      </div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">These are the tabs clients see on the ${esc(BRANDS[brand].name)} page, in this order. Renaming a category moves its services with it.</div>
+      <table class="admin-table"><tbody>
+      ${cats.map((c,i)=>`<tr>
+        <td>${catRenaming===c
+          ?`<input id="cm_rename_in" type="text" maxlength="40" value="${attr(c)}" style="width:100%;">`
+          :`<b>${esc(c)}</b> <span style="color:var(--muted);font-size:12.5px;">· ${count(c)} service${count(c)===1?'':'s'}</span>`}</td>
+        <td><div class="rowbtns">
+          ${catRenaming===c
+            ?`<button class="btn btn-primary btn-sm" id="cm_rename_ok">Save</button><button class="btn btn-ghost btn-sm" id="cm_rename_cancel">Cancel</button>`
+            :`<button class="btn btn-ghost btn-sm" data-cm-up="${i}" ${i===0?'disabled':''} aria-label="Move up">↑</button>
+              <button class="btn btn-ghost btn-sm" data-cm-down="${i}" ${i===cats.length-1?'disabled':''} aria-label="Move down">↓</button>
+              <button class="btn btn-ghost btn-sm" data-cm-rename="${i}">Rename</button>
+              <button class="btn btn-danger btn-sm" data-cm-del="${i}" ${count(c)||cats.length<=1?'disabled':''} title="${count(c)?'Move or delete its services first':''}">Remove</button>`}
+        </div></td></tr>`).join('')}
+      </tbody></table>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+        <input id="cm_new" type="text" maxlength="40" placeholder="New category, e.g. Duet Private Training" style="flex:1;min-width:200px;">
+        <button class="btn btn-primary btn-sm" id="cm_add">Add category</button>
+      </div>
+    </div>`;
+  const same=(a,b)=>a.trim().toLowerCase()===b.trim().toLowerCase();
+  document.getElementById('cm_close').addEventListener('click',()=>{ catManagerOpen=false; catRenaming=null; renderCategoryManager(); });
+  wrap.querySelectorAll('[data-cm-up],[data-cm-down]').forEach(btn=>btn.addEventListener('click',()=>{
+    const i=+(btn.dataset.cmUp??btn.dataset.cmDown), j=btn.dataset.cmUp!==undefined?i-1:i+1;
+    if(j<0||j>=cats.length) return;
+    [cats[i],cats[j]]=[cats[j],cats[i]];
+    saveCategories(brand,cats); renderCategoryManager(); refreshClientCats();
+  }));
+  wrap.querySelectorAll('[data-cm-del]').forEach(btn=>btn.addEventListener('click',()=>{
+    const c=cats[+btn.dataset.cmDel];
+    if(count(c)||cats.length<=1) return;
+    saveCategories(brand,cats.filter(x=>x!==c)); renderCategoryManager(); refreshClientCats();
+    toast(`"${c}" removed from ${BRANDS[brand].name}.`);
+  }));
+  wrap.querySelectorAll('[data-cm-rename]').forEach(btn=>btn.addEventListener('click',()=>{
+    catRenaming=cats[+btn.dataset.cmRename]; renderCategoryManager();
+    const inp=document.getElementById('cm_rename_in'); if(inp){ inp.focus(); inp.select(); }
+  }));
+  const okBtn=document.getElementById('cm_rename_ok');
+  if(okBtn){
+    const doRename=()=>{
+      const from=catRenaming, to=document.getElementById('cm_rename_in').value.trim().replace(/\s+/g,' ');
+      if(!to){ toast('Type a name for the category.'); return; }
+      if(to!==from && cats.some(x=>x!==from&&same(x,to))){ toast(`${BRANDS[brand].name} already has "${to}".`); return; }
+      catRenaming=null;
+      if(to!==from){
+        const moved=svcList(brand).filter(s=>s.cat===from);
+        moved.forEach(s=>{ s.cat=to; });
+        saveCategories(brand,cats.map(x=>x===from?to:x));
+        moved.forEach(s=>cloudSave('services',s.id,brand));
+        toast(`Renamed to "${to}"${moved.length?` — ${moved.length} service${moved.length===1?'':'s'} moved with it`:''}.`);
+        if(currentCat===from) currentCat=to;
+      }
+      renderAdminServices(); refreshClientCats();
+    };
+    okBtn.addEventListener('click',doRename);
+    document.getElementById('cm_rename_in').addEventListener('keydown',e=>{ if(e.key==='Enter') doRename(); if(e.key==='Escape'){ catRenaming=null; renderCategoryManager(); } });
+    document.getElementById('cm_rename_cancel').addEventListener('click',()=>{ catRenaming=null; renderCategoryManager(); });
+  }
+  const addNew=()=>{
+    const inp=document.getElementById('cm_new'); const name=inp.value.trim().replace(/\s+/g,' ');
+    if(!name) { inp.focus(); return; }
+    if(cats.some(x=>same(x,name))){ toast(`${BRANDS[brand].name} already has "${name}".`); return; }
+    saveCategories(brand,[...cats,name]); renderCategoryManager(); refreshClientCats();
+    toast(`"${name}" added to ${BRANDS[brand].name}. Choose it when you add or edit a service.`);
+    const again=document.getElementById('cm_new'); if(again) again.focus();
+  };
+  document.getElementById('cm_add').addEventListener('click',addNew);
+  document.getElementById('cm_new').addEventListener('keydown',e=>{ if(e.key==='Enter') addNew(); });
+}
+function refreshClientCats(){ if(currentScreen==='services'||currentScreen==='detail') render(); }
+document.getElementById('manageCatsBtn').addEventListener('click',()=>{
+  catManagerOpen=!catManagerOpen; catRenaming=null;
+  document.getElementById('serviceFormWrap').innerHTML='';
+  renderCategoryManager();
+});
 
 /* ---------------- Lightbox (client) ---------------- */
 function openLightbox(mediaId){
@@ -8359,6 +8488,8 @@ render();
 // quietly refresh from the shared Supabase database in the background —
 // so it's never blank/waiting on a slow connection, but still ends up
 // showing everyone the same live catalog a moment later.
+// Services cached on this device under a renamed category.
+Object.keys(STORE.services||{}).forEach(b=>(STORE.services[b]||[]).forEach(sv=>{ sv.cat=renamedCat(sv.cat); }));
 restoreClientSession();   // a saved client login, using the last known on/off setting
 loadCatalogFromSupabase().then(ok=>{
   restoreClientSession();
