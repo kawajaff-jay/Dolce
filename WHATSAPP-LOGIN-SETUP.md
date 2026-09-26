@@ -93,4 +93,4 @@ You need these from Meta: a **phone number ID**, a **permanent access token**, a
 - `index.html`: the app (login screens, profile, bookings, admin switch)
 - `supabase_migration_client_whatsapp_login.sql`: Part A
 - `supabase/functions/send-whatsapp-otp/index.ts`: Part C step 1
-- `supabase_rls_test.sql` + `supabase_rls_test_clients.sql`: the security checks. There are 82 of them, and they are for a throwaway test database only, never the real one.
+- The folder `tests - DO NOT RUN IN SUPABASE`: the 82 security checks. They are for a throwaway test database on a computer only. Never paste them into Supabase.
