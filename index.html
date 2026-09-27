@@ -2073,9 +2073,18 @@ async function flushOutbox(){
   const signedIn=await isStaffSignedIn();
   outboxBusy=true; flushAgain=false;
   try{
+    let staffLoginLost=false;
     for(const job of outbox.slice()){
       const spec=CLOUD_TABLES[job.kind];
       if(!spec){ outbox=outbox.filter(j=>j!==job); continue; }
+      // A staff change (a price, a service, a booking status) with no staff
+      // login behind it would be sent as an anonymous visitor and refused —
+      // that is what turned 50 service edits into "Not saved" on a computer
+      // whose Admin login had quietly expired. Keep it waiting instead; it
+      // goes up as soon as someone logs in again.
+      if(supa && !signedIn && !job.guest && !job.clientAuth && job.kind!=='settings'){
+        staffLoginLost=true; continue;
+      }
       const keyCol=spec.key||'id';
       let res;
       try{
@@ -2143,6 +2152,7 @@ async function flushOutbox(){
         lastSyncError='';
       }
     }
+    if(staffLoginLost){ handleStaffLoginLost(); outboxBusy=false; saveOutbox(); updateSyncBadge(); return; }
   } finally {
     saveOutbox(); outboxBusy=false; updateSyncBadge();
   }
@@ -2325,6 +2335,25 @@ function mergeFromCloud(local,cloudRows,spec,inScope){
   return merged;
 }
 
+/* The Admin App remembers who was logged in on this device, but the database
+   login behind it can expire (a long weekend offline, a cleared browser, a
+   password change). When that happens, stop pretending: send the person back
+   to the PIN screen, keep every unsaved change, and save them after login. */
+function handleStaffLoginLost(){
+  const n=outbox.filter(j=>!j.guest&&!j.clientAuth&&j.kind!=='settings').length;
+  if(currentUser){
+    currentUser=null;
+    try{ localStorage.removeItem(CUR_USER_KEY); }catch(e){}
+    const a=document.getElementById('adminAuthed'), l=document.getElementById('adminLogin');
+    if(a) a.style.display='none';
+    if(l) l.style.display='';
+    if(typeof renderLogin==='function') renderLogin();
+  }
+  if(!handleStaffLoginLost.shown){
+    handleStaffLoginLost.shown=true;
+    toast(`Your Admin login has expired — please log in again with your PIN.${n?` ${n} unsaved change${n===1?' is':'s are'} kept and will be saved after you log in.`:''}`);
+  }
+}
 async function isStaffSignedIn(){
   if(!supa) return false;
   try{ const {data}=await supa.auth.getSession(); return !!(data&&data.session); }
@@ -6379,6 +6408,10 @@ try{
 if(typeof window!=='undefined'){
   window.addEventListener('load',()=>{
     if(currentUser && typeof startAdminLiveRefresh==='function') startAdminLiveRefresh();
+    // Remembered as logged in, but is the database login still there?
+    if(currentUser && supa){
+      isStaffSignedIn().then(ok=>{ if(!ok && currentUser) handleStaffLoginLost(); });
+    }
   });
 }
 
@@ -6440,6 +6473,7 @@ function renderLogin(){
       loggedInUser=u;
     }
     currentUser=loggedInUser;
+    handleStaffLoginLost.shown=false;
     try{ localStorage.setItem(CUR_USER_KEY,currentUser.id); }catch(e){}
     showAdminForRole();
     startAdminLiveRefresh();
