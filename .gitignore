@@ -6,3 +6,12 @@ Dolce-Plus.apk
 # The database library is built into index.html now, so this downloaded copy
 # is only ever a working file — it is not part of the app.
 supabase.min.js
+
+# Never publish client/booking data: exported spreadsheets and backups stay
+# on this Mac only (keep them in ~/Documents/Dolce-Data, outside this folder).
+*.csv
+*.xlsx
+*.sql.gz
+*.dump
+backups/
+data-export/
