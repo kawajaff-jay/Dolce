@@ -2881,6 +2881,7 @@ const screenEl=document.getElementById('screen');
 // Both the in-app "Confirm Booking" button and the WhatsApp message pull
 // from this same list, so a client sees the same availability either way.
 const BUSINESS_HOURS=['10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM'];
+const REWARD_GOAL_PTS=3000;   // loyalty points needed for a reward (Profile + AI assistant)
 const BRAND_WHATSAPP={dolce:'9647509000200',polished:'9647519000200',core:'9647519000300'};
 // Reception line the AI assistant offers when it can't match a client's
 // request to anything in the catalog.
@@ -4094,7 +4095,7 @@ function renderPreviewBookings(){
 
 function renderProfile(){
   const c=loggedInClient||{name:'',phone:'',points:0};
-  const REWARD_GOAL=3000;
+  const REWARD_GOAL=REWARD_GOAL_PTS;
   const pts=Number(c.points)||0, pct=Math.min(100,Math.round(pts/REWARD_GOAL*100)), toGo=Math.max(0,REWARD_GOAL-pts);
   const {up}=splitBookings(myBookingList().filter(b=>BRANDS[b.brand]));
   const favList=STORE.products.filter(p=>p.active!==false&&isFav(p.id)).slice(0,6);
@@ -6127,11 +6128,11 @@ const AI_PRODUCT_KEYS=[
 
 /* General questions answered directly. */
 const AI_INFO=[
-  {keys:['price','prices','cost','how much','expensive','cheap','afford','budget','offer','offers','discount','deal','sale','promo','promotion','خصم','عرض','عروض','سعر','اسعار','كم','تخفيض','نرخ','داشکاندن','ئۆفەر','چەند','هەرزان'],
+  {keys:['price','prices','cost','how much','offer','offers','discount','deal','sale','promo','promotion','خصم','عرض','عروض','سعر','اسعار','كم','تخفيض','نرخ','داشکاندن','ئۆفەر','چەند','هەرزان'],
    kind:'deals'},
   {keys:['book','booking','appointment','reserve','reservation','available','availability','slot','حجز','موعد','احجز','متوفر','حجزکردن','کات','ژوان','چاوپێکەوتن'],
    kind:'booking'},
-  {keys:['where','location','address','directions','map','open','opening hours','hours','time open','close','contact','phone','number','whatsapp','call','وين','اين','أين','العنوان','موقع','ساعات','دوام','تواصل','رقم','واتساب','اتصال','لە کوێ','کوێ','ناونیشان','شوێن','کاتژمێر','پەیوەندی','ژمارە','واتساپ'],
+  {keys:['contact','contact you','phone','phone number','your number','whatsapp','call','call you','تواصل','رقم','رقمكم','واتساب','اتصال','اتصل','پەیوەندی','ژمارە','ژمارەتان','واتساپ','تەلەفۆن'],
    kind:'contact'},
 ];
 
@@ -6201,7 +6202,7 @@ function aiFind(text,topics){
     svc.forEach(x=>{ const c=String(x.s.cat||'').toLowerCase(); if(!seen.has(c)){ seen.add(c); first.push(x); } else rest.push(x); });
     pickedSvc=[...first,...rest];
   }
-  return {svc:pickedSvc.slice(0,topics.some(tp=>tp.multi)?5:3), prod:prod.slice(0,3)};
+  return {svc:pickedSvc.slice(0,topics.some(tp=>tp.multi)?5:3), prod:prod.slice(0,3), allSvc:pickedSvc, allProd:prod};
 }
 
 const AI_TEXT={
@@ -6219,29 +6220,559 @@ const AI_TEXT={
       contact:'دەتوانیت لە واتساپ پەیوەندی بە هەر براندێکەوە بکەیت — لە خوارەوە دابگرە.',wa:'نامە بنێرە لە واتساپ',tapHint:'هەر بڕگەیەک دابگرە بۆ بینینی وردەکاری.'},
 };
 
+/* ================= AI ASSISTANT — CONVERSATION (keywords only) =================
+   A light conversational layer on top of the treatment finder. Everything is
+   keyword based (no internet AI): it recognises small talk, simple facts and
+   follow-up questions in English, Arabic and Kurdish, and remembers the last
+   answer so a client can say "cheaper", "more", "how much", "how long" or
+   "the first one".
+
+   It never invents facts: hours come from BUSINESS_HOURS, numbers from
+   BRAND_WHATSAPP, prices and durations from the live menu, points from the
+   client's own account. Anything medical or personal is passed to the team.
+
+   To teach it more, add words to the keys of an entry in AI_CHAT, or change
+   the replies in AI_CHAT_TEXT (en / ar / ku). */
+const aiCtx={pool:{svc:[],prod:[]},shown:[],seen:new Set(),topics:[],name:'',mode:''};
+
+const AI_CHAT={
+  // ---- social ----
+  greet:['hi','hii','hiii','hello','helo','hey','heya','hiya','yo','good morning','good afternoon','good evening','morning','salam','salaam','assalamu','marhaba','slaw','silaw','choni',
+         'مرحبا','مرحبه','هلا','هلو','اهلا','اهلین','السلام عليكم','السلام علیکم','سلام','صباح الخير','صباح الخیر','مساء الخير','مساء الخیر','صباحو','هاي',
+         'سڵاو','سلاو','بەیانی باش','ئێوارە باش','ڕۆژباش','روژباش','ڕۆژ باش','بەخێربێیت'],
+  howru:['how are you','how r u','how are u','how you doing','how are you doing',"how's it going",'hows it going','how is it going','how is your day',"what's up",'whats up','wassup','sup',
+         'كيفك','کیفک','كيف حالك','کیف حالک','شلونك','شلونک','شلونچ','شخبارك','شخبارک','اخبارك','اخبارک','عامل ايه',
+         'چۆنی','چونی','چۆنن','باشی','چ باسە','چی باسە','ڕۆژت چۆنە','چۆنیت'],
+  fine:["i'm fine",'im fine','i am fine',"i'm good",'im good','i am good','fine','good','great','all good','not bad','doing well','pretty good','very good','well',
+        'الحمد لله','الحمدلله','بخير','بخیر','زين','زین','تمام','منيح','منیح','كويس','کویس','ماشي','ماشی',
+        'باشم','زۆر باشم','خۆشم','سوپاس باشم','باشین','شوکور'],
+  notgood:['not good','not great','not well','not fine','tired','so tired','sad','stressed','stress','exhausted','bad day','rough day','anxious','burned out','burnt out','overwhelmed',
+           'تعبان','تعبانه','تعبانة','زعلان','زعلانه','مو زين','مو زین','متضايق','متضایق','مضغوط','ضغط','حزين','حزین',
+           'ماندووم','ماندوو','ماندووم','خەمبار','خەمبارم','باش نیم','بێزارم','پەستانم','فشار'],
+  thanks:['thanks','thank you','thank u','thx','thanx','ty','tysm','many thanks','appreciate','appreciated','cheers',
+          'شكرا','شکرا','شكراً','مشكور','مشکور','مشكورة','تسلم','تسلمی','تسلمين','يسلمو','یسلمو','يعطيك العافيه','یعطیک العافیه','ممنون',
+          'سوپاس','زۆر سوپاس','دەستخۆش','دەست خۆش','مەمنون','مەمنونم','سپاس'],
+  bye:['bye','byee','goodbye','good bye','see you','see ya','later','good night','goodnight','take care','cya',
+       'مع السلامه','مع السلامة','باي','الى اللقاء','إلى اللقاء','تصبح على خير','تصبحين على خير','في امان الله',
+       'خوات لەگەڵ','خواحافیز','خوا حافیز','شەو باش','شەوت باش','بەخێر بچیت','دواتر دەبینین','بای'],
+  compliment:['love it','love you','i love','amazing','awesome','great job','well done','nice','cool','perfect','beautiful','brilliant','excellent','wonderful','smart','clever','you are the best',"you're the best",'good bot','impressive','wow',
+              'حلو','حلوه','رائع','رايع','ممتاز','جميل','جمیل','تحفه','تحفة','يجنن','یجنن','احبك','احبکم','عاشت ايدك','عاشت ایدک','وااو','واو',
+              'نایاب','نایابە','جوانە','زۆر جوانە','زۆر باشە','دەستت خۆش','خۆشم دەوێیت','ئافەرین','ئافەرم','وای'],
+  who:['who are you','what are you','are you human','are you a bot','are you a robot','are you real','are you ai','are you a person','your name',"what's your name",'whats your name','who made you','who built you',
+       'من انت','مین انت','انت مين','انتی مین','شنو انت','شو انت','ما اسمك','ما اسمک','شنو اسمك','شنو اسمک','هل انت روبوت','انت روبوت','انت انسان','ذكاء اصطناعي','ذکاء اصطناعی',
+       'تۆ کێیت','کێیت','تۆ چیت','ناوت چییە','ناوت چیە','ڕۆبۆتی','ڕۆبۆتیت','مرۆڤی','زیرەکی دەستکرد'],
+  help:['what can you do','what do you do','how does this work','how do you work','help me','can you help','i need help','options','menu','what can i ask','what should i ask','how to use',
+        'ماذا تستطيع','ماذا تفعل','شو تقدر','شنو تكدر','شنو تکدر','ساعدني','ساعدنی','احتاج مساعده','كيف يشتغل','کیف یشتغل','شو بتعمل',
+        'چی دەتوانیت','چی دەکەیت','یارمەتیم بدە','یارمەتی','پێویستم بە یارمەتی','چۆن کار دەکات','چی بپرسم'],
+  laugh:['haha','hahaha','hehe','lol','lmao','rofl','هههه','ههههه','هاها','هەهە','هەهەهە','خخخخ'],
+  joke:['joke','tell me a joke','make me laugh','something funny','funny','نكته','نکته','نكتة','ضحكني','ضحکنی','نوکتە','نکتە','پێکەنینم پێ بکە','گاڵتە'],
+  human:['human','real person','talk to someone','speak to someone','talk to a person','staff','agent','customer service','manager','reception','receptionist',
+         'موظف','شخص حقيقي','شخص حقیقی','خدمه العملاء','خدمة العملاء','الاستقبال','ابي احكي','اريد اتكلم','المدير',
+         'کارمەند','کەسێکی ڕاستەقینە','مرۆڤێک','پێشوازی','بەڕێوەبەر','قسە لەگەڵ کەسێک'],
+  complaint:['complaint','complain','not happy','unhappy','disappointed','angry','upset','bad service','terrible','awful','horrible','worst','rude','refund','money back',
+             'شكوى','شکوی','زعلانه منكم','غير راضي','غیر راضی','مو راضي','ناراض','سيء','سیء','سئ','زفت','استرجاع','استرداد',
+             'سکاڵا','ناڕازی','ناڕازیم','زۆر خراپ','تووڕە','توڕە','پارەکەم بگەڕێننەوە'],
+  unsure:["don't know",'dont know','do not know','not sure','no idea','idk','recommend','suggest','suggestion','surprise me','anything','whatever','popular','most popular','best seller','bestseller','best sellers','trending','favourite','favorite','what do you have','what do you offer','what do you recommend','what should i','where do i start','first time','new here',
+          'ما اعرف','ما اعرف شو','ما ادري','ما ادری','مدري','مدری','مو متاكد','مو متاکد','اقترح','اقتراح','شو تنصح','ماذا تنصح','شنو تنصح','شنو عندكم','شنو عندکم','شو عندكم','الاكثر طلبا','الأكثر طلباً','اول مره','اول مرة','جديده','جدیده',
+          'نازانم','دڵنیا نیم','پێشنیار','پێشنیاز','چی باشە','چیتان هەیە','چی هەیە','باوترین','یەکەم جارمە','تازەم','چی دەڵێیت'],
+  yes:['yes','yeah','yep','yup','ya','yea','sure','ok','okay','okey','k','alright','of course','please','why not','sounds good',
+       'نعم','اي','ای','ايه','ایه','ايوه','ایوه','اكيد','اکید','طبعا','تمام','اوكي','اوکی','ماشي','ماشی','يلا','یلا','ان شاء الله',
+       'بەڵێ','بەلێ','ئا','ئەرێ','ئەری','باشە','باشه','بێگومان','دەی','ئۆکێ','ئۆکەی'],
+  no:['no','nope','nah','not really','no thanks','no thank you','not now','maybe later',
+      'لا','كلا','کلا','لا شكرا','لا شکرا','مو هسه','بعدين','بعدین',
+      'نەخێر','نا','نە','نا سوپاس','ئێستا نا','دواتر'],
+  name:['my name is','my name','call me','i am called',"i'm called",'اسمي','اسمی','انا اسمي','ناوم','ناوی من','من ناوم'],
+  // ---- facts ----
+  hours:['opening hours','open hours','working hours','business hours','what time','what times','when are you open','when do you open','when do you close','are you open','open today','open now','open tomorrow','closing time','close today','hours','timing','timings','friday','weekend',
+         'ساعات','ساعات العمل','الدوام','دوام','متى تفتحون','متى تفتح','متی تفتحون','متى تسكرون','متی تسکرون','مفتوح','مفتوحين','مفتوحین','الجمعه','الجمعة','العطله','العطلة',
+         'کاتی کار','کاتی کارکردن','کاتژمێر','کەی دەکەنەوە','کەی دەکرێتەوە','کەی دادەخەن','کراوەیە','کراوەن','هەینی','دەوام','ڕۆژانی پشوو'],
+  location:['where are you','where is it','where is dolce','where is polished','where is core','where r u','location','address','directions','map','how do i get there','how do i get to you','how to get there','find you','which area','which street',
+            'وين','وین','وينكم','وینکم','وين مكانكم','اين','أين','العنوان','عنوان','موقعكم','موقعکم','لوكيشن','لوکیشن','مكانكم','مکانکم',
+            'لە کوێن','لە کوێیە','لە کوێ','کوێ','ناونیشان','ناونیشانتان','شوێنتان','لۆکەیشن'],
+  points:['points','point','loyalty','rewards','reward','member','membership','my points','how many points','tier',
+          'نقاط','نقاطي','نقاطی','نقطه','ولاء','مكافاه','مکافاه','مكافأة','عضويه','عضویه',
+          'خاڵ','خاڵەکانم','خاڵەکان','خەڵات','خەڵاتەکان','ئەندامێتی'],
+  currency:['iqd','dinar','dinars','dollar','dollars','usd','currency','iraqi dinar',
+            'دينار','دینار','دولار','عمله','عملة','بالدينار','بالدولار',
+            'دۆلار','دراو','بە دینار','بە دۆلار'],
+  language:['language','languages','english','arabic','kurdish','sorani','speak arabic','speak kurdish','in arabic','in kurdish',
+            'لغه','لغة','عربي','عربی','كردي','کردی','انكليزي','انجليزي','انگلیزی','بالعربي','بالکردی',
+            'زمان','کوردی','عەرەبی','ئینگلیزی','بە کوردی','بە عەرەبی'],
+  account:['login','log in','sign in','signin','sign up','signup','register','account','password','otp','verification code','my account','create account',
+           'تسجيل','تسجيل دخول','تسجيل الدخول','حساب','حسابي','حسابی','رمز','كلمه السر','کلمه السر','كود','کود',
+           'چوونەژوورەوە','چونەژورەوە','خۆتۆمارکردن','هەژمار','هەژمارەکەم','وشەی نهێنی','کۆد','ئەکاونت'],
+  cancel:['cancel','cancellation','reschedule','re schedule','change my booking','change my appointment','move my appointment','postpone','change the time','change time','running late',
+          'الغاء','إلغاء','الغي','الغی','تاجيل','تأجيل','تاجیل','تغيير الموعد','تغییر الموعد','غير الموعد','متاخر','متاخره',
+          'هەڵوەشاندنەوە','هەڵیوەشێنەوە','دواخستن','دوای بخە','گۆڕینی کات','کاتەکە بگۆڕە','درەنگ'],
+  payment:['pay','payment','pay by card','card payment','cash','visa','mastercard','credit card','installment','instalment','fib','zain cash','zaincash','fastpay',
+           'دفع','الدفع','كاش','کاش','الدفع بالبطاقه','فيزا','فیزا','تقسيط','تقسیط','زين كاش','زین کاش',
+           'پارەدان','پارە بدەم','قیست','ڤیزا'],
+  delivery:['delivery','deliver','shipping','ship','send it','home delivery','pick up','pickup',
+            'توصيل','توصیل','ديليفري','دلفري','شحن','استلام',
+            'گەیاندن','بگەیەننە','دیلیڤەری','وەرگرتن'],
+  safety:['pain','painful','hurt','hurts','does it hurt','safe','is it safe','safety','side effect','side effects','risk','risks','downtime','recovery time','allergy','allergic','pregnant','pregnancy safe','breastfeeding','medication','medical condition',
+          'الم','ألم','مؤلم','مولم','يوجع','یوجع','توجع','امن','آمن','اعراض جانبيه','أعراض جانبية','مضاعفات','حامل','رضاعه','رضاعة','حساسيه','حساسية','ادويه','أدوية',
+          'ئازار','ئازاری هەیە','مەترسی','بێ مەترسی','کاریگەری لاوەکی','دووگیان','دووگیانم','شیردان','هەستیاری','دەرمان'],
+  brands:['about dolce','what is dolce','what is polished','what is core','about polished','about core','your brands','the brands','three brands','dolce plus','what is this app','about you','about the app','your places','your branches',
+          'علاماتكم','علاماتکم','فروعكم','فروعکم','الفروع','شنو دولچي','ما هو التطبيق','عن التطبيق',
+          'براندەکان','براندەکانتان','لقەکان','لقەکانتان','ئەم ئەپە چییە','دەربارەی ئەپ'],
+  // ---- follow-ups on the last answer ----
+  cheaper:['cheaper','cheapest','less expensive','lower price','budget','affordable','cheap','lowest price','something cheaper','too expensive','expensive',
+           'ارخص','أرخص','الارخص','رخيص','رخیص','ارخص شي','غالي','غالی','غاليه','سعر اقل','اقل سعر',
+           'هەرزانتر','هەرزانترین','هەرزان','گرانە','زۆر گرانە','نرخی کەمتر'],
+  premium:['most expensive','premium','luxury','luxurious','vip','top one','fancy','high end',
+           'فاخر','فخم','الاغلى','الأغلى','اغلى','ڤي اي بي',
+           'لوکس','گرانترین','باشترینیان','تایبەتترین'],
+  more:['more','other','others','another','anything else','something else','else','different','show more','show me more','more options','other options',
+        'غير','غيرها','غیرها','غيره','اخرى','أخرى','اكثر','أكثر','المزيد','شي ثاني','شی ثانی','خيارات','خیارات',
+        'زیاتر','هی تر','شتێکی تر','تر','بژاردەی تر','هیتر'],
+  price:['how much','price','prices','cost','costs','how much is it','how much does it cost','pricing','fee',
+         'كم','کم','بكم','بکم','سعر','السعر','اسعار','الاسعار','كم السعر','کم السعر','بيش','بیش','شكد','شکد',
+         'نرخ','نرخی','نرخەکان','چەندە','بە چەندە','بە چەند','چەند'],
+  duration:['how long','duration','how much time','how many minutes','take long','how long does it take','session length','long is it',
+            'كم يستغرق','كم تستغرق','کم یستغرق','كم وقت','کم وقت','المده','المدة','مده','مدة','كم دقيقه','کم دقیقه','شكد ياخذ','شکد یاخذ',
+            'چەند دەخایەنێت','چەندی دەوێت','ماوە','ماوەی','چەند خولەک','چەند کات'],
+  bookit:['book it','book this','book that','book one','i want it','i want this','i want that','i want to book','lets book',"let's book",'reserve it','book now','sign me up','i will take it',"i'll take it",
+          'احجز','احجزلي','احجزلی','ابي احجز','ابی احجز','اريد احجز','ارید احجز','اريد احجزه','ابيه','ابیه','اريده','اریده','خلص احجز',
+          'حجزی بکە','حجز دەکەم','دەمەوێت حجز بکەم','دەمەوێت','ئەمەم دەوێت','حجزم بۆ بکە'],
+};
+/* "The first one", "number 2", "الثاني", "دووەم"… → which item of the last list. */
+const AI_ORDINALS=[
+  ['first','1st','number 1','no 1','the 1','one','1','الاول','الأول','اول','أول','الاولى','الأولى','رقم 1','١','یەکەم','یەکەمیان','یەکەمین','ژمارە 1'],
+  ['second','2nd','number 2','no 2','two','2','الثاني','الثانی','ثاني','الثانيه','الثانية','رقم 2','٢','دووەم','دووەمیان','دووەمین','ژمارە 2'],
+  ['third','3rd','number 3','no 3','three','3','الثالث','ثالث','الثالثه','الثالثة','رقم 3','٣','سێیەم','سێیەمیان','سێیەمین','ژمارە 3'],
+  ['fourth','4th','number 4','four','4','الرابع','رابع','رقم 4','٤','چوارەم','چوارەمیان'],
+  ['fifth','5th','number 5','five','5','الخامس','خامس','رقم 5','٥','پێنجەم','پێنجەمیان'],
+  ['last','last one','the last','الاخير','الأخير','اخیر','کۆتایی','دواییەکە','دوایین'],
+];
+
+const AI_CHAT_TEXT={
+  en:{
+    greet:["Hi{n}! 😊 What are you in the mood for today — skin, hair, nails, or a pilates or yoga class?",
+           "Hello{n}! Lovely to see you. Tell me what you'd like to feel or fix, and I'll find the right treatment.",
+           "Hey{n}! 👋 Ask me anything — a treatment, a class, a product or our offers."],
+    greetShort:['Hi{n}! 😊','Hello{n}! 👋','Hey{n}! ✨'],
+    howru:["I'm doing great, thanks for asking! 😊 How are you?","All good here, thank you! How's your day going?","I'm wonderful — even better now you're here! How are you?"],
+    fine:["Glad to hear it! 💛 What can I help you with today?","Lovely! Is there a treatment, class or product you're curious about?"],
+    notgoodShort:["Sorry to hear that 💛 Let's find you something that helps."],
+    notgood:["Oh no, I'm sorry to hear that 💛 A little time for yourself can really help — here are some relaxing ideas.",
+             "Sending you a hug 🤍 Maybe it's time for some self-care — these are our most calming options."],
+    thanks:["You're very welcome! 💛 Anything else I can help with?","Anytime! Just ask if you need anything else.","My pleasure 😊 Anything else?"],
+    bye:["Bye for now{n}! Take care 💛","See you soon{n} — treat yourself! ✨","Take care{n}! We'd love to see you soon. 🌸"],
+    compliment:["Aww, thank you! 💛 That made my day.","Thank you so much! 😊 Can I find something for you?","You're too kind! ✨"],
+    who:["I'm the Dolce+ assistant ✨ — a little helper who knows the menus of Dolce, Polished and Core, our offers and our shop. I'm not a person, so for anything personal our team on WhatsApp is happy to help."],
+    help:["Here's what I can do:\n• Suggest treatments for a goal — try “glowing skin”, “acne scars” or “get stronger”\n• Show offers and prices — try “any offers?”\n• Find shop products — try “a serum for dry skin”\n• Tell you booking times and how to book\nAfter I suggest something, you can say “cheaper”, “more”, “how long” or “the first one”."],
+    laugh:["😄 Glad I made you smile!","Haha 😊 What else can I do for you?"],
+    joke:["Why did the yoga teacher never argue? She didn't want to get bent out of shape. 🧘‍♀️",
+          "I tried to tell a pilates joke… but it was a bit of a stretch. 😄",
+          "My nails and I have a lot in common — we both like to look polished. 💅",
+          "Why did the face mask go to therapy? It had too many layers to peel back. 😄"],
+    human:["Of course! Our team is happy to talk to you on WhatsApp — pick the place below."],
+    complaint:["I'm really sorry about that 💛 Please message our team on WhatsApp — a real person will look into it and sort it out for you."],
+    unsure:["No problem — here are some client favourites from each place. Or tell me a goal like “glowing skin”, “relax” or “get stronger”."],
+    yesCtx:["Great! Tap the one you like to see the details and book — or just say “the first one”."],
+    yes:["Great! Tell me what you're looking for — skin, hair, nails, lashes, pilates, yoga or a product."],
+    no:["No problem at all! If you change your mind, I'm right here. 😊","Okay! Just ask whenever you need something."],
+    name:["Nice to meet you, {name}! 😊 What can I find for you today?"],
+    hours:["When you book, you can choose times from {open} to {close}. For holidays or a different time, just ask us on WhatsApp."],
+    location:["We're in Erbil. Message the place you're visiting on WhatsApp and the team will send you the exact location pin. 📍"],
+    pointsIn:["You have {pts} points ✨ — {togo} more to your next reward. Rewards include: {rewards}. You can see them in your Profile."],
+    pointsGoal:["You have {pts} points — that's enough for a reward! 🎉 Show this to our team or message us on WhatsApp to redeem."],
+    pointsOut:["With a Dolce+ account you collect loyalty points at Dolce, Polished and Core. {goal} points unlock a reward: {rewards}. Log in from your Profile to see yours."],
+    pointsOff:["Loyalty points are collected at Dolce, Polished and Core — {goal} points unlock a reward: {rewards}. Ask our team about your points."],
+    currency:["All prices are set in US dollars. Tap “IQD” at the top to see them in Iraqi dinar."],
+    language:["I understand English, Arabic and Kurdish (Sorani) 😊 You can switch the app's language in your Profile or with the buttons at the top."],
+    accountOn:["Logging in is easy: open Profile, type your mobile number and we send you a 6-digit code on WhatsApp — no password needed. One account works for Dolce, Polished and Core."],
+    accountOff:["You don't need an account to book — just open a treatment and tap “Request Booking”, and our team confirms it."],
+    cancel:["No problem — to change or cancel an appointment, message the team on WhatsApp and they'll sort it out for you. Your bookings are listed under Bookings."],
+    payment:["You pay when you visit. For shop orders, your bag is sent to us on WhatsApp and the team confirms payment there. For which payment methods are accepted, just ask the team."],
+    delivery:["Shop orders are sent to us on WhatsApp from your bag, and the team arranges pickup or delivery with you there."],
+    safety:["Good question. Everyone is different, so our specialists always check with you first. Please tell them if you're pregnant, breastfeeding, have allergies or take any medication. For personal medical advice, message us on WhatsApp to arrange a consultation."],
+    brands:["Dolce+ is one account for three places in Erbil:\n• Dolce — aesthetic clinic (skin, injectables, laser, wellness)\n• Polished — salon (hair, nails, lashes, brows, makeup)\n• Core — yoga & pilates studio\nWhat would you like to explore?"],
+    cheaper:["Here are the most affordable options:","These are the lighter-on-the-wallet choices 💛"],
+    premium:["Here are our most luxurious options ✨","Treat yourself — these are the top-tier choices:"],
+    more:["Here are a few more options:","Sure — some other ideas:"],
+    noMore:["That's everything I have for that. Want to try something else, or ask our team on WhatsApp?"],
+    price:["Here are the prices:"],
+    priceNote:"Prices are in US dollars — tap “IQD” at the top to see Iraqi dinar.",
+    duration:["Here's how long each one takes:"],
+    noDuration:"Our team can confirm the exact time on WhatsApp.",
+    whichOne:["Which one would you like? Tap it to see details and book — or say “the first one”, “the second one”…"],
+    opening:["Opening {item} for you… ✨"],
+    rewardsJoin:', ',
+  },
+  ar:{
+    greet:["أهلاً{n}! 😊 شو حابة اليوم — بشرة، شعر، أظافر، أو حصة بيلاتس أو يوغا؟",
+           "مرحباً{n}! سعداء بوجودك. قولي لي ماذا تحبين أن تحسّني، وسأجد لك العلاج المناسب.",
+           "هلا{n}! 👋 اسأليني أي شيء — علاج، حصة، منتج أو عروضنا."],
+    greetShort:['أهلاً{n}! 😊','مرحباً{n}! 👋','هلا{n}! ✨'],
+    howru:["أنا بخير، شكراً على سؤالك! 😊 وأنتِ كيف حالك؟","كل شيء تمام، شكراً! كيف يومك؟"],
+    fine:["الحمد لله! 💛 كيف أقدر أساعدك اليوم؟","رائع! هل في علاج أو حصة أو منتج حابة تعرفي عنه؟"],
+    notgoodShort:["آسفة لسماع ذلك 💛 خلينا نلاقي لك شيئاً يساعدك."],
+    notgood:["آسفة لسماع ذلك 💛 القليل من الوقت لنفسك قد يساعد — هذه بعض الأفكار المريحة.",
+             "أرسل لك حضناً 🤍 ربما حان وقت الاهتمام بنفسك — هذه أكثر الخيارات راحة."],
+    thanks:["العفو! 💛 هل هناك شيء آخر أساعدك فيه؟","في أي وقت! اسأليني متى احتجتِ.","بكل سرور 😊"],
+    bye:["مع السلامة{n}! اعتني بنفسك 💛","نراك قريباً{n} — دلّلي نفسك! ✨"],
+    compliment:["شكراً جزيلاً! 💛 أسعدتِ يومي.","ذوقك! 😊 هل أبحث لك عن شيء؟"],
+    who:["أنا مساعد Dolce+ ✨ — مساعد صغير يعرف قوائم Dolce وPolished وCore وعروضنا ومتجرنا. لست إنساناً، لذلك لأي شيء شخصي فريقنا على واتساب يسعده مساعدتك."],
+    help:["هذا ما أستطيع فعله:\n• أقترح علاجات حسب هدفك — جربي «بشرة نضرة» أو «آثار حب الشباب» أو «أريد أن أصبح أقوى»\n• أعرض العروض والأسعار — جربي «في عروض؟»\n• أجد منتجات المتجر — جربي «سيروم للبشرة الجافة»\n• أخبرك بأوقات الحجز وطريقته\nبعد أن أقترح شيئاً، قولي «أرخص» أو «المزيد» أو «كم يستغرق» أو «الأول»."],
+    laugh:["😄 سعيدة أني أضحكتك!","هههه 😊 شو كمان أقدر أساعدك؟"],
+    joke:["ليش مدربة اليوغا ما تزعل أبداً؟ لأنها دائماً مرنة! 🧘‍♀️",
+          "قالت الأظافر للمبرد: لولاك ما كان عندي شكل! 💅",
+          "ليش الماسك دائماً هادي؟ لأنه يعرف كيف يرتاح على الوجه 😄"],
+    human:["طبعاً! فريقنا يسعده التحدث معك على واتساب — اختاري المكان أدناه."],
+    complaint:["أنا آسفة جداً 💛 أرجوكِ راسلي فريقنا على واتساب — شخص حقيقي سيتابع الموضوع ويحله لك."],
+    unsure:["لا مشكلة — هذه بعض الخيارات المفضلة لدى عملائنا من كل مكان. أو قولي لي هدفاً مثل «بشرة نضرة» أو «استرخاء» أو «لياقة»."],
+    yesCtx:["رائع! اضغطي على الخيار الذي يعجبك لرؤية التفاصيل والحجز — أو قولي «الأول»."],
+    yes:["رائع! قولي لي ما تبحثين عنه — بشرة، شعر، أظافر، رموش، بيلاتس، يوغا أو منتج."],
+    no:["لا مشكلة أبداً! إذا غيّرتِ رأيك أنا هنا. 😊","تمام! اسأليني متى احتجتِ."],
+    name:["تشرفنا يا {name}! 😊 شو أقدر ألاقي لك اليوم؟"],
+    hours:["عند الحجز يمكنك اختيار الأوقات من {open} إلى {close}. للعطل أو لوقت مختلف، راسلينا على واتساب."],
+    location:["نحن في أربيل. راسلي المكان الذي ستزورينه على واتساب وسيرسل لك الفريق الموقع بالضبط. 📍"],
+    pointsIn:["لديك {pts} نقطة ✨ — باقي {togo} للمكافأة التالية. المكافآت تشمل: {rewards}. تجدينها في ملفك الشخصي."],
+    pointsGoal:["لديك {pts} نقطة — تكفي لمكافأة! 🎉 أخبري فريقنا أو راسلينا على واتساب لاستبدالها."],
+    pointsOut:["مع حساب Dolce+ تجمعين نقاط الولاء في Dolce وPolished وCore. {goal} نقطة تمنحك مكافأة: {rewards}. سجلي الدخول من الملف الشخصي لرؤية نقاطك."],
+    pointsOff:["تُجمع نقاط الولاء في Dolce وPolished وCore — {goal} نقطة تمنحك مكافأة: {rewards}. اسألي فريقنا عن نقاطك."],
+    currency:["جميع الأسعار بالدولار الأمريكي. اضغطي «IQD» في الأعلى لرؤيتها بالدينار العراقي."],
+    language:["أفهم الإنجليزية والعربية والكردية (السورانية) 😊 يمكنك تغيير لغة التطبيق من ملفك الشخصي أو من الأزرار في الأعلى."],
+    accountOn:["تسجيل الدخول سهل: افتحي الملف الشخصي، اكتبي رقم هاتفك وسنرسل لك رمزاً من 6 أرقام على واتساب — بدون كلمة سر. حساب واحد لـ Dolce وPolished وCore."],
+    accountOff:["لا تحتاجين حساباً للحجز — افتحي أي علاج واضغطي «طلب حجز» وسيؤكده فريقنا."],
+    cancel:["لا مشكلة — لتغيير الموعد أو إلغائه راسلي الفريق على واتساب وسيرتبونه لك. حجوزاتك موجودة في قسم الحجوزات."],
+    payment:["الدفع يكون عند زيارتك. لطلبات المتجر تُرسل سلتك إلينا على واتساب ويؤكد الفريق الدفع هناك. لمعرفة طرق الدفع المتاحة اسألي الفريق."],
+    delivery:["طلبات المتجر تُرسل إلينا على واتساب من سلتك، ويرتب الفريق معك الاستلام أو التوصيل هناك."],
+    safety:["سؤال مهم. كل شخص مختلف، لذلك يتحقق مختصونا معك دائماً أولاً. أخبريهم إذا كنتِ حاملاً أو مرضعاً أو لديك حساسية أو تتناولين أدوية. للاستشارة الطبية الشخصية راسلينا على واتساب لترتيب استشارة."],
+    brands:["Dolce+ حساب واحد لثلاثة أماكن في أربيل:\n• Dolce — عيادة تجميل (بشرة، حقن، ليزر، عافية)\n• Polished — صالون (شعر، أظافر، رموش، حواجب، مكياج)\n• Core — استوديو يوغا وبيلاتس\nماذا تحبين أن تكتشفي؟"],
+    cheaper:["هذه الخيارات الأنسب سعراً:","هذه خيارات أخف على الجيب 💛"],
+    premium:["هذه أفخم خياراتنا ✨","دلّلي نفسك — هذه الخيارات المميزة:"],
+    more:["هذه خيارات إضافية:","أكيد — أفكار أخرى:"],
+    noMore:["هذا كل ما لدي لهذا الطلب. تحبين تجربة شيء آخر، أو تسألين فريقنا على واتساب؟"],
+    price:["هذه الأسعار:"],
+    priceNote:"الأسعار بالدولار — اضغطي «IQD» في الأعلى لرؤيتها بالدينار.",
+    duration:["هذه مدة كل واحد:"],
+    noDuration:"يمكن لفريقنا تأكيد المدة بالضبط على واتساب.",
+    whichOne:["أي واحد تفضلين؟ اضغطي عليه لرؤية التفاصيل والحجز — أو قولي «الأول»، «الثاني»…"],
+    opening:["أفتح لك {item}… ✨"],
+    rewardsJoin:'، ',
+  },
+  ku:{
+    greet:["سڵاو{n}! 😊 ئەمڕۆ حەزت لە چییە — پێست، قژ، نینۆک، یان پۆلێکی پیلاتس یان یۆگا؟",
+           "بەخێربێیت{n}! پێم بڵێ دەتەوێت چی باشتر بکەیت، منیش چارەسەری گونجاوت بۆ دەدۆزمەوە.",
+           "سڵاو{n}! 👋 هەر شتێک بپرسە — چارەسەر، پۆل، بەرهەم یان ئۆفەرەکانمان."],
+    greetShort:['سڵاو{n}! 😊','بەخێربێیت{n}! 👋'],
+    howru:["زۆر باشم، سوپاس بۆ پرسیارەکەت! 😊 تۆ چۆنیت؟","هەموو شتێک باشە، سوپاس! ڕۆژەکەت چۆنە؟"],
+    fine:["زۆر خۆشحاڵم! 💛 ئەمڕۆ چۆن یارمەتیت بدەم؟","نایابە! چارەسەر، پۆل یان بەرهەمێک هەیە کە بتەوێت لەبارەیەوە بزانیت؟"],
+    notgoodShort:["ببورە کە وایە 💛 با شتێکت بۆ بدۆزینەوە کە یارمەتیت بدات."],
+    notgood:["ببورە کە وایە 💛 کەمێک کات بۆ خۆت دەتوانێت یارمەتیدەر بێت — ئەمانە هەندێک بیرۆکەی ئارامبەخشن.",
+             "باوەشێکت بۆ دەنێرم 🤍 لەوانەیە کاتی گرنگیدان بە خۆت بێت — ئەمانە ئارامبەخشترین هەڵبژاردەکانن."],
+    thanks:["شایەنی نییە! 💛 شتێکی تر هەیە یارمەتیت بدەم؟","هەر کاتێک! هەرچیت پێویست بوو بپرسە.","بە خۆشحاڵییەوە 😊"],
+    bye:["خوات لەگەڵ{n}! ئاگات لە خۆت بێت 💛","بەم زووانە دەتبینینەوە{n} — خۆت بخەڵەتێنە! ✨"],
+    compliment:["زۆر سوپاس! 💛 ڕۆژەکەمت خۆش کرد.","تۆ زۆر بەڕێزیت! 😊 شتێکت بۆ بدۆزمەوە؟"],
+    who:["من یاریدەدەری Dolce+ م ✨ — یاریدەدەرێکی بچووک کە لیستی Dolce و Polished و Core و ئۆفەر و فرۆشگاکەمان دەزانێت. من مرۆڤ نیم، بۆیە بۆ هەر شتێکی تایبەت تیمەکەمان لە واتساپ بە خۆشحاڵییەوە یارمەتیت دەدات."],
+    help:["ئەمانە دەتوانم بکەم:\n• چارەسەر پێشنیار بکەم بەپێی ئامانجەکەت — تاقی بکەرەوە «پێستی گەشاوە»، «شوێنەواری زیپکە» یان «بەهێزتر بم»\n• ئۆفەر و نرخەکان پیشان بدەم — تاقی بکەرەوە «ئۆفەر هەیە؟»\n• بەرهەمی فرۆشگا بدۆزمەوە — تاقی بکەرەوە «سیرۆم بۆ پێستی وشک»\n• کاتەکانی حجز و چۆنیەتی حجزکردن\nدوای پێشنیارکردن، بڵێ «هەرزانتر»، «زیاتر»، «چەند دەخایەنێت» یان «یەکەم»."],
+    laugh:["😄 خۆشحاڵم کە زەردەخەنەم هێنایە سەر لێوت!","هەهە 😊 چیتر بۆت بکەم؟"],
+    joke:["بۆچی مامۆستای یۆگا هەرگیز تووڕە نابێت؟ چونکە هەمیشە نەرمە! 🧘‍♀️",
+          "نینۆک بە سووهانەکەی گوت: بەبێ تۆ هیچ شێوەیەکم نەبوو! 💅",
+          "بۆچی ماسکی دەموچاو هەمیشە ئارامە؟ چونکە دەزانێت چۆن پشوو بدات 😄"],
+    human:["بێگومان! تیمەکەمان بە خۆشحاڵییەوە لە واتساپ قسەت لەگەڵ دەکات — شوێنەکە لە خوارەوە هەڵبژێرە."],
+    complaint:["زۆر ببورە 💛 تکایە نامە بۆ تیمەکەمان بنێرە لە واتساپ — کەسێکی ڕاستەقینە سەیری دەکات و بۆت چارەسەری دەکات."],
+    unsure:["کێشە نییە — ئەمانە هەندێک هەڵبژاردەی خۆشەویستی کڕیارەکانمانن لە هەر شوێنێک. یان ئامانجێکم پێ بڵێ وەک «پێستی گەشاوە»، «ئارامی» یان «بەهێزبوون»."],
+    yesCtx:["نایابە! ئەوەی حەزت لێیە دابگرە بۆ بینینی وردەکاری و حجزکردن — یان بڵێ «یەکەم»."],
+    yes:["نایابە! پێم بڵێ بەدوای چیدا دەگەڕێیت — پێست، قژ، نینۆک، برژانگ، پیلاتس، یۆگا یان بەرهەم."],
+    no:["هیچ کێشە نییە! ئەگەر بیرت گۆڕی من لێرەم. 😊","باشە! هەر کاتێک پێویستت بوو بپرسە."],
+    name:["خۆشحاڵم بە ناسینت، {name}! 😊 ئەمڕۆ چیت بۆ بدۆزمەوە؟"],
+    hours:["کاتێک حجز دەکەیت دەتوانیت کات هەڵبژێریت لە {open} تا {close}. بۆ پشووەکان یان کاتێکی جیاواز، لە واتساپ پێمان بڵێ."],
+    location:["ئێمە لە هەولێرین. نامە بۆ ئەو شوێنە بنێرە کە سەردانی دەکەیت لە واتساپ و تیمەکە لۆکەیشنی وردت بۆ دەنێرێت. 📍"],
+    pointsIn:["تۆ {pts} خاڵت هەیە ✨ — {togo} ی ماوە بۆ خەڵاتی داهاتوو. خەڵاتەکان: {rewards}. لە پرۆفایلەکەتدا دەیانبینیت."],
+    pointsGoal:["تۆ {pts} خاڵت هەیە — بەسە بۆ خەڵاتێک! 🎉 بە تیمەکەمان بڵێ یان لە واتساپ نامەمان بۆ بنێرە بۆ وەرگرتنی."],
+    pointsOut:["بە هەژمارێکی Dolce+ خاڵی بەداخوازی کۆدەکەیتەوە لە Dolce و Polished و Core. {goal} خاڵ خەڵاتێکت پێدەدات: {rewards}. لە پرۆفایلەوە بچۆ ژوورەوە بۆ بینینی خاڵەکانت."],
+    pointsOff:["خاڵی بەداخوازی لە Dolce و Polished و Core کۆدەکرێتەوە — {goal} خاڵ خەڵاتێکت پێدەدات: {rewards}. دەربارەی خاڵەکانت لە تیمەکەمان بپرسە."],
+    currency:["هەموو نرخەکان بە دۆلاری ئەمریکین. «IQD» لە سەرەوە دابگرە بۆ بینینیان بە دیناری عێراقی."],
+    language:["من ئینگلیزی، عەرەبی و کوردی (سۆرانی) تێدەگەم 😊 دەتوانیت زمانی ئەپەکە لە پرۆفایلەکەت یان بە دوگمەکانی سەرەوە بگۆڕیت."],
+    accountOn:["چوونەژوورەوە ئاسانە: پرۆفایل بکەرەوە، ژمارەی مۆبایلەکەت بنووسە و کۆدێکی 6 ژمارەییت بۆ دەنێرین لە واتساپ — بێ وشەی نهێنی. یەک هەژمار بۆ Dolce و Polished و Core."],
+    accountOff:["بۆ حجزکردن پێویستت بە هەژمار نییە — هەر چارەسەرێک بکەرەوە و «داواکردنی حجز» دابگرە، تیمەکەمان پشتڕاستی دەکاتەوە."],
+    cancel:["کێشە نییە — بۆ گۆڕین یان هەڵوەشاندنەوەی کاتەکەت، لە واتساپ نامە بۆ تیمەکە بنێرە و بۆت ڕێکی دەخەن. حجزەکانت لە بەشی حجزەکان دان."],
+    payment:["پارەدان لە کاتی سەردانەکەتدایە. بۆ داواکاری فرۆشگا، سەبەتەکەت لە واتساپ بۆمان دەنێردرێت و تیمەکە لەوێ پارەدان پشتڕاست دەکاتەوە. بۆ زانینی ڕێگاکانی پارەدان لە تیمەکە بپرسە."],
+    delivery:["داواکارییەکانی فرۆشگا لە سەبەتەکەتەوە لە واتساپ بۆمان دەنێردرێن، و تیمەکە لەوێ وەرگرتن یان گەیاندنت بۆ ڕێک دەخات."],
+    safety:["پرسیارێکی باشە. هەموو کەسێک جیاوازە، بۆیە پسپۆڕەکانمان هەمیشە سەرەتا لەگەڵت دەپشکنن. تکایە پێیان بڵێ ئەگەر دووگیانیت، شیر دەدەیت، هەستیاریت هەیە یان دەرمان بەکاردەهێنیت. بۆ ڕاوێژی پزیشکی تایبەت، لە واتساپ نامەمان بۆ بنێرە بۆ ڕێکخستنی ڕاوێژکردن."],
+    brands:["Dolce+ یەک هەژمارە بۆ سێ شوێن لە هەولێر:\n• Dolce — کلینیکی جوانکاری (پێست، دەرزی، لەیزەر، تەندروستی)\n• Polished — ساڵۆن (قژ، نینۆک، برژانگ، برۆ، مەیکئەپ)\n• Core — ستۆدیۆی یۆگا و پیلاتس\nحەز دەکەیت چی ببینیت؟"],
+    cheaper:["ئەمانە هەرزانترین هەڵبژاردەکانن:","ئەمانە هەڵبژاردەی سووکتر بۆ گیرفانن 💛"],
+    premium:["ئەمانە لوکسترین هەڵبژاردەکانمانن ✨","خۆت بخەڵەتێنە — ئەمانە باشترین هەڵبژاردەکانن:"],
+    more:["ئەمانە چەند هەڵبژاردەیەکی ترن:","بێگومان — چەند بیرۆکەیەکی تر:"],
+    noMore:["ئەوە هەموو ئەوەیە کە بۆ ئەمە هەمە. دەتەوێت شتێکی تر تاقی بکەیتەوە، یان لە واتساپ لە تیمەکەمان بپرسیت؟"],
+    price:["ئەمانە نرخەکانن:"],
+    priceNote:"نرخەکان بە دۆلارن — «IQD» لە سەرەوە دابگرە بۆ بینینیان بە دینار.",
+    duration:["ئەمە ماوەی هەر یەکێکیانە:"],
+    noDuration:"تیمەکەمان دەتوانێت ماوەی ورد لە واتساپ پشتڕاست بکاتەوە.",
+    whichOne:["کامیانت دەوێت؟ دایبگرە بۆ بینینی وردەکاری و حجزکردن — یان بڵێ «یەکەم»، «دووەم»…"],
+    opening:["{item} ت بۆ دەکەمەوە… ✨"],
+    rewardsJoin:'، ',
+  },
+};
+
+function aiPick(a){ return Array.isArray(a)?a[Math.floor(Math.random()*a.length)]:a; }
+function aiFill(s,vars){ return String(s).replace(/\{(\w+)\}/g,(m,k)=>vars&&vars[k]!=null?vars[k]:''); }
+/* Text for a bot bubble: escaped, with line breaks kept. */
+function aiTextHtml(s){ return esc(s).replace(/\n/g,'<br>'); }
+/* Conversation keys match whole words (short keys) or the start of a word (longer keys). */
+function aiSaid(norm,key){
+  const k=aiNorm(key); if(!k) return false;
+  const h=' '+norm+' ';
+  if(k.length<=3 || /^\d+$/.test(k)) return h.includes(' '+k+' ');
+  return h.includes(' '+k);
+}
+function aiSaidAny(norm,keys){ return (keys||[]).some(k=>aiSaid(norm,k)); }
+/* Which conversation intents are in this message? */
+function aiIntents(norm){
+  const found=new Set();
+  Object.keys(AI_CHAT).forEach(id=>{ if(aiSaidAny(norm,AI_CHAT[id])) found.add(id); });
+  return found;
+}
+/* The client's first name, if they told us or are logged in. */
+function aiName(){
+  if(aiCtx.name) return aiCtx.name;
+  try{ if(typeof clientIn==='function' && clientIn() && loggedInClient && loggedInClient.name) return String(loggedInClient.name).trim().split(/\s+/)[0]; }catch(e){}
+  return '';
+}
+function aiSay(L,key,vars){
+  const C=AI_CHAT_TEXT[L]||AI_CHAT_TEXT.en;
+  const n=aiName();
+  return aiFill(aiPick(C[key]||AI_CHAT_TEXT.en[key]||''),Object.assign({n:n?(L==='en'?' '+n:' '+n):''},vars||{}));
+}
+/* WhatsApp buttons for all three places (for location, complaints, "talk to a person"). */
+function aiWaAll(){
+  return '<br>'+Object.keys(BRAND_WHATSAPP).filter(b=>BRANDS[b]).map(b=>
+    `<a class="rec-btn" href="https://wa.me/${BRAND_WHATSAPP[b]}" target="_blank" rel="noopener" style="margin:4px 4px 0 0;display:inline-block;">💬 ${esc(BRANDS[b].name)}</a>`).join('');
+}
+function aiItemKey(x){ return x.kind==='prod'?'p:'+x.p.id:'s:'+x.b+'|'+x.id; }
+function aiItemPrice(x){ return numOr0(effectivePrice(x.kind==='prod'?x.p:x.s)); }
+function aiItemName(x){ return x.kind==='prod'?x.p.n:x.s.n; }
+/* Remember what the assistant is currently talking about, so follow-ups work. */
+function aiRemember(topics,svc,prod){
+  aiCtx.topics=topics||[];
+  aiCtx.pool={svc:(svc||[]).slice(),prod:(prod||[]).slice()};
+  aiCtx.seen=new Set();
+}
+/* Every live service (all brands) as recommendation items. */
+function aiAllSvc(){
+  const out=[];
+  Object.keys(BRANDS).forEach(b=>(svcList(b)||[]).forEach(s=>out.push({kind:'svc',b,id:s.id,s})));
+  return out;
+}
+function aiAllProd(){ return (STORE.products||[]).filter(p=>p.active!==false&&numOr0(p.stock)>0).map(p=>({kind:'prod',p})); }
+/* Open a remembered item (service or product). */
+function aiOpenItem(x,L){
+  aiBubble('bot',aiTextHtml(aiSay(L,'opening',{item:aiItemName(x)})));
+  setTimeout(()=>{
+    document.getElementById('aiOverlay').classList.remove('open');
+    if(x.kind==='prod'){ currentProduct=String(x.p.id); goto('product'); }
+    else { currentBrand=x.b; currentService=x.s.id; goto('detail'); }
+  },650);
+}
+/* Client favourites: one per place (offers first), plus a popular product. */
+function aiFavourites(){
+  const svc=[];
+  Object.keys(BRANDS).forEach(b=>{
+    const list=(svcList(b)||[]).slice();
+    const pick=list.find(s=>hasDiscount(s))||list[0];
+    if(pick) svc.push({kind:'svc',b,id:pick.id,s:pick});
+  });
+  const prods=aiAllProd();
+  const prod=(prods.filter(x=>hasDiscount(x.p)).concat(prods)).slice(0,1);
+  return {svc,prod};
+}
+/* Follow-ups on the last answer: cheaper, premium, more, price, duration, book it, "the second one". */
+function aiFollowUp(norm,I,L,T){
+  const shown=aiCtx.shown||[];
+  const short=norm.split(' ').length<=6;
+  const pool=aiCtx.pool||{svc:[],prod:[]};
+  const hasPool=pool.svc.length||pool.prod.length;
+  if(I.has('cheaper')||I.has('premium')){
+    const dir=I.has('cheaper')?1:-1;
+    let svc=hasPool?pool.svc.slice():aiAllSvc();
+    let prod=hasPool?pool.prod.slice():[];
+    // A wider pool for the same subject, so "cheaper" can find options not shown yet.
+    if(aiCtx.topics.length){ const r=aiFind('',aiCtx.topics); if(r.allSvc) svc=r.allSvc; if(r.allProd) prod=r.allProd; }
+    svc.sort((a,b)=>dir*(aiItemPrice(a)-aiItemPrice(b)));
+    prod.sort((a,b)=>dir*(aiItemPrice(a)-aiItemPrice(b)));
+    aiBubble('bot',aiTextHtml(aiSay(L,dir>0?'cheaper':'premium')));
+    aiCtx.pool={svc,prod}; aiCtx.seen=new Set();
+    aiShowRecs(svc.slice(0,3),prod.slice(0,2),T);
+    return true;
+  }
+  if(!hasPool && !shown.length) return false;
+  if(I.has('more')){
+    const svc=pool.svc.filter(x=>!aiCtx.seen.has(aiItemKey(x))).slice(0,3);
+    const prod=pool.prod.filter(x=>!aiCtx.seen.has(aiItemKey(x))).slice(0,2);
+    if(!svc.length && !prod.length){ aiBubble('bot',aiTextHtml(aiSay(L,'noMore'))+aiWaLinks(T)); return true; }
+    aiBubble('bot',aiTextHtml(aiSay(L,'more')));
+    aiShowRecs(svc,prod,T);
+    return true;
+  }
+  if(!shown.length) return false;
+  // "the first one", "number 2", "الثاني", "دووەم"…
+  if(shown.length && short){
+    const idx=AI_ORDINALS.findIndex(list=>aiSaidAny(norm,list));
+    if(idx>=0){
+      const x=idx===AI_ORDINALS.length-1?shown[shown.length-1]:shown[idx];
+      if(x){ aiOpenItem(x,L); return true; }
+    }
+  }
+  if(I.has('duration')){
+    const C=AI_CHAT_TEXT[L];
+    const lines=shown.filter(x=>x.kind==='svc').map(x=>`• ${x.s.n}${x.s.dur?' — '+x.s.dur:''}`);
+    const any=shown.some(x=>x.kind==='svc'&&x.s.dur);
+    aiBubble('bot',aiTextHtml(aiSay(L,'duration')+'\n'+lines.join('\n')+(any?'':'\n'+C.noDuration)));
+    return true;
+  }
+  if(I.has('price')){
+    aiBubble('bot',aiTextHtml(aiSay(L,'price')));
+    const svc=shown.filter(x=>x.kind==='svc'), prod=shown.filter(x=>x.kind==='prod');
+    aiShowRecs(svc,prod,T,true);
+    aiBubble('bot',aiTextHtml(AI_CHAT_TEXT[L].priceNote));
+    return true;
+  }
+  if(I.has('bookit')){
+    const svc=shown.filter(x=>x.kind==='svc');
+    if(svc.length===1){ aiOpenItem(svc[0],L); return true; }
+    aiBubble('bot',aiTextHtml(aiSay(L,'whichOne')));
+    return true;
+  }
+  if(I.has('yes') && short){ aiBubble('bot',aiTextHtml(aiSay(L,'yesCtx'))); return true; }
+  return false;
+}
+/* Simple facts, answered from the app's own data. Returns the reply HTML, or ''. */
+function aiFact(id,L){
+  const C=AI_CHAT_TEXT[L]||AI_CHAT_TEXT.en;
+  const rewards=['r1','r2','r3','r4'].map(k=>t(k)).join(C.rewardsJoin);
+  const goal=REWARD_GOAL_PTS.toLocaleString('en-US');
+  switch(id){
+    case 'hours': return aiTextHtml(aiSay(L,'hours',{open:BUSINESS_HOURS[0],close:BUSINESS_HOURS[BUSINESS_HOURS.length-1]}))+aiWaLinks(AI_TEXT[L]);
+    case 'location': return aiTextHtml(aiSay(L,'location'))+aiWaAll();
+    case 'points': {
+      let loggedIn=false; try{ loggedIn=typeof clientIn==='function'&&clientIn(); }catch(e){}
+      if(loggedIn){
+        const pts=numOr0(loggedInClient&&loggedInClient.points);
+        if(pts>=REWARD_GOAL_PTS) return aiTextHtml(aiSay(L,'pointsGoal',{pts:pts.toLocaleString('en-US')}))+aiWaLinks(AI_TEXT[L]);
+        return aiTextHtml(aiSay(L,'pointsIn',{pts:pts.toLocaleString('en-US'),togo:(REWARD_GOAL_PTS-pts).toLocaleString('en-US'),rewards}));
+      }
+      let on=false; try{ on=typeof clientLoginOn==='function'&&clientLoginOn(); }catch(e){}
+      return aiTextHtml(aiSay(L,on?'pointsOut':'pointsOff',{goal,rewards}));
+    }
+    case 'currency': return aiTextHtml(aiSay(L,'currency'));
+    case 'language': return aiTextHtml(aiSay(L,'language'));
+    case 'account': { let on=false; try{ on=typeof clientLoginOn==='function'&&clientLoginOn(); }catch(e){}
+      return aiTextHtml(aiSay(L,on?'accountOn':'accountOff')); }
+    case 'cancel': return aiTextHtml(aiSay(L,'cancel'))+aiWaAll();
+    case 'payment': return aiTextHtml(aiSay(L,'payment'))+aiWaLinks(AI_TEXT[L]);
+    case 'delivery': return aiTextHtml(aiSay(L,'delivery'))+aiWaLinks(AI_TEXT[L]);
+    case 'safety': return aiTextHtml(aiSay(L,'safety'))+aiWaLinks(AI_TEXT[L]);
+    case 'brands': return aiTextHtml(aiSay(L,'brands'));
+  }
+  return '';
+}
+const AI_FACTS=['brands','hours','location','points','currency','language','account','cancel','payment','delivery','safety'];
+
+/* A name the client gave us ("my name is Sara", "اسمي سارة", "ناوم سارایە"). */
+function aiGrabName(raw){
+  const m=String(raw).match(/(?:my name is|my name's|call me|i am called|i'm called|انا اسمي|اسمي|اسمی|ناوی من|من ناوم|ناوم)\s*[:\-]?\s*([^\s,.!?،؛]+)/i);
+  if(!m) return '';
+  let n=m[1].replace(/(یە|ە)$/,'').trim();
+  if(n.length<2||n.length>20||/\d/.test(n)) return '';
+  if(/^[a-z]/.test(n)) n=n[0].toUpperCase()+n.slice(1);
+  return n;
+}
 function aiRespond(text){
   ensureGreeting();
   aiBubble('user',esc(text));
   const L=aiLang(), T=AI_TEXT[L];
-  const norm=aiNorm(text);
-  // 1) general questions
+  const raw=String(text||'');
+  const norm=aiNorm(typeof latinDigits==='function'?latinDigits(raw):raw);
+  const I=aiIntents(norm);
+  if(/[😂🤣😆😹]/u.test(raw)) I.add('laugh');
+  if(/[❤💛💖💕😍🥰😘👍]/u.test(raw)) I.add('compliment');
+  // General questions (offers, booking, contact) and treatment topics, strongest first
   const info=AI_INFO.find(i=>i.keys.some(k=>aiHas(norm,k)));
-  // 2) topics, strongest first
-  const scored=AI_TOPICS.map(tp=>({tp,sc:tp.keys.reduce((n,k)=>n+(aiHas(norm,k)?(aiNorm(k).length>6?2:1):0),0)}))
+  // Words already used by a fact question ("خاڵەکانم" = my points) shouldn't also pick a treatment topic ("خاڵ" = spots).
+  const factWords=AI_FACTS.filter(id=>I.has(id)).flatMap(id=>AI_CHAT[id].filter(k=>aiSaid(norm,k)).map(aiNorm));
+  const topicKey=k=>{ const nk=aiNorm(k); return aiHas(norm,k) && !factWords.some(fw=>fw.includes(nk)); };
+  const scored=AI_TOPICS.map(tp=>({tp,sc:tp.keys.reduce((n,k)=>n+(topicKey(k)?(aiNorm(k).length>6?2:1):0),0)}))
     .filter(x=>x.sc>0).sort((a,b)=>b.sc-a.sc);
   const topics=scored.slice(0,2).map(x=>x.tp);
   const wantsProducts=AI_PRODUCT_KEYS.some(k=>aiHas(norm,k));
+  const fresh=!!(topics.length||wantsProducts);       // a new subject was mentioned
+  const mode=aiCtx.mode; aiCtx.mode='';
+  const bot=html=>aiBubble('bot',html);
+  const say=(key,vars)=>aiTextHtml(aiSay(L,key,vars));
+  const showTopics=(tps,max)=>{
+    const r=aiFind('',tps);
+    aiRemember(tps,r.allSvc,r.allProd);
+    aiShowRecs(r.svc.slice(0,max||3),r.prod.slice(0,1),T);
+  };
+
+  // 1) "My name is …"
+  if(I.has('name')){
+    const nm=aiGrabName(raw);
+    if(nm){ aiCtx.name=nm; if(!fresh && !info){ bot(say('name',{name:nm})); return; } }
+  }
+  // 2) Something went wrong → straight to a person
+  if(I.has('complaint')){ bot(say('complaint')+aiWaAll()); return; }
+  if(I.has('human') && !fresh){ bot(say('human')+aiWaAll()); return; }
+  // 3) The answer to "how are you?"
+  if(!fresh && mode==='howru'){
+    if(I.has('notgood')){ bot(say('notgood')); showTopics(AI_TOPICS.filter(tp=>tp.id==='spa'||tp.id==='yoga')); return; }
+    if(I.has('fine')||I.has('thanks')||I.has('yes')){ bot(say('fine')); return; }
+  }
+  // 4) Follow-ups on the last answer: cheaper, more, how much, how long, the first one…
+  if(!fresh && !I.has('unsure') && aiFollowUp(norm,I,L,T)) return;
+  // 5) Simple facts (hours, location, points, currency, language, account, payment…)
+  const facts=AI_FACTS.filter(id=>I.has(id) && !(id==='brands' && fresh)).slice(0,2);
+  if(facts.length && (I.has('greet')||I.has('howru'))) bot(say('greetShort'));
+  facts.forEach(id=>{ const h=aiFact(id,L); if(h) bot(h); });
+  if(facts.length && !fresh) return;
+  // 6) Small talk (only when no treatment, product or question was mentioned)
+  if(!fresh && !facts.length && !info){
+    if(I.has('notgood')){ bot(say('notgood')); showTopics(AI_TOPICS.filter(tp=>tp.id==='spa'||tp.id==='yoga')); return; }
+    if(I.has('howru')){ bot(say('howru')); aiCtx.mode='howru'; return; }
+    if(I.has('who')){ bot(say('who')); return; }
+    if(I.has('help')){ bot(say('help')); return; }
+    if(I.has('joke')){ bot(say('joke')); return; }
+    if(I.has('unsure')){
+      const fav=aiFavourites();
+      bot(say('unsure'));
+      aiRemember([],fav.svc.concat(aiAllSvc().filter(x=>!fav.svc.some(f=>f.b===x.b&&f.id===x.id))),aiAllProd());
+      aiShowRecs(fav.svc,fav.prod,T);
+      return;
+    }
+    if(I.has('thanks')){ bot(say('thanks')); return; }
+    if(I.has('bye')){ bot(say('bye')); return; }
+    if(I.has('laugh')){ bot(say('laugh')); return; }
+    if(I.has('compliment')){ bot(say('compliment')); return; }
+    if(I.has('greet')){ bot(say('greet')); return; }
+    if(I.has('yes')){ bot(say('yes')); return; }
+    if(I.has('no')){ bot(say('no')); return; }
+  }
+  // A friendly word before answering a real question
+  if(!facts.length && (I.has('greet')||I.has('howru'))) bot(say('greetShort'));
+  if(fresh && I.has('notgood')) bot(say('notgoodShort'));
 
   if(info && info.kind==='deals' && !topics.length){
     const deals=[];
     Object.keys(BRANDS).forEach(b=>svcList(b).forEach(s=>{ if(hasDiscount(s)) deals.push({kind:'svc',b,id:s.id,s}); }));
     const dprods=(STORE.products||[]).filter(p=>p.active!==false&&hasDiscount(p)).map(p=>({kind:'prod',p}));
-    aiBubble('bot',esc(deals.length||dprods.length?T.deals:T.noDeals));
-    aiShowRecs(deals.slice(0,4),dprods.slice(0,3),T);
+    if(deals.length||dprods.length){
+      bot(esc(T.deals));
+      aiRemember([],deals,dprods);
+      aiShowRecs(deals.slice(0,4),dprods.slice(0,3),T);
+    } else {
+      const fav=aiFavourites();
+      bot(esc(T.noDeals));
+      aiRemember([],aiAllSvc(),aiAllProd());
+      aiShowRecs(fav.svc,fav.prod,T);
+    }
     return;
   }
   if(info && (info.kind==='booking'||info.kind==='contact') && !topics.length && !wantsProducts){
-    aiBubble('bot',esc(info.kind==='booking'?T.booking:T.contact)+aiWaLinks(T));
+    bot(esc(info.kind==='booking'?T.booking:T.contact)+(info.kind==='contact'?aiWaAll():aiWaLinks(T)));
     return;
   }
   let res;
@@ -6250,18 +6781,19 @@ function aiRespond(text){
     // Introduce the topic that the top suggestion actually belongs to.
     const topCat=res.svc[0]?String(res.svc[0].s.cat||'').toLowerCase():'';
     const lead=topics.find(tp=>tp.cats.some(c=>c.toLowerCase()===topCat))||topics[0];
-    aiBubble('bot',esc(lead.say[L]||lead.say.en));
+    bot(esc(lead.say[L]||lead.say.en));
   } else {
     res=aiFind(text,[]);
     if(!res.svc.length && !res.prod.length){
-      aiBubble('bot',esc(T.none)+aiWaLinks(T));
+      bot(esc(T.none)+aiWaLinks(T));
       return;
     }
-    aiBubble('bot',esc(T.found));
+    bot(esc(T.found));
   }
   if(!wantsProducts && topics.length) res.prod=res.prod.slice(0,2);
   if(wantsProducts && !topics.length) res.svc=res.svc.slice(0,2);
-  if(!res.svc.length && !res.prod.length){ aiBubble('bot',esc(T.none)+aiWaLinks(T)); return; }
+  if(!res.svc.length && !res.prod.length){ bot(esc(T.none)+aiWaLinks(T)); return; }
+  aiRemember(topics,res.allSvc,res.allProd);
   aiShowRecs(res.svc,res.prod,T);
 }
 function aiWaLinks(T){
@@ -6270,6 +6802,8 @@ function aiWaLinks(T){
 }
 /* The recommendation bubble: every line is tappable and opens that service or product. */
 function aiShowRecs(svcs,prods,T){
+  const items=[...(svcs||[]),...(prods||[])];
+  if(items.length){ aiCtx.shown=items; items.forEach(x=>aiCtx.seen.add(aiItemKey(x))); }
   const sLines=(svcs||[]).map(x=>`<li><span class="rec-item" data-ai-svc="${attr(x.b)}|${attr(String(x.id))}">${esc(x.s.n)}</span> <span style="color:var(--muted);">— ${esc(BRANDS[x.b].name)}, ${fmtMoney(effectivePrice(x.s))}${hasDiscount(x.s)?' 🏷️':''}</span></li>`).join('');
   const pLines=(prods||[]).map(x=>`<li><span class="rec-item" data-ai-prod="${attr(String(x.p.id))}">${esc(x.p.n)}</span> <span style="color:var(--muted);">— ${fmtMoney(effectivePrice(x.p))}</span></li>`).join('');
   if(!sLines && !pLines) return;
@@ -6631,8 +7165,16 @@ document.querySelectorAll('[data-mode-btn]').forEach(b=>{
         renderLogin();
       }
     }
+    // Keep the address bar in step, so the Admin page can be bookmarked
+    // (…/Dolce/#admin opens straight into the Admin App).
+    try{ history.replaceState(history.state,'',appMode==='admin'?'#admin':location.pathname+location.search); }catch(e){}
   });
 });
+// Direct link to the Admin App: https://kawajaff-jay.github.io/Dolce/#admin
+// (not in the installed phone app, which is client-only).
+if(location.hash==='#admin' && !(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())){
+  window.addEventListener('load',()=>{ const b=document.querySelector('[data-mode-btn="admin"]'); if(b) b.click(); });
+}
 
 /* ---------------- Admin tabs ---------------- */
 let adminTab='overview', svcBrandTab='dolce';
