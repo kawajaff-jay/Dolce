@@ -871,23 +871,27 @@
      back there; the next card peeks in on the right. */
   /* The gap equals the page margin (16px): when a card snaps to the margin,
      the card before it ends exactly at the screen edge, so no sliver of it
-     shows on the left. Each card is the page width minus that gap and a
-     deliberate 36px preview of the next one. */
+     shows on the left. Cards are big (page width minus the margins, a
+     sliver of the next one peeks in) and move on by themselves. */
   .eo-strip{display:flex;gap:16px;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;
     scroll-snap-type:x mandatory;margin:0 -16px;padding:2px 16px 18px;scroll-padding-inline:16px;scrollbar-width:none;}
   .eo-strip::-webkit-scrollbar{display:none;}
-  .eo-card{flex:0 0 calc(100% - 52px);max-width:320px;scroll-snap-align:start;scroll-snap-stop:always;display:flex;flex-direction:column;cursor:pointer;
-    background:var(--ivory);border:1px solid var(--lux-hair);border-radius:18px;overflow:hidden;
-    box-shadow:0 8px 20px -14px rgba(58,42,31,.20);}
+  .eo-card{flex:0 0 calc(100% - 10px);max-width:560px;scroll-snap-align:start;scroll-snap-stop:always;display:flex;flex-direction:column;cursor:pointer;
+    background:var(--ivory);border:1px solid var(--lux-hair);border-radius:22px;overflow:hidden;
+    box-shadow:0 12px 28px -16px rgba(58,42,31,.28);}
   .eo-card .mi.eo-media{border-radius:0;flex:none;}
   .eo-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:1;
-    font-family:var(--display);font-size:20px;letter-spacing:.08em;color:rgba(255,255,255,.88);}
-  .eo-body{flex:1;display:flex;flex-direction:column;gap:4px;padding:11px 14px 13px;}
-  .eo-meta{display:flex;justify-content:space-between;gap:8px;font:500 9.5px/1.3 var(--sans);letter-spacing:.2em;text-transform:uppercase;color:var(--label);}
+    font-family:var(--display);font-size:26px;letter-spacing:.08em;color:rgba(255,255,255,.88);}
+  .eo-body{flex:1;display:flex;flex-direction:column;gap:6px;padding:15px 18px 18px;}
+  .eo-meta{display:flex;justify-content:space-between;gap:8px;font:500 10.5px/1.3 var(--sans);letter-spacing:.2em;text-transform:uppercase;color:var(--label);}
   .eo-meta span:last-child:not(:first-child){letter-spacing:.08em;white-space:nowrap;}
-  .eo-title{font-family:var(--display);font-weight:400;font-size:16.5px;line-height:1.22;margin:1px 0 0;color:var(--ink);
+  .eo-title{font-family:var(--display);font-weight:400;font-size:21px;line-height:1.2;margin:2px 0 0;color:var(--ink);
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
-  .eo-desc{font:400 12.5px/1.45 var(--sans);color:var(--ink-soft);margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .eo-desc{font:400 14px/1.5 var(--sans);color:var(--ink-soft);margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  /* Little dots under the carousel: which card is showing (it moves on by itself). */
+  .eo-dots{display:flex;justify-content:center;gap:7px;margin:-6px 0 0;}
+  .eo-dots i{width:6px;height:6px;border-radius:3px;background:var(--lux-hair,#d9cbb8);transition:width .3s ease,background .3s ease;}
+  .eo-dots i.on{width:18px;background:var(--gold-dark,#8a6a3f);}
 
   /* Shop header */
   #screen[data-screen="shop"] .screen-head{align-items:flex-start;padding-top:26px;padding-bottom:6px;}
@@ -1208,7 +1212,7 @@
   body.tablet .lux-h2{font-size:28px;}
   body.tablet .dest-card .dest-name{font-size:32px;}
   body.tablet .eo-strip{margin:0;padding-inline:0;scroll-padding-inline:0;}
-  body.tablet .eo-card{flex:0 0 290px;max-width:none;}
+  body.tablet .eo-card{flex:0 0 440px;max-width:none;}
   body.tablet .cf{display:grid;grid-template-columns:1fr 1fr;align-items:center;}
   body.tablet .cf-body{padding:32px 36px;}
   body.tablet .cf-title{font-size:28px;}
@@ -3389,9 +3393,59 @@ function renderWelcome(){
     </section>
     ${curated.length?`<section class="lux-sec">${LuxHeader(t('curatedForYou'))}${CuratedFeature(curated[0])}</section>`:''}
     ${events.length?`<section class="lux-sec">${LuxHeader(t('upcomingEvents'))}
-      <div class="eo-strip" role="list">${events.map(EventOfferCard).join('')}</div></section>`:''}
+      <div class="eo-strip" role="list">${events.map(EventOfferCard).join('')}</div>
+      ${events.length>1?`<div class="eo-dots" aria-hidden="true">${events.map((e,i)=>`<i${i?'':' class="on"'}></i>`).join('')}</div>`:''}</section>`:''}
   `;
 }
+
+/* Upcoming events carousel: moves to the next card by itself every few
+   seconds and loops back to the first. It pauses while the client touches
+   it (and for a little while after), when the app is in the background, when
+   the carousel is off screen, and for people who turned on "Reduce Motion". */
+const EO_AUTO_MS=4500, EO_PAUSE_MS=9000;
+let eoPausedUntil=0;
+function eoCurrentIndex(strip){
+  const cards=[...strip.querySelectorAll('.eo-card')]; if(!cards.length) return -1;
+  const rtl=getComputedStyle(strip).direction==='rtl', sr=strip.getBoundingClientRect();
+  let best=0, bestD=Infinity;
+  cards.forEach((c,i)=>{ const r=c.getBoundingClientRect(); const d=Math.abs(rtl?(sr.right-r.right):(r.left-sr.left)); if(d<bestD){bestD=d;best=i;} });
+  return best;
+}
+function eoGoTo(strip,i){
+  const cards=strip.querySelectorAll('.eo-card'); const card=cards[i]; if(!card) return;
+  const rtl=getComputedStyle(strip).direction==='rtl';
+  const cs=getComputedStyle(strip);
+  const sr=strip.getBoundingClientRect(), r=card.getBoundingClientRect();
+  const delta=rtl ? r.right-(sr.right-parseFloat(cs.paddingRight||0)) : r.left-(sr.left+parseFloat(cs.paddingLeft||0));
+  // Jumping back to the first card crosses several cards; "snap stop" would halt
+  // it at the next card, so snapping is switched off for that one move.
+  const far=Math.abs(delta)>r.width*1.5;
+  if(far){ strip.style.scrollSnapType='none'; clearTimeout(strip._eoSnap); strip._eoSnap=setTimeout(()=>{ strip.style.scrollSnapType=''; },1200); }
+  strip.scrollBy({left:delta,behavior:'smooth'});
+}
+function eoUpdateDots(strip){
+  const dots=strip.parentElement&&strip.parentElement.querySelector('.eo-dots'); if(!dots) return;
+  const i=eoCurrentIndex(strip);
+  dots.querySelectorAll('i').forEach((d,k)=>d.classList.toggle('on',k===i));
+}
+document.addEventListener('scroll',e=>{
+  const el=e.target; if(el&&el.classList&&el.classList.contains('eo-strip')) eoUpdateDots(el);
+},true);
+['pointerdown','touchstart','wheel'].forEach(ev=>document.addEventListener(ev,e=>{
+  if(e.target&&e.target.closest&&e.target.closest('.eo-strip')) eoPausedUntil=Date.now()+EO_PAUSE_MS;
+},{passive:true,capture:true}));
+setInterval(()=>{
+  if(document.hidden || Date.now()<eoPausedUntil) return;
+  if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  document.querySelectorAll('.eo-strip').forEach(strip=>{
+    const n=strip.querySelectorAll('.eo-card').length; if(n<2) return;
+    const r=strip.getBoundingClientRect();
+    if(!strip.offsetParent || r.bottom<0 || r.top>innerHeight || r.width===0) return;   // not on screen
+    const ov=document.getElementById('aiOverlay'); if(ov&&ov.classList.contains('open')) return;
+    const i=eoCurrentIndex(strip);
+    eoGoTo(strip,(i+1)%n);
+  });
+},EO_AUTO_MS);
 
 /* ---------------- Product options (sizes, colours…) ----------------
    Stored on the product as [{name:'Size',values:['50 ml','100 ml']}]. The
