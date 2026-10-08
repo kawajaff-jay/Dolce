@@ -857,6 +857,8 @@
   .bar-wrap .bcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;justify-content:flex-end;height:100%;}
   .bar-wrap .b{width:100%;max-width:26px;background:var(--series-1);border-radius:4px 4px 0 0;position:relative;}
   .bar-wrap .m{font-size:12px;color:var(--muted);}
+  .stat .sub{font-size:12.5px;color:var(--muted);margin-top:4px;}
+  .chart-empty{font-size:13.5px;color:var(--muted);padding:30px 0;text-align:center;}
   .bar-wrap .b[title]:hover::after{content:attr(title);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;font-size:12.5px;padding:3px 6px;border-radius:5px;white-space:nowrap;margin-bottom:4px;}
 
   footer{border-top:1px solid var(--line);padding:26px 0;text-align:center;font-size:13.5px;color:var(--muted);}
@@ -1517,32 +1519,28 @@
       <div id="waTemplatesWrap"></div>
       <div id="brandPhotosWrap"></div>
       <div class="stat-row">
-        <div class="stat"><div class="lbl">Total Bookings</div><div class="val">1,256</div></div>
-        <div class="stat"><div class="lbl">Total Customers</div><div class="val">3,782</div></div>
-        <div class="stat"><div class="lbl">Points Issued</div><div class="val">125,650</div></div>
-        <div class="stat"><div class="lbl">Revenue</div><div class="val">$86,230</div></div>
+        <div class="stat"><div class="lbl">Bookings · last 30 days</div><div class="val" id="stBookings">—</div><div class="sub" id="stBookingsSub"></div></div>
+        <div class="stat"><div class="lbl">Dolce+ members</div><div class="val" id="stClients">—</div><div class="sub" id="stClientsSub"></div></div>
+        <div class="stat"><div class="lbl">D+ points issued</div><div class="val" id="stPoints">—</div><div class="sub" id="stPointsSub"></div></div>
+        <div class="stat"><div class="lbl">Revenue · last 30 days</div><div class="val" id="stRevenue">—</div><div class="sub" id="stRevenueSub"></div></div>
       </div>
       <div class="chart-row">
         <div class="chart-card">
           <h4>Bookings by brand</h4>
           <div class="cap">Share of total bookings, last 30 days</div>
           <div style="display:flex;align-items:center;gap:18px;">
-            <svg id="donut" width="120" height="120" viewBox="0 0 42 42" role="img" aria-label="Bookings by brand: Dolce 40%, Polished 35%, Core 25%"></svg>
+            <svg id="donut" width="120" height="120" viewBox="0 0 42 42" role="img" aria-label="Bookings by brand"></svg>
             <div class="legend" id="donutLegend"></div>
           </div>
           <button class="table-toggle" data-toggle="donutTable">View data as table</button>
           <table class="chart-table" id="donutTable">
             <thead><tr><th>Brand</th><th>Share</th><th>Bookings</th></tr></thead>
-            <tbody>
-              <tr><td>Dolce</td><td>40%</td><td>502</td></tr>
-              <tr><td>Polished</td><td>35%</td><td>440</td></tr>
-              <tr><td>Core</td><td>25%</td><td>314</td></tr>
-            </tbody>
+            <tbody></tbody>
           </table>
         </div>
         <div class="chart-card">
           <h4>Revenue trend</h4>
-          <div class="cap">Last 6 months, all brands combined</div>
+          <div class="cap" id="revCap">Last 6 months, all brands combined</div>
           <div class="bar-wrap" id="revBars"></div>
           <button class="table-toggle" data-toggle="revTable">View data as table</button>
           <table class="chart-table" id="revTable">
@@ -2118,7 +2116,7 @@ const CLOUD_TABLES={
     table:'clients',
     list:()=>STORE.clients,
     row:(c)=>({id:c.id,phone:c.phone,name:c.name}),
-    app:(r)=>({id:r.id,phone:r.phone,name:r.name,points:r.points||0,contactPhone:r.contact_phone||'',email:r.email||''}),
+    app:(r)=>({id:r.id,phone:r.phone,name:r.name,points:r.points||0,contactPhone:r.contact_phone||'',email:r.email||'',createdAt:r.created_at||''}),
   },
   // D+ Rewards Shop (owner edits; everyone can read).
   rewards:{
@@ -6317,13 +6315,25 @@ function bindScreen(){
 
   const hoursToggle=document.getElementById('hoursToggle');
   if(hoursToggle) hoursToggle.addEventListener('click',()=>{ hoursOpen=!hoursOpen; navDirection='none'; render(); });
+  /* Picking a date or a time must not redraw the screen as if it had just
+     been opened: that replayed the slide-in animation and jumped back to the
+     top on every tap, which looked like the page shaking. Redraw in place
+     and keep the page and the row of dates exactly where they were. */
+  const redrawInPlace=()=>{
+    const body=screenEl.querySelector('.screen-body');
+    const row=screenEl.querySelector('.date-chip'); const rowEl=row&&row.parentElement;
+    const top=body?body.scrollTop:0, left=rowEl?rowEl.scrollLeft:0;
+    navDirection='none'; render();
+    const body2=screenEl.querySelector('.screen-body'); if(body2) body2.scrollTop=top;
+    const row2=screenEl.querySelector('.date-chip'); if(row2&&row2.parentElement) row2.parentElement.scrollLeft=left;
+  };
   screenEl.querySelectorAll('[data-date]:not([disabled])').forEach(el=>el.addEventListener('click',()=>{
-    selectedDateObj=new Date(el.dataset.date); selectedTime=null; render();
+    selectedDateObj=new Date(el.dataset.date); selectedTime=null; redrawInPlace();
   }));
   screenEl.querySelectorAll('.time-chip:not(.taken)').forEach(el=>el.addEventListener('click',()=>{
     const sl=availableTimesForDate(currentBrand,fmtDate(selectedDateObj),selectedDateObj).find(x=>x.time===el.dataset.time);
-    if(!sl||sl.past){ toast(t('timePassed')); render(); return; }
-    selectedTime=el.dataset.time; render();
+    if(!sl||sl.past){ toast(t('timePassed')); selectedTime=null; redrawInPlace(); return; }
+    selectedTime=el.dataset.time; redrawInPlace();
   }));
 
   // Books the appointment directly in the app — no WhatsApp required. The
@@ -7623,26 +7633,79 @@ function handleAISend(){
 }
 
 /* ---------------- Admin charts ---------------- */
-function buildDonut(){
-  const data=[{l:'Dolce',v:40,c:'var(--series-1)'},{l:'Polished',v:35,c:'var(--series-2)'},{l:'Core',v:25,c:'var(--series-3)'}];
-  const svg=document.getElementById('donut');
-  let cum=0; const r=15.9155, cx=21, cy=21;
-  let circles='';
-  data.forEach(d=>{
-    const dash=`${d.v} ${100-d.v}`;
-    circles+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="transparent" stroke="${d.c}" stroke-width="6" stroke-dasharray="${dash}" stroke-dashoffset="${25-cum}"><title>${d.l}: ${d.v}%</title></circle>`;
-    cum+=d.v;
-  });
+/* The Overview numbers, worked out from the real records this account can
+   see (its departments only). Revenue = completed bookings at their service
+   price + product sales, in USD (shown in IQD when that toggle is on).
+   "Points issued" comes from the D+ points history (all points ever added). */
+var loyaltyIssued=null;
+function overviewIso(label){ const iso=toIsoDate(label); return /^\d{4}-\d{2}-\d{2}$/.test(iso||'')?iso:''; }
+function renderOverviewStats(){
+  if(!document.getElementById('stBookings')) return;
+  const see=(b)=>!currentUser||canSeeBrand(currentUser,b);
+  const brands=Object.keys(BRANDS).filter(see);
+  const today=new Date(); const iso=(d)=>isoOf(d);
+  const from30=iso(new Date(today.getFullYear(),today.getMonth(),today.getDate()-29)), to=iso(today);
+  const prevFrom=iso(new Date(today.getFullYear(),today.getMonth(),today.getDate()-59));
+  const bks=STORE.bookings.filter(b=>see(b.brand)&&b.status!=='Cancelled').map(b=>({b,d:overviewIso(b.date)})).filter(x=>x.d);
+  const last30=bks.filter(x=>x.d>=from30&&x.d<=to);
+  const prev30=bks.filter(x=>x.d>=prevFrom&&x.d<from30);
+  const sales=(STORE.productSales||[]).filter(x=>see(x.brand)).map(x=>({x,d:overviewIso(x.date)})).filter(x=>x.d);
+  const bkRev=(list)=>list.filter(x=>x.b.status==='Completed').reduce((s,x)=>s+(bookingPrice(x.b)||0),0);
+  const saleRev=(from,until)=>sales.filter(y=>y.d>=from&&y.d<=until).reduce((s,y)=>s+(Number(y.x.total)||0),0);
+  const rev30=bkRev(last30)+saleRev(from30,to);
+  const n=(v)=>Number(v||0).toLocaleString('en-US');
+  const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
+  set('stBookings',n(last30.length));
+  const diff=last30.length-prev30.length;
+  set('stBookingsSub',prev30.length?`${diff>=0?'+':''}${n(diff)} vs the 30 days before`:`${n(last30.filter(x=>x.b.status==='Completed').length)} completed`);
+  const members=STORE.clients.length;
+  const new30=STORE.clients.filter(c=>c.createdAt&&String(c.createdAt).slice(0,10)>=from30).length;
+  set('stClients',n(members));
+  set('stClientsSub',members?(new30?`${n(new30)} joined in the last 30 days`:'client accounts in the app'):'no client accounts yet');
+  set('stPoints',loyaltyIssued===null?'—':n(loyaltyIssued));
+  const held=STORE.clients.reduce((s,c)=>s+(Number(c.points)||0),0);
+  set('stPointsSub',`${n(held)} held by clients now`);
+  set('stRevenue',fmtMoney(Math.round(rev30)));
+  set('stRevenueSub',`${n(last30.filter(x=>x.b.status==='Completed').length)} completed visits + product sales`);
+
+  // Bookings by brand, last 30 days
+  const colors={dolce:'var(--series-1)',polished:'var(--series-2)',core:'var(--series-3)'};
+  const counts=brands.map(k=>({k,l:BRANDS[k].name,c:colors[k],cnt:last30.filter(x=>x.b.brand===k).length}));
+  const total=counts.reduce((s,x)=>s+x.cnt,0);
+  const svg=document.getElementById('donut'); const r=15.9155, cx=21, cy=21;
+  let cum=0, circles='';
+  counts.forEach(d=>{ if(!total||!d.cnt) return; const v=d.cnt/total*100;
+    circles+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="transparent" stroke="${d.c}" stroke-width="6" stroke-dasharray="${v} ${100-v}" stroke-dashoffset="${25-cum}"><title>${d.l}: ${d.cnt}</title></circle>`; cum+=v; });
   svg.innerHTML=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="transparent" stroke="var(--grid-line)" stroke-width="6"></circle>${circles}`;
-  document.getElementById('donutLegend').innerHTML=data.map(d=>`<div class="li"><span class="dot" style="background:${d.c}"></span>${d.l} — ${d.v}%</div>`).join('');
-}
-function buildBars(){
-  const months=[{m:'Mar',v:62},{m:'Apr',v:68},{m:'May',v:74},{m:'Jun',v:79},{m:'Jul',v:83},{m:'Aug',v:86}];
+  svg.setAttribute('aria-label','Bookings by brand, last 30 days: '+counts.map(d=>`${d.l} ${d.cnt}`).join(', '));
+  const pct=(c)=>total?Math.round(c/total*100):0;
+  document.getElementById('donutLegend').innerHTML=total
+    ? counts.map(d=>`<div class="li"><span class="dot" style="background:${d.c}"></span>${d.l} — ${pct(d.cnt)}% (${n(d.cnt)})</div>`).join('')
+    : `<div class="li">No bookings in the last 30 days yet.</div>`;
+  document.querySelector('#donutTable tbody').innerHTML=counts.map(d=>`<tr><td>${d.l}</td><td>${pct(d.cnt)}%</td><td>${n(d.cnt)}</td></tr>`).join('');
+
+  // Revenue per month, last 6 months
+  const months=[];
+  for(let i=5;i>=0;i--){
+    const d0=new Date(today.getFullYear(),today.getMonth()-i,1), d1=new Date(today.getFullYear(),today.getMonth()-i+1,0);
+    const f=iso(d0), u=iso(d1);
+    const v=bkRev(bks.filter(x=>x.d>=f&&x.d<=u))+saleRev(f,u);
+    months.push({m:d0.toLocaleDateString('en-US',{month:'short'}),y:d0.getFullYear(),v:Math.round(v)});
+  }
   const max=Math.max(...months.map(x=>x.v));
-  const wrap=document.getElementById('revBars');
-  wrap.innerHTML=months.map(x=>`<div class="bcol"><div class="b" style="height:${(x.v/max*100)}%" title="$${x.v}k"></div><div class="m">${x.m}</div></div>`).join('');
-  const tbody=document.querySelector('#revTable tbody');
-  tbody.innerHTML=months.map(x=>`<tr><td>${x.m}</td><td>$${x.v}k</td></tr>`).join('');
+  const cap=document.getElementById('revCap');
+  if(cap) cap.textContent=`Last 6 months, ${brands.length>=Object.keys(BRANDS).length?'all brands combined':brands.map(k=>BRANDS[k].name).join(' + ')} · completed visits + product sales`;
+  document.getElementById('revBars').innerHTML=max>0
+    ? months.map(x=>`<div class="bcol"><div class="b" style="height:${Math.max(x.v?3:0,x.v/max*100)}%" title="${fmtMoney(x.v)}"></div><div class="m">${x.m}</div></div>`).join('')
+    : `<div class="chart-empty" style="width:100%;">No completed visits or sales in the last 6 months yet.</div>`;
+  document.querySelector('#revTable tbody').innerHTML=months.map(x=>`<tr><td>${x.m} ${x.y}</td><td>${fmtMoney(x.v)}</td></tr>`).join('');
+}
+async function pullLoyaltyIssued(){
+  if(!supa) return;
+  try{
+    const res=await supa.from('point_transactions').select('points').gt('points',0).neq('kind','opening');
+    if(!res.error&&res.data){ loyaltyIssued=res.data.reduce((s,r)=>s+(Number(r.points)||0),0); renderOverviewStats(); }
+  }catch(e){}
 }
 document.querySelectorAll('[data-toggle]').forEach(btn=>{
   btn.addEventListener('click',()=>{
@@ -7921,7 +7984,7 @@ function showAdminForRole(){
   });
   if(!canSeeBrand(currentUser,svcBrandTab)) svcBrandTab=userBrands(currentUser)[0];
   document.querySelectorAll('#svcBrandTabs [data-svc-brand-tab]').forEach(x=>x.classList.toggle('active',x.dataset.svcBrandTab===svcBrandTab));
-  renderAdminProducts(); renderAdminServices(); renderAdminOffers(); renderAdminGallery(); renderAdminBookings(); renderBrandPhotos(); renderCurrencySettings(); renderClientLoginSetting(); renderWaTemplates(); renderHoursAdmin(); renderAdminEmployees(); renderAdminPurchases(); renderAdminReports(); renderAdminLoyalty();
+  renderAdminProducts(); renderAdminServices(); renderAdminOffers(); renderAdminGallery(); renderAdminBookings(); renderBrandPhotos(); renderCurrencySettings(); renderClientLoginSetting(); renderWaTemplates(); renderHoursAdmin(); renderAdminEmployees(); renderAdminPurchases(); renderAdminReports(); renderAdminLoyalty(); renderOverviewStats(); pullLoyaltyIssued();
 }
 
 /* ---------------- Full-screen client app ---------------- */
@@ -7979,6 +8042,7 @@ document.querySelectorAll('[data-admin-tab]').forEach(b=>{
     adminTab=b.dataset.adminTab;
     document.querySelectorAll('[data-admin-tab]').forEach(x=>x.classList.toggle('active',x===b));
     document.getElementById('adminOverview').classList.toggle('active',adminTab==='overview');
+    if(adminTab==='overview'){ renderOverviewStats(); pullLoyaltyIssued(); }
     document.getElementById('adminBookings').classList.toggle('active',adminTab==='bookings');
     document.getElementById('adminProducts').classList.toggle('active',adminTab==='products');
     document.getElementById('adminServices').classList.toggle('active',adminTab==='services');
@@ -10517,8 +10581,7 @@ function showBrandReveal(brand,cb){
 }
 
 /* ---------------- init ---------------- */
-buildDonut();
-buildBars();
+renderOverviewStats();
 applyBrandImages();
 render();
 
