@@ -143,6 +143,12 @@ Two practical matters that belong here. The database provider keeps **no backups
 
 The second is that when a change cannot be sent to the shared database, the app no longer fails quietly. A red marker appears with the count, and it can be opened to see exactly which records are stuck and why, with buttons to try again or to clear them. A sync failure you cannot see is worse than one you can.
 
+## Client login: email now, WhatsApp later
+
+Customers log in with a 6-digit code instead of a password. The plan was to send that code on WhatsApp, but Meta only allows login-code messages from businesses it has verified, and that verification is still in progress. So for now the code arrives by email. The customer types their email, enters the code, and gives their name and mobile number for appointments. One account still covers Dolce, Polished and Core.
+
+Because an email login doesn't prove who owns a phone number, the number a customer types is kept for contacting them only. It doesn't link them to an existing reception record or show them bookings made under that number; only a WhatsApp login can do that safely. The owner chooses the method in Admin → Overview → Client login (Off / email / WhatsApp), so switching to WhatsApp later is one click. Setup steps are in EMAIL-LOGIN-SETUP.md.
+
 ## A phased build, so you are never blocked waiting for "the whole thing"
 
 The first phase is the smallest version that is still genuinely useful: the destination picker, service browsing and pricing for all three brands, service detail screens, and booking with a real date/time picker (in-app and via WhatsApp, as the prototype now shows), plus English and Arabic (adding Kurdish shortly after). This alone replaces having three separate Instagram-DM-based booking processes with one coherent, professional experience, and it can realistically be live within a few weeks once content (service lists, prices, photos) is ready. The second phase adds the AI assistant with real recommendations, the loyalty program, and the retail shop — this is where the product starts to feel genuinely different from a normal clinic or salon website, because it actively works to cross-sell between your three brands. The third phase adds the admin dashboard with full analytics, Kurdish language support if not already included, a proper native app wrapper for the App Store and Play Store, and true staff-calendar-aware scheduling — availability that accounts for which specific provider is free, not just whether the time slot is taken by anyone.
