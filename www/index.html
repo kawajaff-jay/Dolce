@@ -1151,6 +1151,47 @@
     padding:14px 16px;font:400 17px var(--sans);color:var(--ink);outline:none;-webkit-appearance:none;}
   .cl-input:focus{border-color:var(--champagne,#c8a96a);box-shadow:0 0 0 3px rgba(200,169,106,.18);}
   .cl-input.cl-code{text-align:center;letter-spacing:.5em;font-size:24px;padding-inline:8px;}
+  /* OTP code entry — beige digit boxes; on the last digit they fan out like a
+     small hand of cards, gather into one square, and that square shows the
+     check (gold while checking, soft green once the server accepts). */
+  .otp{position:relative;margin:4px auto 0;max-width:380px;height:var(--otp-h,74px);}
+  .otp-row{display:grid;grid-template-columns:repeat(var(--otp-n,6),1fr);gap:clamp(6px,2.4vw,11px);height:100%;align-items:center;}
+  .otp-box{position:relative;aspect-ratio:1/1.16;max-height:100%;border-radius:15px;
+    background:linear-gradient(180deg,#f8f2e7,#efe4d1);border:1px solid rgba(195,163,106,.42);
+    box-shadow:0 8px 16px -12px rgba(58,42,31,.45),inset 0 1px 0 rgba(255,255,255,.7);
+    display:flex;align-items:center;justify-content:center;transform-origin:50% 120%;
+    transition:border-color .2s,box-shadow .2s,background .2s;will-change:transform;}
+  .otp-box span{font-family:var(--display);font-size:clamp(22px,7vw,28px);line-height:1;color:var(--ink);}
+  .otp-box.on{border-color:var(--champagne,#c8a96a);box-shadow:0 0 0 3px rgba(200,169,106,.2),0 8px 16px -12px rgba(58,42,31,.45),inset 0 1px 0 rgba(255,255,255,.7);}
+  .otp-box.on:not(.fill)::after{content:'';width:1.5px;height:38%;border-radius:2px;background:var(--gold-dark,#8a6a3f);animation:otpCaret 1.05s steps(1) infinite;}
+  @keyframes otpCaret{50%{opacity:0;}}
+  .otp.err .otp-box{border-color:rgba(160,71,58,.55);}
+  .otp-input{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;padding:0;margin:0;font-size:16px;
+    color:transparent;caret-color:transparent;background:transparent;outline:none;-webkit-appearance:none;}
+  .otp.locked .otp-input{pointer-events:none;}
+  .otp-seal{position:absolute;left:50%;top:50%;width:var(--seal-w,52px);height:var(--seal-h,60px);margin:calc(var(--seal-h,60px)/-2) 0 0 calc(var(--seal-w,52px)/-2);
+    border-radius:16px;background:linear-gradient(180deg,#f8f2e7,#efe4d1);box-shadow:0 14px 26px -16px rgba(58,42,31,.55),inset 0 1px 0 rgba(255,255,255,.7);
+    opacity:0;pointer-events:none;}
+  .otp-seal svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;}
+  .otp-ring-base{fill:none;stroke:rgba(195,163,106,.35);stroke-width:1.2;}
+  .otp-ring{fill:none;stroke:var(--champagne,#c8a96a);stroke-width:2;stroke-linecap:round;stroke-dasharray:24 76;
+    animation:otpRing 1.5s linear infinite;transition:stroke .45s ease,stroke-dasharray .6s ease;}
+  @keyframes otpRing{to{stroke-dashoffset:-100;}}
+  .otp-seal.ok .otp-ring{stroke:#7f9f72;animation:none;stroke-width:2.2;}
+  .otp-seal.ok{box-shadow:0 0 18px -4px rgba(127,159,114,.45),0 14px 26px -16px rgba(58,42,31,.55),inset 0 1px 0 rgba(255,255,255,.7);transition:box-shadow .5s;}
+  .otp-rays{opacity:0;transform-origin:0 0;transform-box:view-box;stroke:#9cb68f;stroke-width:1.6;stroke-linecap:round;}
+  .otp-title{transition:color .4s;}
+  .otp-title.ok{color:#5f7f54;}
+  .otp-seal.ok .otp-ring-base{stroke:rgba(127,159,114,.4);}
+  .otp-check{fill:none;stroke:#5f7f54;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:30;stroke-dashoffset:30;}
+  .otp-seal.checked .otp-check{transition:stroke-dashoffset .45s cubic-bezier(.65,0,.35,1);stroke-dashoffset:0;}
+  .otp-status{min-height:22px;margin:14px 0 0;text-align:center;font:500 13.5px var(--sans);letter-spacing:.02em;color:var(--ink-soft);transition:opacity .3s;}
+  .otp-status.err{color:#a0473a;}
+  .otp-status.ok{color:#5f7f54;}
+  .otp-continue{opacity:0;transform:translateY(10px);}
+  .otp-continue[hidden]{display:none;}
+  .otp-after{transition:opacity .35s;}
+  .otp-after.gone{opacity:0;pointer-events:none;}
   .cl-auth .wa-btn,.cl-auth .primary-btn{margin-top:14px;border-radius:999px;padding:14px;}
   .cl-auth .wa-btn[disabled],.cl-auth .primary-btn[disabled]{opacity:.6;}
   .cl-row{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:6px;}
@@ -3313,6 +3354,9 @@ function ensureBookingSelection(){
   return dates;
 }
 
+Object.assign(I18N.en,{otpChecking:'Checking your code',otpVerified:'Verified',otpCheckingSub:'One moment — we’re confirming it.',otpVerifiedSub:'Setting up your account…'});
+Object.assign(I18N.ar,{otpChecking:'جارٍ التحقق من الرمز',otpVerified:'تم التحقق',otpCheckingSub:'لحظة واحدة — نتأكد منه الآن.',otpVerifiedSub:'نجهّز حسابك…'});
+Object.assign(I18N.ku,{otpChecking:'کۆدەکەت دەپشکنرێت',otpVerified:'پشتڕاستکرایەوە',otpCheckingSub:'تکایە کەمێک چاوەڕێ بکە — پشتڕاستی دەکەینەوە.',otpVerifiedSub:'هەژمارەکەت ئامادە دەکەین…'});
 Object.assign(I18N.en,{
   dpMember:'D+ Member',dpGold:'D+ Gold',dpBlack:'D+ Black',ptsWord:'pts',
   toTier:'{amt} more in 12 months to reach {tier}',topTier:'You are at our highest level — thank you.',
@@ -3648,13 +3692,13 @@ function renderClientAuth(){
     const wait=Math.max(0,Math.ceil((authResendAt-Date.now())/1000));
     return `<section class="cl-auth">
       <div class="lux-eyebrow">${byEmail?t('emailWord'):'WhatsApp'}</div>
-      <h2 class="lux-h2">${t('codeTitle')}</h2>
-      <p class="lux-lede">${t(byEmail?'codeSentToEmail':'codeSentTo')} <b dir="ltr" style="white-space:nowrap;word-break:break-all;">${esc(byEmail?authEmail:clientPhoneText(authPhone))}</b></p>
+      <h2 class="lux-h2 otp-title" id="authCodeTitle">${t('codeTitle')}</h2>
+      <p class="lux-lede" id="authCodeLede">${t(byEmail?'codeSentToEmail':'codeSentTo')} <b dir="ltr" style="white-space:nowrap;word-break:break-all;">${esc(byEmail?authEmail:clientPhoneText(authPhone))}</b></p>
       ${byEmail?`<p class="cl-note">${t('checkSpam')}</p>`:''}
-      <label class="cl-label" for="authCodeInput">${t('codeLabel')}</label>
-      <input class="cl-input cl-code" id="authCodeInput" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" dir="ltr" placeholder="••••••">
-      <button class="primary-btn" id="authVerify">${t('verify')}</button>
-      <div class="cl-row">
+      <div class="cl-label" style="text-align:center;margin-top:14px;">${t('codeLabel')}</div>
+      ${otpBoxesHtml()}
+      <button class="primary-btn otp-continue" id="authContinue" hidden>${t('continueBtn')}</button>
+      <div class="cl-row otp-after" id="otpAfter">
         <button class="lux-link" id="authResend" ${wait?'disabled':''}>${wait?`${t('resendIn')} <span id="authResendN">${wait}</span>s`:t('resend')}</button>
         <button class="lux-link" id="authBack">${t(byEmail?'changeEmail':'changeNumber')}</button>
       </div>
@@ -6230,6 +6274,126 @@ const NAV_ICONS=(()=>{
   };
 })();
 
+/* ---- OTP entry & the verification animation ----
+   One real input (so iPhone/Android code autofill, paste, the number pad and
+   backspace all behave natively) sits invisibly over the digit boxes. The
+   boxes only display what is in it. The last digit starts verification once;
+   success is shown only after Supabase has accepted the code. */
+const OTP_LEN=6;   // Supabase → Email OTP Length
+function otpBoxesHtml(){
+  const rays=Array.from({length:12},(_,i)=>{ const a=i*30*Math.PI/180, c=Math.cos(a), s=Math.sin(a);
+    return `<line x1="${(c*36).toFixed(1)}" y1="${(s*36).toFixed(1)}" x2="${(c*(i%2?41:44)).toFixed(1)}" y2="${(s*(i%2?41:44)).toFixed(1)}"/>`; }).join('');
+  return `<div class="otp" id="otp" dir="ltr" style="--otp-n:${OTP_LEN}">
+      <div class="otp-row" id="otpRow" aria-hidden="true">${Array.from({length:OTP_LEN},()=>`<div class="otp-box"><span></span></div>`).join('')}</div>
+      <input class="otp-input" id="authCodeInput" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code"
+        maxlength="${OTP_LEN}" aria-label="${attr(t('codeLabel'))}" autocorrect="off" spellcheck="false">
+      <div class="otp-seal" id="otpSeal" aria-hidden="true">
+        <svg id="otpSealSvg" viewBox="0 0 58 64"><g id="otpRaysPos"><g class="otp-rays" id="otpRays">${rays}</g></g>
+          <rect class="otp-ring-base" x="1" y="1" width="56" height="62" rx="15"/>
+          <rect class="otp-ring" id="otpRing" x="1" y="1" width="56" height="62" rx="15" pathLength="100"/>
+          <path class="otp-check" id="otpCheck" d="M-9.5 1.5l6.5 6.5L11 -6.5" pathLength="30"/></svg>
+      </div>
+    </div>
+    <div class="otp-status" id="otpStatus" role="status" aria-live="polite"></div>`;
+}
+const otpReduced=()=>{ try{ return matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; } };
+const otpWait=(ms)=>new Promise(r=>setTimeout(r,ms));
+function otpAnim(el,frames,opts){
+  try{ return el.animate(frames,Object.assign({fill:'forwards'},opts)); }
+  catch(e){ return {finished:Promise.resolve(),cancel(){}}; }
+}
+/* The movement follows the reference recording:
+   1. the boxes draw together into an overlapping hand of cards and fan out
+      (raised in the middle, outer cards tilted outward) — 420ms, then held;
+   2. one after another, left to right, each card slides onto the next into
+      a small layered deck in the centre while the digits fade;
+   3. the top card becomes the "seal": a gold light travels round its edge
+      while the code is being checked. */
+async function otpCollapse(otp,onSeal){
+  const boxes=[...otp.querySelectorAll('.otp-box')], seal=otp.querySelector('#otpSeal');
+  const anims=[], n=boxes.length, mid=(n-1)/2;
+  const or=otp.getBoundingClientRect(), cx=or.left+or.width/2;
+  const r0=boxes[0].getBoundingClientRect(); const bw=r0.width||48, bh=r0.height||56;
+  // seal = one card, same size
+  otp.style.setProperty('--seal-w',bw+'px'); otp.style.setProperty('--seal-h',bh+'px');
+  const svg=otp.querySelector('#otpSealSvg'), W=Math.round(bw), H=Math.round(bh);
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  otp.querySelectorAll('.otp-ring,.otp-ring-base').forEach(rc=>{ rc.setAttribute('width',W-2); rc.setAttribute('height',H-2); rc.setAttribute('rx',Math.min(15,W*.3)); });
+  otp.querySelector('#otpCheck').setAttribute('transform',`translate(${W/2} ${H/2+1})`);
+  otp.querySelector('#otpRaysPos').setAttribute('transform',`translate(${W/2} ${H/2}) scale(${(Math.max(W,H)/58).toFixed(3)})`);
+  const centres=boxes.map(b=>{ const r=b.getBoundingClientRect(); return r.left+r.width/2-cx; });
+  if(otpReduced()){
+    boxes.forEach(b=>anims.push(otpAnim(b,[{opacity:1},{opacity:0}],{duration:180})));
+    if(onSeal) onSeal();
+    anims.push(otpAnim(seal,[{opacity:0},{opacity:1}],{duration:200,delay:120}));
+    await otpWait(330);
+    return anims;
+  }
+  // 1. hand of cards
+  const spread=bw*0.58, tilt=Math.min(7, 16/Math.max(1,mid));
+  const fan=boxes.map((b,i)=>{ const k=i-mid;
+    return `translate(${(k*spread-centres[i]).toFixed(1)}px,${(-10+Math.pow(k/Math.max(1,mid),2)*10).toFixed(1)}px) rotate(${(k*tilt).toFixed(1)}deg)`; });
+  boxes.forEach((b,i)=>anims.push(otpAnim(b,[{transform:'none'},{transform:fan[i]}],{duration:420,easing:'cubic-bezier(.2,.9,.25,1.08)'})));
+  await otpWait(420+480);
+  // 2. gather, card by card, into a layered deck
+  const step=Math.max(45,Math.round(240/Math.max(1,n-1)));
+  boxes.forEach((b,i)=>{
+    const depth=n-1-i;
+    const deck=`translate(${(-centres[i]-depth*1.6).toFixed(1)}px,${(-depth*1.6).toFixed(1)}px) rotate(0deg)`;
+    anims.push(otpAnim(b,[{transform:fan[i]},{transform:deck}],{duration:340,delay:i*step,easing:'cubic-bezier(.55,0,.25,1)'}));
+    anims.push(otpAnim(b.firstElementChild,[{opacity:1},{opacity:0}],{duration:260,delay:i*step+120,easing:'ease-out'}));
+  });
+  await otpWait((n-1)*step+340);
+  // 3. the seal
+  if(onSeal) onSeal();
+  anims.push(otpAnim(seal,[{opacity:0},{opacity:1}],{duration:220,easing:'ease-out'}));
+  await otpWait(220);
+  return anims;
+}
+// Success: the border fills in soft green, a small burst, then the check.
+async function otpSuccess(otp){
+  const seal=otp.querySelector('#otpSeal'), ring=otp.querySelector('#otpRing'), rays=otp.querySelector('#otpRays');
+  seal.classList.add('ok');
+  if(otpReduced()){ seal.classList.add('checked'); return; }
+  await otpAnim(ring,[{strokeDasharray:'8 92',strokeDashoffset:0},{strokeDasharray:'100 0',strokeDashoffset:0}],{duration:520,easing:'cubic-bezier(.65,0,.35,1)'}).finished;
+  otpAnim(seal,[{boxShadow:'0 0 0 0 rgba(127,159,114,.45), 0 14px 26px -16px rgba(58,42,31,.55)'},
+    {boxShadow:'0 0 0 14px rgba(127,159,114,0), 0 14px 26px -16px rgba(58,42,31,.55)'}],{duration:650,easing:'ease-out',fill:'none'});
+  otpAnim(rays,[{opacity:0,transform:'scale(.82)'},{opacity:1,offset:.35},{opacity:0,transform:'scale(1.18)'}],{duration:620,easing:'ease-out',fill:'none'});
+  otp.querySelectorAll('.otp-box').forEach(b=>otpAnim(b,[{opacity:1},{opacity:0}],{duration:300,fill:'forwards'}));
+  await otpWait(160);
+  seal.classList.add('checked');
+}
+// Back to the row of boxes after a refused code.
+async function otpRestore(otp,anims){
+  const boxes=[...otp.querySelectorAll('.otp-box')], seal=otp.querySelector('#otpSeal');
+  const fade=otpAnim(seal,[{opacity:1},{opacity:0}],{duration:200});
+  await fade.finished;
+  const states=boxes.map(b=>getComputedStyle(b).transform);
+  boxes.forEach(b=>{ b.firstElementChild.textContent=''; b.classList.remove('fill'); });
+  (anims||[]).forEach(a=>a.cancel()); fade.cancel();
+  if(otpReduced()){
+    await Promise.all(boxes.map(b=>otpAnim(b,[{opacity:0},{opacity:1}],{duration:180}).finished));
+  } else {
+    await Promise.all(boxes.map((b,i)=>otpAnim(b,[{transform:states[i]==='none'?'none':states[i],opacity:.5},{transform:'none',opacity:1}],
+      {duration:480,delay:(boxes.length-1-i)*35,easing:'cubic-bezier(.22,1,.36,1)'}).finished));
+    await otpAnim(otp.querySelector('#otpRow'),[{transform:'translateX(0)'},{transform:'translateX(-7px)'},{transform:'translateX(6px)'},
+      {transform:'translateX(-4px)'},{transform:'translateX(2px)'},{transform:'translateX(0)'}],{duration:380,easing:'ease-out'}).finished;
+  }
+  otp.querySelectorAll('.otp-box,.otp-box span,#otpRow,#otpSeal').forEach(el=>el.getAnimations&&el.getAnimations().forEach(a=>a.cancel()));
+}
+// The heading changes with the step, as in the reference: a soft blur-fade.
+async function otpHeading(title,lede,cls){
+  const h=document.getElementById('authCodeTitle'), p=document.getElementById('authCodeLede');
+  if(!h||!p) return;
+  const swap=()=>{ h.textContent=title; p.innerHTML=lede; h.classList.toggle('ok',cls==='ok'); };
+  if(otpReduced()){ swap(); return; }
+  const out=[{opacity:1,filter:'blur(0)'},{opacity:0,filter:'blur(4px)'}];
+  await Promise.all([otpAnim(h,out,{duration:180}).finished,otpAnim(p,out,{duration:180}).finished]);
+  swap();
+  const inn=[{opacity:0,filter:'blur(4px)',transform:'translateY(3px)'},{opacity:1,filter:'blur(0)',transform:'none'}];
+  otpAnim(h,inn,{duration:260,easing:'ease-out'}); otpAnim(p,inn,{duration:260,easing:'ease-out'});
+}
+
 function render(){
   const {title,small}=screenTitle();
   screenEl.dataset.screen=currentScreen;
@@ -6483,48 +6647,95 @@ function bindScreen(){
   if(authGuest) authGuest.addEventListener('click',continueAsGuest);
   const authEmailInput=document.getElementById('authEmailInput');
   if(authEmailInput) authEmailInput.addEventListener('keydown',e=>{ if(e.key==='Enter') authSendCode&&authSendCode.click(); });
-  const authVerify=document.getElementById('authVerify');
   const authCodeInput=document.getElementById('authCodeInput');
-  const doVerify=async()=>{
-    if(authBusy||!authVerify) return;
-    const code=latinDigits(authCodeInput.value).replace(/\D/g,'');
-    if(code.length!==6){ toast(t('codeWrong')); return; }
-    const cs=clientSupa(); if(!cs){ toast(t('offline')); return; }
-    authBusy=true; busyBtn(authVerify,t('verifying'));
-    let res;
-    // Email codes: Supabase labels a first-time code "signup" and a returning
-    // one "magiclink"; newer servers accept "email" for both. Try each in turn
-    // (a wrong type is simply refused, it does not use up the code).
-    const tries=clientLoginMethod()==='email'
-      ?['email','signup','magiclink'].map(type=>({email:authEmail,token:code,type}))
-      :[{phone:'+'+authPhone,token:code,type:'sms'}];
-    for(const args of tries){
-      try{ res=await cs.auth.verifyOtp(args); }
-      catch(e){ res={error:{message:'fetch'}}; break; }
-      if(!res.error) break;
-      if(/fetch|network/i.test(String(res.error.message))) break;
-    }
-    if(res.error) console.warn('Login code refused:',res.error.status,res.error.code||'',res.error.message);
-    if(res.error){
-      authBusy=false; freeBtn(authVerify);
-      toast(/fetch|network/i.test(String(res.error.message))?t('offline'):t('codeWrong'));
-      if(authCodeInput.isConnected){ authCodeInput.value=''; authCodeInput.focus(); }
-      return;
-    }
-    const r=await clientAfterLogin();
-    authBusy=false;
-    if(r==='ok') return finishClientLogin(false);
-    if(r==='needName'){ authStep='name'; render(); const ni=document.getElementById('authNameInput'); if(ni) ni.focus(); return; }
-    freeBtn(authVerify);
-    toast(r==='staff'?t('staffLogin'):r==='offline'?t('offline'):t('sendFailed'));
-    if(r==='staff'){ authStep='phone'; authPhone=''; authEmail=''; render(); }
-  };
-  if(authVerify) authVerify.addEventListener('click',doVerify);
-  if(authCodeInput) authCodeInput.addEventListener('input',()=>{
-    const v=latinDigits(authCodeInput.value).replace(/\D/g,'').slice(0,6);
-    if(authCodeInput.value!==v) authCodeInput.value=v;
-    if(v.length===6) doVerify();          // a pasted / auto-filled code logs straight in
-  });
+  const otpEl=document.getElementById('otp');
+  if(otpEl && authCodeInput){
+    const boxes=[...otpEl.querySelectorAll('.otp-box')];
+    const statusEl=document.getElementById('otpStatus');
+    const contBtn=document.getElementById('authContinue');
+    const afterEl=document.getElementById('otpAfter');
+    let state='idle', claim=null, anims=null;
+    const headTitle=document.getElementById('authCodeTitle').textContent, headLede=document.getElementById('authCodeLede').innerHTML;
+    const setStatus=(txt,cls)=>{ statusEl.textContent=txt||''; statusEl.className='otp-status'+(cls?' '+cls:''); };
+    const paint=()=>{
+      const v=authCodeInput.value, focused=document.activeElement===authCodeInput;
+      boxes.forEach((bx,i)=>{ bx.firstElementChild.textContent=v[i]||''; bx.classList.toggle('fill',!!v[i]);
+        bx.classList.toggle('on',focused&&state==='idle'&&i===Math.min(v.length,OTP_LEN-1)); });
+    };
+    const toEnd=()=>{ try{ const n=authCodeInput.value.length; authCodeInput.setSelectionRange(n,n); }catch(e){} };
+    const lock=(on)=>{ otpEl.classList.toggle('locked',on); authCodeInput.readOnly=on;
+      afterEl.querySelectorAll('button').forEach(x=>{ if(on) x.dataset.wasDis=x.disabled?'1':''; x.disabled=on?true:x.dataset.wasDis==='1'; }); };
+    // Backend check: the code itself, tried as each email code type in turn.
+    const checkCode=async(code)=>{
+      const cs=clientSupa(); if(!cs) return {error:{message:'fetch'}};
+      let res;
+      const tries=clientLoginMethod()==='email'
+        ?['email','signup','magiclink'].map(type=>({email:authEmail,token:code,type}))
+        :[{phone:'+'+authPhone,token:code,type:'sms'}];
+      for(const args of tries){
+        try{ res=await cs.auth.verifyOtp(args); }
+        catch(e){ res={error:{message:'fetch'}}; break; }
+        if(!res.error) break;
+        if(/fetch|network/i.test(String(res.error.message))) break;
+      }
+      if(res.error) console.warn('Login code refused:',res.error.status,res.error.code||'',res.error.message);
+      return res;
+    };
+    const doVerify=async()=>{
+      const code=latinDigits(authCodeInput.value).replace(/\D/g,'');
+      if(state!=='idle'||authBusy||code.length!==OTP_LEN) return;     // one request at a time
+      state='busy'; authBusy=true; lock(true); otpEl.classList.remove('err'); paint();
+      authCodeInput.blur();
+      setStatus('');
+      const verifying=checkCode(code);
+      anims=await otpCollapse(otpEl,()=>otpHeading(t('otpChecking'),esc(t('otpCheckingSub'))));
+      const [res]=await Promise.all([verifying,otpWait(otpReduced()?150:450)]);
+      if(res.error){
+        otpHeading(headTitle,headLede);
+        await otpRestore(otpEl,anims); anims=null;
+        state='idle'; authBusy=false; lock(false);
+        authCodeInput.value=''; otpEl.classList.add('err');
+        setStatus(/fetch|network/i.test(String(res.error.message))?t('offline'):t('codeWrong'),'err');
+        authCodeInput.focus(); paint();
+        return;
+      }
+      // The server accepted the code — only now show success.
+      state='done';
+      afterEl.classList.add('gone');
+      claim=clientAfterLogin();             // link the login to the client record meanwhile
+      otpHeading(t('otpVerified'),esc(t('otpVerifiedSub')),'ok');
+      await otpSuccess(otpEl);
+      await otpWait(otpReduced()?120:650);
+      contBtn.hidden=false;
+      otpAnim(contBtn,otpReduced()?[{opacity:0},{opacity:1}]:[{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'translateY(0)'}],
+        {duration:otpReduced()?150:480,easing:'cubic-bezier(.22,1,.36,1)'});
+      authBusy=false;
+    };
+    contBtn.addEventListener('click',async()=>{
+      if(state!=='done'||contBtn.dataset.busy==='1') return;
+      contBtn.dataset.busy='1'; busyBtn(contBtn,t('verifying'));
+      const r=await (claim||clientAfterLogin());
+      contBtn.dataset.busy=''; freeBtn(contBtn);
+      if(r==='ok') return finishClientLogin(false);
+      if(r==='needName'){ authStep='name'; render(); const ni=document.getElementById('authNameInput'); if(ni) ni.focus(); return; }
+      toast(r==='staff'?t('staffLogin'):r==='offline'?t('offline'):t('sendFailed'));
+      if(r==='staff'){ authStep='phone'; authPhone=''; authEmail=''; render(); return; }
+      claim=null;                            // offline: the next tap tries again
+    });
+    authCodeInput.addEventListener('input',()=>{
+      if(state!=='idle') return;
+      const v=latinDigits(authCodeInput.value).replace(/\D/g,'').slice(0,OTP_LEN);
+      if(authCodeInput.value!==v) authCodeInput.value=v;
+      if(v.length) { otpEl.classList.remove('err'); if(statusEl.classList.contains('err')) setStatus(''); }
+      toEnd(); paint();
+      if(v.length===OTP_LEN) doVerify();  // typed, pasted or autofilled — verifies once
+    });
+    authCodeInput.addEventListener('keydown',e=>{ if(e.key==='Enter') doVerify(); });
+    ['focus','blur'].forEach(ev=>authCodeInput.addEventListener(ev,()=>{ toEnd(); paint(); }));
+    authCodeInput.addEventListener('click',toEnd);
+    paint();
+    if(!authBusy) setTimeout(()=>{ if(authCodeInput.isConnected&&state==='idle') authCodeInput.focus(); },60);
+  }
   const authResend=document.getElementById('authResend');
   if(authResend){
     const n=document.getElementById('authResendN');
