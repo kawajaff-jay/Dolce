@@ -147,6 +147,49 @@
   body.native-app .toast{bottom:calc(158px + env(safe-area-inset-bottom,0px));background:rgba(40,30,22,.92);
     -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);font-weight:500;font-size:14px;letter-spacing:.01em;max-width:calc(100% - 48px);box-sizing:border-box;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  /* D+ loyalty — admin */
+  #pointsPanel{display:none;}
+  #pointsPanel.open{display:block;}
+  .lo-who{font-size:14px;color:var(--ink-soft);margin:6px 0 10px;}
+  .lo-warn{background:#fff6e8;border:1px solid #e8c98f;border-radius:10px;padding:9px 12px;color:#7a5520;}
+  .lo-find input,.lo-amt input,.lo-adj input{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-size:14.5px;font-family:inherit;background:#fff;box-sizing:border-box;}
+  .lo-find{margin-bottom:12px;}
+  .lo-find #pp_res,.lo-find #lo_res{display:flex;flex-direction:column;gap:4px;margin-top:6px;}
+  .lo-pick{text-align:left;border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 11px;font:inherit;font-size:14px;cursor:pointer;}
+  .lo-pick:hover{border-color:var(--gold);}
+  .lo-none{font-size:13px;color:var(--muted);padding:4px 2px;}
+  .lo-amt{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;}
+  .lo-amt label{flex:1 1 200px;font-size:13.5px;font-weight:700;color:var(--ink-soft);}
+  .lo-amt label input{margin-top:5px;font-weight:400;}
+  .lo-calc{flex:1 1 200px;font-size:14px;color:var(--ink-soft);}
+  .lo-calc b{font-size:22px;color:var(--ink);}
+  .lo-calc span{font-size:12.5px;color:var(--muted);}
+  .lo-stats .val{font-size:22px;}
+  .lo-client{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:4px 0 16px;}
+  .lo-c-head{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:flex-start;margin-bottom:6px;}
+  .lo-c-name{font-size:19px;font-weight:700;color:var(--ink);}
+  .lo-c-sub{font-size:13.5px;color:var(--ink-soft);margin-top:2px;}
+  .lo-c-bal{font-size:15px;color:var(--ink-soft);display:flex;align-items:center;gap:10px;}
+  .lo-c-bal b{font-size:26px;color:var(--ink);}
+  .lo-badge{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:4px 10px;background:var(--cream-2);color:var(--ink-soft);}
+  .lo-badge.lo-gold{background:linear-gradient(135deg,#e9cf95,#b8925a);color:#3b2a12;}
+  .lo-badge.lo-black{background:#151210;color:#e7cf9b;}
+  .lo-actions{display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-top:14px;}
+  @media (max-width:820px){.lo-actions{grid-template-columns:1fr;}}
+  .lo-box{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#fffdf9;}
+  .lo-box-t{font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px;}
+  .lo-rw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;}
+  .lo-rw{display:flex;flex-direction:column;gap:3px;text-align:left;border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 11px;font:inherit;font-size:13.5px;cursor:pointer;color:var(--ink);}
+  .lo-rw small{font-size:12px;color:var(--muted);}
+  .lo-rw:disabled{opacity:.45;cursor:default;}
+  .lo-rw:not(:disabled):hover{border-color:var(--gold);}
+  .lo-rw.arm{border-color:#a0473a;background:#fff3f0;color:#a0473a;font-weight:700;}
+  .lo-adj{display:flex;flex-direction:column;gap:8px;}
+  .lo-adj .btn{align-self:flex-end;}
+  .lo-rw-edit input:not([type=checkbox]),.lo-rw-edit select{width:100%;min-width:90px;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font:inherit;font-size:13.5px;background:#fff;box-sizing:border-box;}
+  .lo-rw-edit input[type=date]{min-width:130px;margin-bottom:4px;}
+  .lo-rw-edit td{padding:8px 8px;vertical-align:top;}
+  .lo-rw-edit td:first-child input{min-width:200px;}
   /* The aftercare prompt, shown the moment a treatment is marked Completed. */
   #aftercarePanel{display:none;}
   #aftercarePanel.open{display:block;}
@@ -1148,6 +1191,25 @@
   .pv-reward{display:flex;flex-direction:column;gap:8px;padding:16px 14px;border-radius:18px;background:var(--ivory);border:1px solid var(--lux-hair);
     font:500 13px/1.3 var(--sans);color:var(--ink);}
   .pv-reward span{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--beige);color:var(--gold-dark);font-size:15px;}
+  /* D+ loyalty — client profile */
+  .pv-loyalty.dp-gold{background:radial-gradient(120% 140% at 100% 0%,rgba(226,190,120,.55),transparent 55%),linear-gradient(150deg,#6b4e2c,#2b1f14);}
+  .pv-loyalty.dp-black{background:radial-gradient(120% 140% at 100% 0%,rgba(195,163,106,.28),transparent 55%),linear-gradient(150deg,#1d1a17,#050505);}
+  .pv-note.dp-perk{margin-top:4px;font-size:12px;color:rgba(251,245,234,.6);}
+  .dp-rw-list{display:flex;flex-direction:column;gap:8px;}
+  .dp-rw{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:var(--ivory);border:1px solid var(--lux-hair);opacity:.72;}
+  .dp-rw.ok{opacity:1;border-color:rgba(195,163,106,.65);box-shadow:0 8px 20px -16px rgba(58,42,31,.35);}
+  .dp-rw-pts{flex:0 0 62px;text-align:center;font-family:var(--display);font-size:20px;line-height:1;color:var(--gold-dark);}
+  .dp-rw-pts small{display:block;font:600 9.5px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--label);margin-top:4px;}
+  .dp-rw-name{font:500 13.5px/1.3 var(--sans);color:var(--ink);}
+  .dp-rw-meta{font:400 12px var(--sans);color:var(--ink-soft);margin-top:3px;}
+  .dp-rw-meta b{color:#4f6a45;font-weight:600;}
+  .dp-hist{border-radius:16px;background:var(--ivory);border:1px solid var(--lux-hair);padding:4px 14px;}
+  .dp-h-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--lux-hair);}
+  .dp-h-row:first-child{border-top:0;}
+  .dp-h-what{font:500 13.5px var(--sans);color:var(--ink);}
+  .dp-h-when{font:400 12px var(--sans);color:var(--ink-soft);margin-top:2px;}
+  .dp-h-pts{font:600 15px var(--sans);color:#4f6a45;white-space:nowrap;}
+  .dp-h-pts.neg{color:#a0473a;}
   .pv-favs{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px 4px;}
   .pv-favs::-webkit-scrollbar{display:none;}
   .pv-fav{flex:0 0 104px;border:none;background:none;padding:0;text-align:start;cursor:pointer;}
@@ -1438,6 +1500,7 @@
     <div class="admin-tabs" id="adminTabsRow">
       <button data-admin-tab="overview" class="active">Overview</button>
       <button data-admin-tab="bookings">Bookings</button>
+      <button data-admin-tab="loyalty">Loyalty</button>
       <button data-admin-tab="products">Products</button>
       <button data-admin-tab="services">Services</button>
       <button data-admin-tab="offers">Offers</button>
@@ -1561,6 +1624,7 @@
         </div>
       </div>
       <div id="bookingFormWrap"></div>
+      <div id="pointsPanel"></div>
       <div id="aftercarePanel"></div>
       <div id="remindersPanel"></div>
       <div class="admin-table-wrap">
@@ -1622,6 +1686,10 @@
         <input type="file" id="backupFile" accept="application/json,.json" style="display:none;">
       </div>
       <div style="font-size:13px;color:var(--muted);margin-top:14px;max-width:560px;">Unlike the export above, a backup ignores department limits and includes everything, so only an owner can take or restore one. Staff logins live with the login provider and are not included — after a restore your team may need new PINs.</div>
+    </div>
+
+    <div class="admin-panel" id="adminLoyalty">
+      <div id="loyaltyWrap"></div>
     </div>
 
     <div class="admin-panel" id="adminPurchases">
@@ -1998,11 +2066,11 @@ const CLOUD_TABLES={
     row:(b)=>({id:b.id,brand:b.brand,service_id:b.serviceId||'',service_name:b.serviceName||'',
       date_label:b.date||'',time_label:b.time||'',date_iso:toIsoDate(b.date),
       status:b.status||'Requested',client_name:b.clientName||'',client_id:b.clientId||null,
-      client_phone:b.phone||'',aftercare_ok:!!b.aftercareOk,lang:b.lang||'',reminders:b.reminders||{}}),
+      client_phone:b.phone||'',aftercare_ok:!!b.aftercareOk,lang:b.lang||'',reminders:b.reminders||{},source:b.source||''}),
     app:(r)=>({id:r.id,brand:r.brand,serviceId:r.service_id||'',serviceName:r.service_name||'',
       date:r.date_label||'',time:r.time_label||'',status:r.status,clientName:r.client_name||'',
       clientId:r.client_id||undefined,phone:r.client_phone||'',aftercareOk:!!r.aftercare_ok,
-      lang:r.lang||'',reminders:(r.reminders&&typeof r.reminders==='object')?r.reminders:{}}),
+      lang:r.lang||'',reminders:(r.reminders&&typeof r.reminders==='object')?r.reminders:{},source:r.source||''}),
   },
   media:{
     table:'media',
@@ -2049,8 +2117,19 @@ const CLOUD_TABLES={
   clients:{
     table:'clients',
     list:()=>STORE.clients,
-    row:(c)=>({id:c.id,phone:c.phone,name:c.name,points:numOr0(c.points)}),
+    row:(c)=>({id:c.id,phone:c.phone,name:c.name}),
     app:(r)=>({id:r.id,phone:r.phone,name:r.name,points:r.points||0,contactPhone:r.contact_phone||'',email:r.email||''}),
+  },
+  // D+ Rewards Shop (owner edits; everyone can read).
+  rewards:{
+    table:'rewards',
+    list:()=>STORE.rewards||[],
+    row:(r)=>({id:r.id,name:r.name,name_ar:r.nameAr||'',name_ku:r.nameKu||'',brand:r.brand||'all',
+      points:Math.max(1,Math.round(numOr0(r.points))),active:r.active!==false,
+      starts_on:r.start||null,ends_on:r.end||null,sort_order:numOr0(r.sort)}),
+    app:(r)=>({id:r.id,name:r.name,nameAr:r.name_ar||'',nameKu:r.name_ku||'',brand:r.brand||'all',
+      points:Number(r.points)||0,active:r.active!==false,start:r.starts_on||'',end:r.ends_on||'',
+      sort:numOr0(r.sort_order)}),
   },
   // The two odd ones out: a single row per brand, and a single settings row.
   brandImages:{
@@ -2066,6 +2145,8 @@ const CLOUD_TABLES={
       ? {key:'destinations',value:JSON.stringify(STORE.destinations||{})}
       : id==='hours'
       ? {key:'hours',value:JSON.stringify(STORE.hours||{})}
+      : id==='loyalty'
+      ? {key:'loyalty',value:JSON.stringify(loyaltySettings())}
       : id==='wa_templates'
       ? {key:'wa_templates',value:JSON.stringify(STORE.waTemplates||{})}
       : id==='client_login'
@@ -2481,7 +2562,7 @@ async function pullCatalog(){
       supa.from('products').select('*'),
       supa.from('offers').select('*'),
       supa.from('brand_images').select('*'),
-      supa.from('settings').select('*').in('key',['usd_to_iqd','image_focus','destinations','client_login','wa_templates','hours','categories:dolce','categories:polished','categories:core']),
+      supa.from('settings').select('*').in('key',['usd_to_iqd','image_focus','destinations','client_login','wa_templates','hours','loyalty','categories:dolce','categories:polished','categories:core']),
     ]);
     if(svc.error||prod.error||off.error) return false;
 
@@ -2521,6 +2602,10 @@ async function pullCatalog(){
       if(hrRow && hrRow.value){
         try{ const v=typeof hrRow.value==='string'?JSON.parse(hrRow.value):hrRow.value; if(v&&typeof v==='object') STORE.hours=v; }catch(e){}
       }
+      const loyRow=row('loyalty');
+      if(loyRow && loyRow.value){
+        try{ const v=typeof loyRow.value==='string'?JSON.parse(loyRow.value):loyRow.value; if(v&&typeof v==='object') STORE.loyalty=v; }catch(e){}
+      }
       const waRow=row('wa_templates');
       if(waRow && waRow.value){
         try{ const v=typeof waRow.value==='string'?JSON.parse(waRow.value):waRow.value; if(v&&typeof v==='object') STORE.waTemplates=v; }catch(e){}
@@ -2543,6 +2628,14 @@ async function pullCatalog(){
         }catch(e){}
       }
     }
+
+    // D+ Rewards Shop. Kept apart from the checks above: until the loyalty
+    // migration has been run the table does not exist, and the built-in
+    // list is shown instead.
+    try{
+      const rw=await supa.from('rewards').select('*').order('sort_order',{ascending:true});
+      if(!rw.error && rw.data && rw.data.length) STORE.rewards=mergeFromCloud(STORE.rewards||[],rw.data,CLOUD_TABLES.rewards,()=>true);
+    }catch(e){}
 
     // Staff directory — names only, so everyone this owner has added appears
     // as a login option on every device, not just the one they were added on.
@@ -2628,6 +2721,7 @@ async function pullOperational(){
                         (item)=>(item.brands||[]).every(b=>canSeeBrand(currentUser,b)));
     if(!cl.error) STORE.clients       =mergeFromCloud(STORE.clients,       cl.data||[],CLOUD_TABLES.clients,()=>false);
     saveStore();
+    await pullEarnedBookings();
     return true;
   }catch(e){ return false; }
 }
@@ -2933,6 +3027,7 @@ function setLoggedInClient(row){
 }
 function clearClientState(){
   loggedInClient=null; clientBookings=[]; deleteArmed=false;
+  myLedger=[]; myLedgerYear=[]; myLoyaltyAt=0;
   try{ localStorage.removeItem(CLIENT_CACHE_KEY); }catch(e){}
 }
 /* After a successful code check (or on start-up with a saved login): link
@@ -2955,6 +3050,7 @@ async function clientAfterLogin(name,phone,birth){
   if(!row||!row.id) return 'needName';
   setLoggedInClient(row);
   await loadMyBookings();
+  await loadMyLoyalty(true);
   return 'ok';
 }
 async function loadMyBookings(){
@@ -3219,6 +3315,33 @@ function ensureBookingSelection(){
   return dates;
 }
 
+Object.assign(I18N.en,{
+  dpMember:'D+ Member',dpGold:'D+ Gold',dpBlack:'D+ Black',ptsWord:'pts',
+  toTier:'{amt} more in 12 months to reach {tier}',topTier:'You are at our highest level — thank you.',
+  earnLine:'1 point for every $1 · {app} when you book in the app',tierPerk:'{tier}: {m} points on every visit',
+  rewardsShop:'Rewards shop',redeemAtDesk:'To redeem, show this screen at reception — the points come off your balance straight away.',
+  canRedeem:'Available',needMore:'{n} pts to go',historyTitle:'Points history',
+  noHistory:'No points yet — they are added when a visit is completed.',
+  kEarn:'Visit',kRedeem:'Reward',kAdjust:'Adjustment',kBonus:'Bonus',kExpire:'Expired',kOpening:'Opening balance',brandAll:'All brands'
+});
+Object.assign(I18N.ar,{
+  dpMember:'عضو D+',dpGold:'D+ الذهبي',dpBlack:'D+ الأسود',ptsWord:'نقطة',
+  toTier:'أنفقي {amt} إضافية خلال 12 شهراً للوصول إلى {tier}',topTier:'أنتِ في أعلى مستوى — شكراً لكِ.',
+  earnLine:'نقطة لكل 1$ · {app} عند الحجز من التطبيق',tierPerk:'{tier}: {m} نقاط في كل زيارة',
+  rewardsShop:'متجر المكافآت',redeemAtDesk:'للاستبدال، أظهري هذه الشاشة في الاستقبال — تُخصم النقاط من رصيدك فوراً.',
+  canRedeem:'متاحة لكِ',needMore:'باقي {n} نقطة',historyTitle:'سجل النقاط',
+  noHistory:'لا نقاط بعد — تُضاف عند إتمام زيارتك.',
+  kEarn:'زيارة',kRedeem:'مكافأة',kAdjust:'تعديل',kBonus:'مكافأة إضافية',kExpire:'انتهت صلاحيتها',kOpening:'الرصيد السابق',brandAll:'كل الأقسام'
+});
+Object.assign(I18N.ku,{
+  dpMember:'ئەندامی D+',dpGold:'D+ ئاڵتوونی',dpBlack:'D+ ڕەش',ptsWord:'خاڵ',
+  toTier:'{amt} ی تر لە ١٢ مانگدا خەرج بکە بۆ گەیشتن بە {tier}',topTier:'تۆ لە بەرزترین ئاستدایت — سوپاس.',
+  earnLine:'بۆ هەر 1$ یەک خاڵ · {app} کاتێک لە ئەپەکەوە کات دەگریت',tierPerk:'{tier}: {m} خاڵ لە هەموو سەردانێکدا',
+  rewardsShop:'دوکانی خەڵاتەکان',redeemAtDesk:'بۆ وەرگرتنی خەڵات، ئەم شاشەیە لە پێشوازی پیشان بدە — خاڵەکان ڕاستەوخۆ لە باڵانسەکەت کەم دەکرێنەوە.',
+  canRedeem:'بەردەستە',needMore:'{n} خاڵی ماوە',historyTitle:'مێژووی خاڵەکان',
+  noHistory:'هێشتا خاڵ نییە — کاتێک سەردانەکەت تەواو دەبێت زیاد دەکرێن.',
+  kEarn:'سەردان',kRedeem:'خەڵات',kAdjust:'ڕاستکردنەوە',kBonus:'خاڵی زیادە',kExpire:'بەسەرچوو',kOpening:'باڵانسی پێشوو',brandAll:'هەموو بەشەکان'
+});
 function t(k){return (I18N[lang] && I18N[lang][k]) || I18N.en[k] || k;}
 
 /* ---------------- i18n apply (static text outside phone) ---------------- */
@@ -4616,11 +4739,9 @@ function renderPreviewBookings(){
 
 function renderProfile(){
   const c=loggedInClient||{name:'',phone:'',points:0};
-  const REWARD_GOAL=REWARD_GOAL_PTS;
-  const pts=Number(c.points)||0, pct=Math.min(100,Math.round(pts/REWARD_GOAL*100)), toGo=Math.max(0,REWARD_GOAL-pts);
+  if(loggedInClient) refreshMyLoyaltySoon();
   const {up}=splitBookings(myBookingList().filter(b=>BRANDS[b.brand]));
   const favList=STORE.products.filter(p=>p.active!==false&&isFav(p.id)).slice(0,6);
-  const rewards=[['✦',t('r1')],['%',t('r2')],['❀',t('r3')],['◷',t('r4')]];
   const initial=(String(c.name||'').trim().charAt(0)||'D').toUpperCase();
   return `
     <section class="pv-card">
@@ -4633,19 +4754,12 @@ function renderProfile(){
         ${c.birth?`<div class="pv-sub">🎂 <span dir="ltr">${esc(c.birth)}</span></div>`:''}
       </div>
     </section>
-    <section class="pv-loyalty">
-      <div class="pv-l-top"><span class="lux-eyebrow">${t('yourPoints')}</span></div>
-      <div class="pv-pts">${pts.toLocaleString()}<span>pts</span></div>
-      <div class="pv-bar"><i style="width:${pct}%"></i></div>
-      <div class="pv-note">${toGo.toLocaleString()} pts ${t('toNextReward')}</div>
-    </section>
+    ${clientLoyaltyHtml(c).replace(/<section class="lux-sec">[\s\S]*$/,'')}
     <section class="lux-sec">${LuxHeader(t('upcoming'))}
       ${up.length?up.slice(0,2).map(b=>PreviewBookingCard(bookingCardData(b))).join(''):`<p class="lux-lede">${t('noBookings')}</p>`}
       <button class="lux-link" data-pv-bookings>${t('myBookings')} →</button>
     </section>
-    <section class="lux-sec">${LuxHeader(t('redeem'))}
-      <div class="pv-rewards">${rewards.map(([ic,l])=>`<div class="pv-reward"><span>${ic}</span>${esc(l)}</div>`).join('')}</div>
-    </section>
+    ${clientLoyaltyHtml(c).replace(/^[\s\S]*?<\/section>/,'')}
     ${favList.length?`<section class="lux-sec">${LuxHeader(t('favourite'))}
       <div class="pv-favs">${favList.map(p=>`<button class="pv-fav" data-prod="${esc(String(p.id))}">${mediaHtml(p.image||'','productPrimary',{fallback:brandFallback(p.brand),alt:p.n,style:productPh(p)})}<span>${esc(p.n)}</span></button>`).join('')}</div>
     </section>`:''}
@@ -6251,10 +6365,10 @@ function bindScreen(){
     const req=guest
       ? {id:nextId('b',STORE.bookings),brand:currentBrand,serviceId:currentService,serviceName:s.n,
          date:dateStr,time:selectedTime,status:'Requested',clientName:guest.name,
-         phone:guest.phone,aftercareOk:guest.consent,lang}
+         phone:guest.phone,aftercareOk:guest.consent,lang,source:'app'}
       : {id:nextId('b',STORE.bookings),brand:currentBrand,serviceId:currentService,serviceName:s.n,
          date:dateStr,time:selectedTime,status:'Requested',clientName:loggedInClient.name,clientId:loggedInClient.id,
-         phone:loggedInClient.phone,lang};
+         phone:loggedInClient.phone,lang,source:'app'};
     STORE.bookings.push(req);
     const ok=saveStore();
     if(!ok){ STORE.bookings.pop(); toast("This browser's demo storage is full."); return; }
@@ -6286,10 +6400,10 @@ function bindScreen(){
       const waReq=waGuest
         ? {id:nextId('b',STORE.bookings),brand:currentBrand,serviceId:currentService,serviceName:s.n,
            date:dateStr,time:selectedTime,status:'Requested',clientName:waGuest.name,
-           phone:waGuest.phone,aftercareOk:waGuest.consent,lang}
+           phone:waGuest.phone,aftercareOk:waGuest.consent,lang,source:'app'}
         : {id:nextId('b',STORE.bookings),brand:currentBrand,serviceId:currentService,serviceName:s.n,
            date:dateStr,time:selectedTime,status:'Requested',clientName:loggedInClient.name,clientId:loggedInClient.id,
-           phone:loggedInClient.phone,lang};
+           phone:loggedInClient.phone,lang,source:'app'};
       STORE.bookings.push(waReq);
       saveStore(); cloudSave('bookings',waReq.id,null,waGuest?{guest:true}:{clientAuth:true});
     }
@@ -7275,8 +7389,10 @@ function aiFollowUp(norm,I,L,T){
 /* Simple facts, answered from the app's own data. Returns the reply HTML, or ''. */
 function aiFact(id,L){
   const C=AI_CHAT_TEXT[L]||AI_CHAT_TEXT.en;
-  const rewards=['r1','r2','r3','r4'].map(k=>t(k)).join(C.rewardsJoin);
-  const goal=REWARD_GOAL_PTS.toLocaleString('en-US');
+  const lr=liveRewards();
+  const rewards=lr.slice(0,4).map(r=>rewardName(r,L)).join(C.rewardsJoin);
+  const firstAt=lr.length?lr[0].points:REWARD_GOAL_PTS;
+  const goal=firstAt.toLocaleString('en-US');
   switch(id){
     case 'hours': { const hb=currentBrand||'dolce'; const tdh=dayHours(hb,new Date())||{o:hmToMin(brandHours(hb).days[1].o),c:hmToMin(brandHours(hb).days[1].c)};
       return aiTextHtml(aiSay(L,'hours',{open:minToLabel(tdh.o),close:minToLabel(tdh.c)}))+aiWaLinks(AI_TEXT[L]); }
@@ -7285,8 +7401,8 @@ function aiFact(id,L){
       let loggedIn=false; try{ loggedIn=typeof clientIn==='function'&&clientIn(); }catch(e){}
       if(loggedIn){
         const pts=numOr0(loggedInClient&&loggedInClient.points);
-        if(pts>=REWARD_GOAL_PTS) return aiTextHtml(aiSay(L,'pointsGoal',{pts:pts.toLocaleString('en-US')}))+aiWaLinks(AI_TEXT[L]);
-        return aiTextHtml(aiSay(L,'pointsIn',{pts:pts.toLocaleString('en-US'),togo:(REWARD_GOAL_PTS-pts).toLocaleString('en-US'),rewards}));
+        if(pts>=firstAt) return aiTextHtml(aiSay(L,'pointsGoal',{pts:pts.toLocaleString('en-US')}))+aiWaLinks(AI_TEXT[L]);
+        return aiTextHtml(aiSay(L,'pointsIn',{pts:pts.toLocaleString('en-US'),togo:(firstAt-pts).toLocaleString('en-US'),rewards}));
       }
       let on=false; try{ on=typeof clientLoginOn==='function'&&clientLoginOn(); }catch(e){}
       return aiTextHtml(aiSay(L,on?'pointsOut':'pointsOff',{goal,rewards}));
@@ -7559,6 +7675,7 @@ function toast(msg){
 const TAB_DEFS=[
   {key:'overview',label:'Overview'},
   {key:'bookings',label:'Bookings'},
+  {key:'loyalty',label:'Loyalty'},
   {key:'products',label:'Products'},
   {key:'services',label:'Services'},
   {key:'offers',label:'Offers'},
@@ -7569,7 +7686,7 @@ const TAB_DEFS=[
 ];
 const PRESETS={
   owner:{label:'Owner / Admin',tabs:TAB_DEFS.map(t=>t.key)},
-  reception:{label:'Reception',tabs:['bookings']},
+  reception:{label:'Reception',tabs:['bookings','loyalty']},
   staff:{label:'Staff / Provider',tabs:['bookings','gallery']},
 };
 /* Owner status used to be inferred from having the Employees tab. Accounts
@@ -7784,14 +7901,17 @@ function showAdminForRole(){
     document.getElementById('adminLogin').style.display='';
     renderLogin();
   });
-  const allowed=currentUser.tabs;
+  // Loyalty comes with the Bookings section (points are added when a visit
+  // is completed), so accounts made before it existed get it too.
+  const allowed=[...(currentUser.tabs||[])];
+  if(!allowed.includes('loyalty') && (currentUser.isOwner || allowed.includes('bookings'))) allowed.push('loyalty');
   document.querySelectorAll('#adminTabsRow [data-admin-tab]').forEach(btn=>{
     const ok=allowed.includes(btn.dataset.adminTab);
     btn.style.display=ok?'':'none';
   });
   if(!allowed.includes(adminTab)) adminTab=allowed[0]||'bookings';
   document.querySelectorAll('#adminTabsRow [data-admin-tab]').forEach(x=>x.classList.toggle('active',x.dataset.adminTab===adminTab));
-  ['overview','bookings','products','services','offers','gallery','employees','reports','purchases'].forEach(p=>{
+  ['overview','bookings','loyalty','products','services','offers','gallery','employees','reports','purchases'].forEach(p=>{
     document.getElementById('admin'+p[0].toUpperCase()+p.slice(1)).classList.toggle('active',adminTab===p);
   });
   // Services has its own brand sub-tabs — hide any brand this account isn't
@@ -7801,7 +7921,7 @@ function showAdminForRole(){
   });
   if(!canSeeBrand(currentUser,svcBrandTab)) svcBrandTab=userBrands(currentUser)[0];
   document.querySelectorAll('#svcBrandTabs [data-svc-brand-tab]').forEach(x=>x.classList.toggle('active',x.dataset.svcBrandTab===svcBrandTab));
-  renderAdminProducts(); renderAdminServices(); renderAdminOffers(); renderAdminGallery(); renderAdminBookings(); renderBrandPhotos(); renderCurrencySettings(); renderClientLoginSetting(); renderWaTemplates(); renderHoursAdmin(); renderAdminEmployees(); renderAdminPurchases(); renderAdminReports();
+  renderAdminProducts(); renderAdminServices(); renderAdminOffers(); renderAdminGallery(); renderAdminBookings(); renderBrandPhotos(); renderCurrencySettings(); renderClientLoginSetting(); renderWaTemplates(); renderHoursAdmin(); renderAdminEmployees(); renderAdminPurchases(); renderAdminReports(); renderAdminLoyalty();
 }
 
 /* ---------------- Full-screen client app ---------------- */
@@ -7867,6 +7987,8 @@ document.querySelectorAll('[data-admin-tab]').forEach(b=>{
     document.getElementById('adminEmployees').classList.toggle('active',adminTab==='employees');
     document.getElementById('adminReports').classList.toggle('active',adminTab==='reports');
     document.getElementById('adminPurchases').classList.toggle('active',adminTab==='purchases');
+    document.getElementById('adminLoyalty').classList.toggle('active',adminTab==='loyalty');
+    if(adminTab==='loyalty'){ renderAdminLoyalty(); pullEarnedBookings().then(()=>{ if(loSel) selectLoyaltyClient(loSel); else renderAdminLoyalty(); }); }
     // Photos and video are much larger than everything else, so they are
     // fetched only when this tab is actually opened rather than on every
     // refresh.
@@ -8617,15 +8739,20 @@ function renderAdminBookings(){
         ${advance?`<button class="btn btn-ghost btn-sm" data-advance-booking="${i}">Mark ${advance}</button>`:''}
         ${(bk.status==='Requested'||bk.status==='Confirmed')?`<button class="btn btn-danger btn-sm" data-cancel-booking="${i}">Cancel</button>`:''}
       </div>` : '');
+    const ptsBtn=(bk.status==='Completed' && loyaltyReady===true && !earnedBookingIds.has(String(bk.id)))
+      ? `<button class="btn btn-ghost btn-sm" data-points-booking="${i}" title="Add D+ points for this visit">+ Points</button>` : '';
     return `<tr>
       <td>${esc(bk.clientName)}</td>
       <td><span class="brand-tag" style="background:${brandColor[bk.brand]}">${BRANDS[bk.brand].name}</span></td>
       <td>${esc(bk.serviceName)}</td>
       <td>${esc(bk.date)}<br><span style="color:var(--muted);font-size:13px;">${esc(bk.time)}</span></td>
       <td><span class="status-badge ${esc(bk.status)}">${esc(bk.status)}</span></td>
-      <td>${actions}</td>
+      <td>${actions}${ptsBtn}</td>
     </tr>`;
   }).join('');
+  rows.querySelectorAll('[data-points-booking]').forEach(b=>b.addEventListener('click',()=>{
+    const bk=STORE.bookings[parseInt(b.dataset.pointsBooking)]; if(bk) offerPoints(bk);
+  }));
   rows.querySelectorAll('[data-advance-booking]').forEach(b=>b.addEventListener('click',()=>{
     const i=parseInt(b.dataset.advanceBooking); const bk=STORE.bookings[i];
     bk.status=nextStatus[bk.status]; saveStore(); cloudSave('bookings',bk.id); renderAdminBookings();
@@ -8633,7 +8760,8 @@ function renderAdminBookings(){
     if(currentScreen==='bookings') render();
     // The client is at the desk on their way out — this is the moment the
     // aftercare note is worth sending, not days later.
-    if(bk.status==='Completed') offerAftercare(bk);
+    // First the D+ points for the visit, then the aftercare note.
+    if(bk.status==='Completed') offerPoints(bk,()=>offerAftercare(bk));
     if(bk.status==='Confirmed') offerWhatsApp(bk,'confirm');
   }));
   rows.querySelectorAll('[data-cancel-booking]').forEach(b=>b.addEventListener('click',()=>{
@@ -8719,6 +8847,480 @@ function offerAftercare(booking){
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(body)}`,'_blank','noopener');
     close();
     toast('Aftercare note opened in WhatsApp.');
+  });
+}
+
+
+/* ======================= D+ LOYALTY (phase 1) =======================
+   Every point added or taken away is one row in point_transactions (the
+   "ledger") with the reason, the member of staff and — for a visit — the
+   money spent. The database keeps clients.points in step with the ledger and
+   refuses anything that would take a balance below zero. Rows are never
+   edited or deleted: a mistake is put right with an "adjust" row.
+
+   - $1 = 1 point. One multiplier applies — the HIGHEST of: the client's level
+     (Gold 1.25x, Black 1.5x) and booking in the app (1.25x). They never stack.
+   - Level (D+ Member / Gold / Black) comes from money spent on completed
+     visits in the last 12 months, not from the points balance, so spending
+     points on a reward never lowers a level.
+   - Points are written straight to the database (never queued), because the
+     balance check has to happen there and then. Offline = not saved, and the
+     member of staff is told so. */
+var DEFAULT_LOYALTY={appMult:1.25,gold:1000,black:3000,goldMult:1.25,blackMult:1.5};
+var DEFAULT_REWARDS=[
+  {id:'rw_matcha',name:'Free matcha at Core',nameAr:'ماتشا مجانية في Core',nameKu:'ماتچای بێبەرامبەر لە Core',brand:'core',points:150,active:true,sort:10},
+  {id:'rw_socks',name:'Core grip socks',nameAr:'جوارب Core المانعة للانزلاق',nameKu:'گۆرەوی Core',brand:'core',points:250,active:true,sort:20},
+  {id:'rw_pol15',name:'$15 Polished service credit',nameAr:'رصيد 15$ لخدمات Polished',nameKu:'15$ باڵانس بۆ خزمەتگوزاری Polished',brand:'polished',points:350,active:true,sort:30},
+  {id:'rw_poladd',name:'Complimentary Polished add-on',nameAr:'إضافة مجانية في Polished',nameKu:'زیادکراوێکی بێبەرامبەر لە Polished',brand:'polished',points:500,active:true,sort:40},
+  {id:'rw_dol30',name:'$30 Dolce treatment credit',nameAr:'رصيد 30$ لعلاجات Dolce',nameKu:'30$ باڵانس بۆ چارەسەری Dolce',brand:'dolce',points:600,active:true,sort:50},
+  {id:'rw_coreclass',name:'Complimentary Core class',nameAr:'حصة مجانية في Core',nameKu:'وانەیەکی بێبەرامبەر لە Core',brand:'core',points:750,active:true,sort:60},
+  {id:'rw_dolprem',name:'Premium Dolce treatment / facial add-on',nameAr:'علاج مميز أو إضافة للعناية بالبشرة في Dolce',nameKu:'چارەسەری تایبەت یان زیادکراوی پێست لە Dolce',brand:'dolce',points:1000,active:true,sort:70},
+  {id:'rw_dol75',name:'$75 Dolce treatment credit',nameAr:'رصيد 75$ لعلاجات Dolce',nameKu:'75$ باڵانس بۆ چارەسەری Dolce',brand:'dolce',points:1500,active:true,sort:80},
+  {id:'rw_all100',name:'$100 reward across Dolce / Polished / Core',nameAr:'مكافأة 100$ في Dolce وPolished وCore',nameKu:'خەڵاتی 100$ لە Dolce و Polished و Core',brand:'all',points:2000,active:true,sort:90},
+];
+var loyaltyReady=null;          // null = not checked yet, false = tables missing, true = live
+var earnedBookingIds=new Set(); // bookings that already earned points (staff view)
+function loyaltySettings(){ return Object.assign({},DEFAULT_LOYALTY,(STORE.loyalty&&typeof STORE.loyalty==='object')?STORE.loyalty:{}); }
+function allRewards(){ return (Array.isArray(STORE.rewards)&&STORE.rewards.length)?STORE.rewards:DEFAULT_REWARDS; }
+function rewardLive(r){
+  if(!r||r.active===false) return false;
+  const today=isoOf(new Date());
+  if(r.start&&today<r.start) return false;
+  if(r.end&&today>r.end) return false;
+  return true;
+}
+function liveRewards(){ return allRewards().filter(rewardLive).slice().sort((a,b)=>(a.points-b.points)||(numOr0(a.sort)-numOr0(b.sort))); }
+function rewardName(r,L){ L=L||lang; return (L==='ar'&&r.nameAr)?r.nameAr:(L==='ku'&&r.nameKu)?r.nameKu:r.name; }
+function rewardBrandLabel(b){ return b&&BRANDS[b]?BRANDS[b].name:t('brandAll'); }
+
+// The level, from a client's ledger rows (any order).
+function loyaltyFromRows(rows){
+  const L=loyaltySettings();
+  const since=Date.now()-365*24*3600*1000;
+  const spend=(rows||[]).filter(r=>r.kind==='earn'&&new Date(r.created_at).getTime()>=since)
+    .reduce((s,r)=>s+Number(r.spend||0),0);
+  const tier= spend>=L.black?'black':spend>=L.gold?'gold':'member';
+  const mult= tier==='black'?L.blackMult:tier==='gold'?L.goldMult:1;
+  const next= tier==='member'?{tier:'gold',at:L.gold}:tier==='gold'?{tier:'black',at:L.black}:null;
+  return {spend:Math.round(spend*100)/100,tier,mult,next};
+}
+// "D+" is kept left-to-right inside Arabic/Kurdish text, or it shows as "+D".
+function tierName(tier){ return t(tier==='black'?'dpBlack':tier==='gold'?'dpGold':'dpMember').replace('D+','\u2066D+\u2069'); }
+function tierNameEn(tier){ return tier==='black'?'D+ Black':tier==='gold'?'D+ Gold':'D+ Member'; }
+// Highest one only — never multiplied together.
+function earnMultiplier(tierMult,source){
+  const L=loyaltySettings();
+  return Math.max(Number(tierMult)||1, source==='app'?Number(L.appMult)||1:1);
+}
+function pointsFor(amount,mult){ return Math.max(0,Math.floor((Number(amount)||0)*(Number(mult)||1)+1e-9)); }
+const PT_KIND_KEYS={earn:'kEarn',redeem:'kRedeem',adjust:'kAdjust',bonus:'kBonus',expire:'kExpire',opening:'kOpening'};
+const PT_KIND_EN={earn:'Visit',redeem:'Reward',adjust:'Adjustment',bonus:'Bonus',expire:'Expired',opening:'Opening balance'};
+function last10(p){ const d=normalizedPhone(p); return d.length>=8?d.slice(-10):''; }
+
+/* ---- Client side: balance, level, rewards shop, history ---- */
+var myLedger=[], myLedgerYear=[], myLoyaltyAt=0, myLoyaltyBusy=false;
+async function loadMyLoyalty(force){
+  const cs=clientSupa(); if(!cs||!loggedInClient) return false;
+  if(myLoyaltyBusy) return false;
+  if(!force && Date.now()-myLoyaltyAt<30000) return false;
+  myLoyaltyBusy=true; myLoyaltyAt=Date.now();
+  try{
+    const id=String(loggedInClient.id);
+    const yearAgo=new Date(Date.now()-365*24*3600*1000).toISOString();
+    const [hist,year,me]=await Promise.all([
+      cs.from('point_transactions').select('*').eq('client_id',id).order('created_at',{ascending:false}).limit(30),
+      cs.from('point_transactions').select('kind,spend,created_at').eq('client_id',id).eq('kind','earn').gte('created_at',yearAgo),
+      cs.from('clients').select('points').eq('id',id).maybeSingle(),
+    ]);
+    let changed=false;
+    if(!hist.error&&hist.data){ myLedger=hist.data; changed=true; }
+    if(!year.error&&year.data){ myLedgerYear=year.data; changed=true; }
+    if(!me.error&&me.data&&loggedInClient&&String(loggedInClient.id)===id){
+      const p=Number(me.data.points)||0;
+      if(p!==loggedInClient.points){ loggedInClient.points=p; changed=true;
+        try{ localStorage.setItem(CLIENT_CACHE_KEY,JSON.stringify(loggedInClient)); }catch(e){} }
+    }
+    return changed;
+  }catch(e){ return false; }
+  finally{ myLoyaltyBusy=false; }
+}
+function refreshMyLoyaltySoon(){
+  loadMyLoyalty().then(ch=>{ if(ch&&currentScreen==='profile'&&clientIn()) render(); });
+}
+function clientLoyaltyHtml(c){
+  const pts=Number(c.points)||0;
+  const lv=loyaltyFromRows(myLedgerYear);
+  const L=loyaltySettings();
+  let pct=100, note=t('topTier');
+  if(lv.next){
+    const prevAt=lv.tier==='gold'?L.gold:0;
+    pct=Math.max(2,Math.min(100,Math.round((lv.spend-prevAt)/Math.max(1,lv.next.at-prevAt)*100)));
+    const amt=fmtMoney(Math.max(0,Math.ceil(lv.next.at-lv.spend)));
+    note=t('toTier').replace('{amt}',amt).replace('{tier}',tierName(lv.next.tier));
+  }
+  const fmtX=(m)=>String(Number(m)||1).replace(/\.?0+$/,'')+'×';
+  const perk = lv.tier==='member'
+    ? t('earnLine').replace('{app}',fmtX(L.appMult))
+    : t('tierPerk').replace('{tier}',tierName(lv.tier)).replace('{m}',fmtX(lv.mult))+' · '+t('earnLine').replace('{app}',fmtX(L.appMult));
+  const rws=liveRewards();
+  const hist=myLedger.slice(0,10);
+  const d=(iso)=>{ try{ return new Date(iso).toLocaleDateString(lang==='en'?'en-GB':lang==='ar'?'ar-IQ':'ckb-IQ',{day:'numeric',month:'short',year:'numeric'}); }catch(e){ return String(iso).slice(0,10); } };
+  return `
+    <section class="pv-loyalty dp-${lv.tier}">
+      <div class="pv-l-top"><span class="lux-eyebrow">${t('yourPoints')}</span><span class="pv-tier">${esc(tierName(lv.tier))}</span></div>
+      <div class="pv-pts">${pts.toLocaleString('en-US')}<span>${t('ptsWord')}</span></div>
+      <div class="pv-bar"><i style="width:${pct}%"></i></div>
+      <div class="pv-note">${esc(note)}</div>
+      <div class="pv-note dp-perk">${esc(perk)}</div>
+    </section>
+    <section class="lux-sec">${LuxHeader(t('rewardsShop'))}
+      <div class="dp-rw-list">${rws.map(r=>{ const ok=pts>=r.points; return `
+        <div class="dp-rw${ok?' ok':''}">
+          <div class="dp-rw-pts">${r.points.toLocaleString('en-US')}<small>${t('ptsWord')}</small></div>
+          <div class="dp-rw-txt"><div class="dp-rw-name">${esc(rewardName(r))}</div>
+            <div class="dp-rw-meta">${esc(rewardBrandLabel(r.brand))} · ${ok?`<b>${t('canRedeem')}</b>`:esc(t('needMore').replace('{n}',(r.points-pts).toLocaleString('en-US')))}</div></div>
+        </div>`;}).join('')}</div>
+      <p class="cl-note">${t('redeemAtDesk')}</p>
+    </section>
+    <section class="lux-sec">${LuxHeader(t('historyTitle'))}
+      ${hist.length?`<div class="dp-hist">${hist.map(r=>`
+        <div class="dp-h-row"><div><div class="dp-h-what">${esc(t(PT_KIND_KEYS[r.kind]||'kAdjust'))}${r.kind==='redeem'||r.kind==='earn'?` · ${esc(r.kind==='redeem'?(()=>{const rw=allRewards().find(x=>x.id===r.reward_id);return rw?rewardName(rw):r.reason;})():(BRANDS[r.brand]?BRANDS[r.brand].name:''))}`:''}</div>
+          <div class="dp-h-when">${esc(d(r.created_at))}</div></div>
+          <div class="dp-h-pts ${r.points<0?'neg':''}" dir="ltr">${r.points>0?'+':''}${Number(r.points).toLocaleString('en-US')}</div></div>`).join('')}</div>`
+        :`<p class="lux-lede">${t('noHistory')}</p>`}
+    </section>`;
+}
+
+/* ---- Staff side ---- */
+async function pullEarnedBookings(){
+  if(!supa) return;
+  try{
+    const res=await supa.from('point_transactions').select('booking_id').eq('kind','earn').not('booking_id','is',null);
+    if(res.error){ if(/point_transactions|relation|schema cache/i.test(String(res.error.message||''))) loyaltyReady=false; return; }
+    loyaltyReady=true;
+    earnedBookingIds=new Set((res.data||[]).map(r=>String(r.booking_id)));
+  }catch(e){}
+}
+async function fetchClientLedger(clientId){
+  if(!supa) return {error:'offline'};
+  try{
+    const res=await supa.from('point_transactions').select('*').eq('client_id',String(clientId)).order('created_at',{ascending:false}).limit(500);
+    if(res.error) return {error:String(res.error.message||'error')};
+    return {rows:res.data||[]};
+  }catch(e){ return {error:'offline'}; }
+}
+async function fetchClientPoints(clientId){
+  try{
+    const res=await supa.from('clients').select('points').eq('id',String(clientId)).maybeSingle();
+    if(!res.error&&res.data){
+      const c=STORE.clients.find(x=>String(x.id)===String(clientId));
+      if(c){ c.points=Number(res.data.points)||0; saveStore(); }
+      return Number(res.data.points)||0;
+    }
+  }catch(e){}
+  return null;
+}
+// One write to the ledger. Returns '' on success or a message for staff.
+async function addPointRow(row){
+  if(!supa) return 'Not connected to the database — points were not saved.';
+  if(!(await isStaffSignedIn())) return 'Your Admin login has expired — log in again, then try once more.';
+  const payload={client_id:String(row.client_id),kind:row.kind,points:Math.round(Number(row.points)||0),
+    spend:Math.max(0,Number(row.spend)||0),brand:row.brand||'',booking_id:row.booking_id||null,
+    reward_id:row.reward_id||null,reason:String(row.reason||'').slice(0,200),
+    staff_name:(currentUser&&currentUser.name)||''};
+  let res;
+  try{ res=await supa.from('point_transactions').insert(payload); }
+  catch(e){ return 'No connection — points were not saved. Try again when you are back online.'; }
+  if(res.error){
+    const m=String(res.error.message||''), code=res.error.code;
+    if(code==='23505') return 'Points were already added for this booking.';
+    if(/not enough points/i.test(m)) return 'Not enough points for that — '+m.replace(/^.*?\(/,'(');
+    if(/point_transactions|relation|schema cache/i.test(m)) return 'The loyalty program is not switched on in the database yet (run supabase_migration_loyalty.sql).';
+    if(/fetch|network/i.test(m)) return 'No connection — points were not saved.';
+    return 'Could not save the points: '+m;
+  }
+  if(row.booking_id && row.kind==='earn') earnedBookingIds.add(String(row.booking_id));
+  const c=STORE.clients.find(x=>String(x.id)===String(row.client_id));
+  if(c){ c.points=(Number(c.points)||0)+payload.points; saveStore(); }
+  fetchClientPoints(row.client_id);
+  return '';
+}
+function findClientsFor(q){
+  const s=String(q||'').trim().toLowerCase(); if(!s) return [];
+  const digits=normalizedPhone(s);
+  return STORE.clients.filter(c=>{
+    if(String(c.name||'').toLowerCase().includes(s)) return true;
+    if(String(c.email||'').toLowerCase().includes(s)) return true;
+    if(digits.length>=4 && (normalizedPhone(c.phone).includes(digits.slice(-10))||normalizedPhone(c.contactPhone).includes(digits.slice(-10)))) return true;
+    return false;
+  }).slice(0,12);
+}
+function clientForBooking(bk){
+  if(bk.clientId){ const c=STORE.clients.find(x=>String(x.id)===String(bk.clientId)); if(c) return c; }
+  const p=last10(bk.phone); if(!p) return null;
+  return STORE.clients.find(c=>last10(c.phone)===p)||STORE.clients.find(c=>last10(c.contactPhone)===p)||null;
+}
+function clientLine(c){ return `${esc(c.name||'(no name)')} · <span dir="ltr">${esc(clientPhoneText(c.phone||c.contactPhone||'')||c.email||'')}</span>`; }
+
+// Shown the moment a booking is marked Completed (and from "+ Points").
+function offerPoints(bk,after){
+  const wrap=document.getElementById('pointsPanel');
+  const done=()=>{ wrap.classList.remove('open'); wrap.innerHTML=''; if(after) after(); };
+  if(!wrap||loyaltyReady===false){ if(after) after(); return; }
+  if(earnedBookingIds.has(String(bk.id))){ if(after) after(); return; }
+  const svc=svcList(bk.brand).find(s=>s.id===bk.serviceId);
+  let amount=svc?effectivePrice(svc):0;
+  let client=clientForBooking(bk), level=null, busy=false;
+  const draw=()=>{
+    const mult=earnMultiplier(level?level.mult:1,bk.source);
+    const pts=pointsFor(amount,mult);
+    const reasons=[];
+    if(level&&level.tier!=='member') reasons.push(`${tierNameEn(level.tier)} ${level.mult}×`);
+    if(bk.source==='app') reasons.push(`booked in the app ${loyaltySettings().appMult}×`);
+    wrap.innerHTML=`
+      <div class="ac-card lo-earn">
+        <div class="ac-head">Add D+ points for ${esc(bk.clientName||'this client')}?</div>
+        <div class="ac-meta">${esc(bk.serviceName)} · ${esc(BRANDS[bk.brand].name)} · ${esc(bk.date)}</div>
+        ${client?`<div class="lo-who">✓ ${clientLine(client)} · <b>${(Number(client.points)||0).toLocaleString('en-US')} pts</b>${level?` · ${esc(tierNameEn(level.tier))}`:' · …'}</div>`
+          :`<div class="lo-who lo-warn">No Dolce+ account found for this booking's phone number. Search for the client below — or skip (points need an account in the app).</div>`}
+        <div class="lo-find"><input id="pp_q" placeholder="${client?'Not them? ':''}Search name, phone or email" autocomplete="off"><div id="pp_res"></div></div>
+        <div class="lo-amt">
+          <label>Amount the client paid (USD)
+            <input id="pp_amt" type="number" min="0" step="0.01" inputmode="decimal" value="${amount}"></label>
+          <div class="lo-calc"><b id="pp_pts">${pts.toLocaleString('en-US')}</b> points<br><span>${mult}× — ${reasons.length>1?'the highest of: '+esc(reasons.join(', ')):reasons.length?esc(reasons[0]):'standard rate'}</span></div>
+        </div>
+        <div class="ac-actions">
+          <button class="btn btn-ghost btn-sm" id="pp_skip">Skip</button>
+          <button class="btn btn-primary btn-sm" id="pp_add" ${client&&pts>0&&!busy?'':'disabled'}>${busy?'Saving…':`Add ${pts.toLocaleString('en-US')} points`}</button>
+        </div>
+        <div class="ac-foot">$1 = 1 point. Only one multiplier counts — the highest.</div>
+      </div>`;
+    wrap.classList.add('open');
+    document.getElementById('pp_skip').addEventListener('click',done);
+    const amt=document.getElementById('pp_amt');
+    amt.addEventListener('input',()=>{
+      amount=Math.max(0,Number(amt.value)||0);
+      const p=pointsFor(amount,earnMultiplier(level?level.mult:1,bk.source));
+      document.getElementById('pp_pts').textContent=p.toLocaleString('en-US');
+      const b=document.getElementById('pp_add'); b.textContent=`Add ${p.toLocaleString('en-US')} points`; b.disabled=!client||p<=0;
+    });
+    const q=document.getElementById('pp_q');
+    q.addEventListener('input',()=>{
+      const list=findClientsFor(q.value);
+      document.getElementById('pp_res').innerHTML=list.map(c=>`<button class="lo-pick" data-pp-pick="${esc(String(c.id))}">${clientLine(c)}</button>`).join('')
+        ||(q.value.trim()?'<div class="lo-none">No match.</div>':'');
+      document.querySelectorAll('[data-pp-pick]').forEach(b=>b.addEventListener('click',()=>{
+        client=STORE.clients.find(x=>String(x.id)===b.dataset.ppPick); level=null; draw(); loadLevel();
+      }));
+    });
+    document.getElementById('pp_add').addEventListener('click',async()=>{
+      if(!client||busy) return;
+      const mult=earnMultiplier(level?level.mult:1,bk.source);
+      const p=pointsFor(amount,mult); if(p<=0) return;
+      busy=true; draw();
+      const err=await addPointRow({client_id:client.id,kind:'earn',points:p,spend:amount,brand:bk.brand,
+        booking_id:String(bk.id),reason:`${bk.serviceName||'Visit'} (${mult}×)`});
+      busy=false;
+      if(err){ draw(); toast(err); return; }
+      toast(`${p.toLocaleString('en-US')} points added for ${client.name||bk.clientName}.`);
+      renderAdminBookings(); if(adminTab==='loyalty') renderAdminLoyalty();
+      done();
+    });
+  };
+  const loadLevel=async()=>{
+    if(!client) return;
+    const c=client, r=await fetchClientLedger(c.id);
+    if(client!==c) return;
+    level=loyaltyFromRows(r.rows||[]);
+    if(r.error && /point_transactions|relation|schema cache/i.test(r.error)){ loyaltyReady=false; done(); return; }
+    if(!busy) draw();
+  };
+  draw(); loadLevel();
+}
+
+/* ---- Admin → Loyalty tab ---- */
+var loSel=null, loRows=[], loErr='', loQuery='', loRedeemArm='';
+function renderAdminLoyalty(){
+  const wrap=document.getElementById('loyaltyWrap'); if(!wrap||!currentUser) return;
+  const owner=!!currentUser.isOwner;
+  const L=loyaltySettings();
+  const members=STORE.clients.length;
+  const outstanding=STORE.clients.reduce((s,c)=>s+(Number(c.points)||0),0);
+  const notReady=loyaltyReady===false;
+  const sel=loSel?STORE.clients.find(c=>String(c.id)===String(loSel)):null;
+  const lv=loyaltyFromRows(loRows);
+  const scopeOk=(r)=>r.brand==='all'||!r.brand||canSeeBrand(currentUser,r.brand);
+  const bal=sel?(Number(sel.points)||0):0;
+  wrap.innerHTML=`
+    ${notReady?`<div class="ac-card" style="max-width:none;"><b>The loyalty program isn't switched on in the database yet.</b> An owner needs to run <code>supabase_migration_loyalty.sql</code> in Supabase (SQL Editor → Run). Until then, points can't be saved.</div>`:''}
+    <div class="stat-row lo-stats">
+      <div class="stat"><div class="lbl">Members</div><div class="val">${members.toLocaleString('en-US')}</div></div>
+      <div class="stat"><div class="lbl">Points held by clients</div><div class="val">${outstanding.toLocaleString('en-US')}</div></div>
+      <div class="stat"><div class="lbl">Earning</div><div class="val" style="font-size:15px;line-height:1.4;">$1 = 1 pt · app ${L.appMult}×<br>Gold $${L.gold.toLocaleString('en-US')}+ ${L.goldMult}× · Black $${L.black.toLocaleString('en-US')}+ ${L.blackMult}×</div></div>
+    </div>
+    <div class="section-label" style="margin:6px 0 10px;">Find a client</div>
+    <div class="lo-find" style="max-width:620px;"><input id="lo_q" placeholder="Name, phone or email" value="${esc(loQuery)}" autocomplete="off"><div id="lo_res"></div></div>
+    ${sel?`
+    <div class="lo-client">
+      <div class="lo-c-head">
+        <div><div class="lo-c-name">${esc(sel.name||'(no name)')}</div>
+          <div class="lo-c-sub" dir="ltr" style="text-align:start;">${esc(clientPhoneText(sel.phone||sel.contactPhone||''))}${sel.email?' · '+esc(sel.email):''}</div></div>
+        <div class="lo-c-bal"><b>${bal.toLocaleString('en-US')}</b> pts<span class="lo-badge lo-${lv.tier}">${esc(tierNameEn(lv.tier))}</span></div>
+      </div>
+      <div class="lo-c-sub">Spent in the last 12 months: <b>$${lv.spend.toLocaleString('en-US')}</b>${lv.next?` — $${Math.max(0,Math.ceil(lv.next.at-lv.spend)).toLocaleString('en-US')} more to ${esc(tierNameEn(lv.next.tier))}`:' — top level'}</div>
+      ${loErr?`<div class="lo-who lo-warn" style="margin-top:10px;">${esc(loErr)}</div>`:''}
+      <div class="lo-actions">
+        <div class="lo-box">
+          <div class="lo-box-t">Redeem a reward</div>
+          <div class="lo-rw-grid">${liveRewards().filter(scopeOk).map(r=>{ const ok=bal>=r.points; const arm=loRedeemArm===r.id; return `
+            <button class="lo-rw${arm?' arm':''}" data-lo-redeem="${esc(r.id)}" ${ok&&!notReady?'':'disabled'}>
+              <span>${arm?`Confirm: −${r.points.toLocaleString('en-US')} pts`:esc(r.name)}</span><small>${r.points.toLocaleString('en-US')} pts · ${esc(rewardBrandLabelEn(r.brand))}</small></button>`;}).join('')||'<div class="lo-none">No active rewards.</div>'}</div>
+        </div>
+        <div class="lo-box">
+          <div class="lo-box-t">Add or remove points</div>
+          <div class="lo-adj">
+            <input id="lo_adj_pts" type="number" step="1" placeholder="e.g. 50 or -50" inputmode="numeric">
+            <input id="lo_adj_reason" placeholder="Reason (required)" maxlength="200">
+            <button class="btn btn-primary btn-sm" id="lo_adj_save" ${notReady?'disabled':''}>Save</button>
+          </div>
+          <div class="ac-foot">Saved with your name (${esc(currentUser.name)}). To undo a mistake, add the opposite amount with a reason.</div>
+        </div>
+      </div>
+      <div class="lo-box-t" style="margin-top:16px;">History</div>
+      <div class="admin-table-wrap"><table class="admin-table">
+        <thead><tr><th>Date</th><th>Type</th><th>Points</th><th>Spent</th><th>Brand</th><th>Reason</th><th>Staff</th></tr></thead>
+        <tbody>${loRows.length?loRows.map(r=>`<tr>
+          <td>${esc(new Date(r.created_at).toLocaleString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}))}</td>
+          <td>${esc(PT_KIND_EN[r.kind]||r.kind)}</td>
+          <td style="font-weight:700;color:${r.points<0?'#a0473a':'#4f6a45'};">${r.points>0?'+':''}${Number(r.points).toLocaleString('en-US')}</td>
+          <td>${Number(r.spend)>0?'$'+Number(r.spend).toLocaleString('en-US'):''}</td>
+          <td>${BRANDS[r.brand]?esc(BRANDS[r.brand].name):''}</td>
+          <td>${esc(r.reason||'')}</td><td>${esc(r.staff_name||'')}</td></tr>`).join('')
+          :`<tr><td colspan="7"><div class="admin-empty">No points yet.</div></td></tr>`}</tbody>
+      </table></div>
+    </div>`:''}
+    ${owner?loyaltyOwnerHtml():''}`;
+
+  const q=document.getElementById('lo_q');
+  const showRes=()=>{
+    const list=findClientsFor(loQuery);
+    document.getElementById('lo_res').innerHTML=list.map(c=>`<button class="lo-pick" data-lo-pick="${esc(String(c.id))}">${clientLine(c)} · ${(Number(c.points)||0).toLocaleString('en-US')} pts</button>`).join('')
+      ||(loQuery.trim()?'<div class="lo-none">No client matches. Clients appear here once they have a Dolce+ account.</div>':'');
+    document.querySelectorAll('[data-lo-pick]').forEach(b=>b.addEventListener('click',()=>selectLoyaltyClient(b.dataset.loPick)));
+  };
+  q.addEventListener('input',()=>{ loQuery=q.value; showRes(); });
+  if(loQuery && !sel) showRes();
+  document.querySelectorAll('[data-lo-redeem]').forEach(b=>b.addEventListener('click',async()=>{
+    const id=b.dataset.loRedeem;
+    if(loRedeemArm!==id){ loRedeemArm=id; renderAdminLoyalty(); return; }
+    const r=allRewards().find(x=>x.id===id); if(!r||!sel) return;
+    loRedeemArm=''; b.disabled=true;
+    const err=await addPointRow({client_id:sel.id,kind:'redeem',points:-r.points,reward_id:r.id,
+      brand:BRANDS[r.brand]?r.brand:'',reason:r.name});
+    if(err){ toast(err); renderAdminLoyalty(); return; }
+    toast(`Redeemed: ${r.name} (−${r.points.toLocaleString('en-US')} pts).`);
+    selectLoyaltyClient(sel.id);
+  }));
+  const adj=document.getElementById('lo_adj_save');
+  if(adj) adj.addEventListener('click',async()=>{
+    const p=Math.round(Number(document.getElementById('lo_adj_pts').value)||0);
+    const reason=document.getElementById('lo_adj_reason').value.trim();
+    if(!p){ toast('Type how many points to add (or a minus number to remove).'); return; }
+    if(!reason){ toast('Please give a reason — it is saved with the change.'); return; }
+    if(bal+p<0){ toast(`That would take the balance below zero (balance ${bal}).`); return; }
+    adj.disabled=true;
+    const err=await addPointRow({client_id:sel.id,kind:'adjust',points:p,reason});
+    if(err){ toast(err); adj.disabled=false; return; }
+    toast(`${p>0?'+':''}${p} points saved for ${sel.name}.`);
+    selectLoyaltyClient(sel.id);
+  });
+  if(owner) bindLoyaltyOwner();
+}
+function rewardBrandLabelEn(b){ return b&&BRANDS[b]?BRANDS[b].name:'All brands'; }
+async function selectLoyaltyClient(id){
+  loSel=String(id); loRows=[]; loErr=''; loRedeemArm='';
+  renderAdminLoyalty();
+  const r=await fetchClientLedger(id);
+  if(String(loSel)!==String(id)) return;
+  if(r.error){
+    loErr=/point_transactions|relation|schema cache/i.test(r.error)?'':'Could not load the history — check the connection and try again.';
+    if(/point_transactions|relation|schema cache/i.test(r.error)) loyaltyReady=false;
+  } else { loRows=r.rows; loyaltyReady=true; }
+  await fetchClientPoints(id);
+  if(String(loSel)===String(id)) renderAdminLoyalty();
+}
+
+// Owner only: the rewards shop and the earning rules.
+function loyaltyOwnerHtml(){
+  const L=loyaltySettings();
+  const rws=allRewards().slice().sort((a,b)=>numOr0(a.sort)-numOr0(b.sort)||a.points-b.points);
+  const brandSel=(id,v)=>`<select id="${id}"><option value="all" ${v==='all'?'selected':''}>All brands</option>${Object.keys(BRANDS).map(k=>`<option value="${k}" ${v===k?'selected':''}>${BRANDS[k].name}</option>`).join('')}</select>`;
+  return `
+    <div class="section-label" style="margin:30px 0 10px;">Rewards shop <span style="font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0;">— what clients can spend points on (owner only)</span></div>
+    <div class="admin-table-wrap"><table class="admin-table lo-rw-edit">
+      <thead><tr><th>Reward (English)</th><th>Arabic</th><th>Kurdish</th><th>Brand</th><th>Points</th><th>From / until</th><th>Shown</th><th></th></tr></thead>
+      <tbody>${rws.map(r=>{ const k=esc(r.id); return `<tr data-rw-row="${k}">
+        <td><input data-f="name" value="${esc(r.name)}"></td>
+        <td><input data-f="nameAr" dir="rtl" value="${esc(r.nameAr||'')}"></td>
+        <td><input data-f="nameKu" dir="rtl" value="${esc(r.nameKu||'')}"></td>
+        <td>${brandSel('rwb_'+k,r.brand||'all').replace('<select ','<select data-f="brand" ')}</td>
+        <td><input data-f="points" type="number" min="1" step="1" value="${r.points}" style="width:80px;"></td>
+        <td><input data-f="start" type="date" value="${esc(r.start||'')}"><input data-f="end" type="date" value="${esc(r.end||'')}"></td>
+        <td><input data-f="active" type="checkbox" ${r.active!==false?'checked':''}></td>
+        <td><div class="rowbtns"><button class="btn btn-primary btn-sm" data-rw-save="${k}">Save</button><button class="btn btn-danger btn-sm" data-rw-del="${k}">Delete</button></div></td>
+      </tr>`;}).join('')}</tbody>
+    </table></div>
+    <button class="btn btn-ghost btn-sm" id="rw_add" style="margin-top:10px;">+ Add reward</button>
+    <div class="ac-foot" style="max-width:620px;">Changing or removing a reward never changes points clients already have. Untick "Shown" to hide a reward without deleting it.</div>
+
+    <div class="section-label" style="margin:30px 0 10px;">Earning rules (owner only)</div>
+    <div class="admin-form" style="max-width:620px;">
+      <div class="field"><label>Booked in the app — multiplier</label><input id="ls_app" type="number" step="0.05" min="1" value="${L.appMult}"></div>
+      <div class="field"></div>
+      <div class="field"><label>D+ Gold from (USD spent in 12 months)</label><input id="ls_gold" type="number" step="50" min="1" value="${L.gold}"></div>
+      <div class="field"><label>D+ Gold — multiplier</label><input id="ls_goldm" type="number" step="0.05" min="1" value="${L.goldMult}"></div>
+      <div class="field"><label>D+ Black from (USD spent in 12 months)</label><input id="ls_black" type="number" step="50" min="1" value="${L.black}"></div>
+      <div class="field"><label>D+ Black — multiplier</label><input id="ls_blackm" type="number" step="0.05" min="1" value="${L.blackMult}"></div>
+      <div class="actions" style="justify-content:space-between;align-items:center;"><span style="font-size:13px;color:var(--muted);">$1 = 1 point. Only the highest multiplier counts.</span><button class="btn btn-primary btn-sm" id="ls_save">Save rules</button></div>
+    </div>`;
+}
+function bindLoyaltyOwner(){
+  const ensureOwn=()=>{ if(!Array.isArray(STORE.rewards)||!STORE.rewards.length) STORE.rewards=DEFAULT_REWARDS.map(r=>({...r})); };
+  document.querySelectorAll('[data-rw-save]').forEach(b=>b.addEventListener('click',()=>{
+    const id=b.dataset.rwSave, tr=document.querySelector(`[data-rw-row="${CSS.escape(id)}"]`);
+    const f=(k)=>tr.querySelector(`[data-f="${k}"]`);
+    const name=f('name').value.trim(), pts=Math.round(Number(f('points').value)||0);
+    if(!name){ toast('Give the reward an English name.'); return; }
+    if(pts<1){ toast('Points must be 1 or more.'); return; }
+    ensureOwn();
+    const i=idxById(STORE.rewards,id);
+    const rec={...(i>=0?STORE.rewards[i]:{id,sort:(STORE.rewards.length+1)*10}),name,nameAr:f('nameAr').value.trim(),nameKu:f('nameKu').value.trim(),
+      brand:f('brand').value,points:pts,start:f('start').value||'',end:f('end').value||'',active:f('active').checked};
+    if(i>=0) STORE.rewards[i]=rec; else STORE.rewards.push(rec);
+    saveStore(); cloudSave('rewards',id); toast(`Saved "${name}".`); renderAdminLoyalty();
+  }));
+  document.querySelectorAll('[data-rw-del]').forEach(b=>b.addEventListener('click',()=>{
+    const id=b.dataset.rwDel;
+    if(b.dataset.armed!=='1'){ b.dataset.armed='1'; b.textContent='Really delete?'; return; }
+    ensureOwn();
+    STORE.rewards=STORE.rewards.filter(r=>String(r.id)!==String(id));
+    saveStore(); cloudDelete('rewards',id); toast('Reward deleted.'); renderAdminLoyalty();
+  }));
+  const add=document.getElementById('rw_add');
+  if(add) add.addEventListener('click',()=>{
+    ensureOwn();
+    const id=nextId('rw_',STORE.rewards);
+    STORE.rewards.push({id,name:'New reward',nameAr:'',nameKu:'',brand:'all',points:500,active:false,sort:(STORE.rewards.length+1)*10});
+    saveStore(); renderAdminLoyalty();
+    toast('Fill in the new reward at the bottom of the list, tick "Shown", then press Save.');
+  });
+  const ls=document.getElementById('ls_save');
+  if(ls) ls.addEventListener('click',()=>{
+    const v=(id)=>Number(document.getElementById(id).value);
+    const n={appMult:v('ls_app'),gold:v('ls_gold'),black:v('ls_black'),goldMult:v('ls_goldm'),blackMult:v('ls_blackm')};
+    if([n.appMult,n.goldMult,n.blackMult].some(x=>!(x>=1&&x<=5))){ toast('Multipliers must be between 1 and 5.'); return; }
+    if(!(n.gold>0&&n.black>n.gold)){ toast('Black must start at a higher amount than Gold.'); return; }
+    STORE.loyalty=n; saveStore(); cloudSave('settings','loyalty'); toast('Earning rules saved.'); renderAdminLoyalty();
   });
 }
 

@@ -149,6 +149,16 @@ Customers log in with a 6-digit code instead of a password. The plan was to send
 
 Because an email login doesn't prove who owns a phone number, the number a customer types is kept for contacting them only. It doesn't link them to an existing reception record or show them bookings made under that number; only a WhatsApp login can do that safely. The owner chooses the method in Admin → Overview → Client login (Off / email / WhatsApp), so switching to WhatsApp later is one click. Setup steps are in EMAIL-LOGIN-SETUP.md.
 
+## D+ loyalty: points, levels and the Rewards Shop
+
+Every completed visit at Dolce, Polished or Core earns points on the client's one Dolce+ account: $1 spent is 1 point. When reception marks a booking Completed, the app asks how much the client paid (already filled in with the price) and shows the points before anything is saved. One multiplier applies, the highest of the client's level and booking in the app (1.25×). They never stack.
+
+Levels come from money spent in the last 12 months, not from the points balance, so spending points never lowers a level. D+ Member is the start, D+ Gold from $1,000 (1.25× points) and D+ Black from $3,000 (1.5×). The owner can change all of these in Admin → Loyalty.
+
+Clients see their balance, level, progress to the next level, the Rewards Shop and their points history in their Profile, in English, Arabic and Kurdish. To redeem, they show the screen at reception, and staff take the points off in Admin → Loyalty. Staff can also add or remove points, but only with a written reason, and every change is saved with their name. Nothing in the points history can be edited or deleted. A mistake is corrected with a new line, and the database itself refuses a balance below zero. The owner edits the rewards: names in three languages, brand, points, and optional start and end dates.
+
+Still to come (phase 2): double- and triple-points campaigns, referrals, a birthday bonus, points expiring after 12 months without a visit, and loyalty reports.
+
 ## A phased build, so you are never blocked waiting for "the whole thing"
 
 The first phase is the smallest version that is still genuinely useful: the destination picker, service browsing and pricing for all three brands, service detail screens, and booking with a real date/time picker (in-app and via WhatsApp, as the prototype now shows), plus English and Arabic (adding Kurdish shortly after). This alone replaces having three separate Instagram-DM-based booking processes with one coherent, professional experience, and it can realistically be live within a few weeks once content (service lists, prices, photos) is ready. The second phase adds the AI assistant with real recommendations, the loyalty program, and the retail shop — this is where the product starts to feel genuinely different from a normal clinic or salon website, because it actively works to cross-sell between your three brands. The third phase adds the admin dashboard with full analytics, Kurdish language support if not already included, a proper native app wrapper for the App Store and Play Store, and true staff-calendar-aware scheduling — availability that accounts for which specific provider is free, not just whether the time slot is taken by anyone.
