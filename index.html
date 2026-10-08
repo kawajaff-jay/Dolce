@@ -1302,6 +1302,30 @@
   .rem-n{background:#a9884f;color:#fff;border-radius:999px;padding:1px 9px;font-size:12px;}
   .rem-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-top:1px solid rgba(0,0,0,.06);}
   .rem-meta{font-size:13px;color:var(--muted);}
+
+  /* Opening hours */
+  .date-chip.off{opacity:.45;cursor:not-allowed;}
+  .date-chip .off-tag{font-size:9.5px;color:#b23b3b;font-weight:700;}
+  .hrs-card{border:1px solid var(--line);border-radius:14px;background:var(--card,#fff);margin:0 0 14px;overflow:hidden;}
+  .hrs-sum{display:flex;align-items:center;gap:8px;width:100%;padding:11px 14px;border:0;background:transparent;font:inherit;font-size:14px;color:var(--ink);cursor:pointer;text-align:start;}
+  .hrs-dot{width:8px;height:8px;border-radius:50%;background:#b23b3b;flex:none;}
+  .hrs-dot.on{background:#3f8a4f;}
+  .hrs-now{font-weight:700;}
+  .hrs-today{color:var(--ink-soft);flex:1;}
+  .hrs-chev{opacity:.5;font-size:11px;}
+  .hrs-week{padding:4px 14px 12px;border-top:1px solid var(--line);}
+  .hrs-row{display:flex;justify-content:space-between;padding:6px 0;font-size:14px;color:var(--ink-soft);}
+  .hrs-row.today{color:var(--ink);font-weight:700;}
+  .hrs-note{font-size:12.5px;color:var(--muted);margin-top:6px;}
+  .hr-wrap{grid-column:1/-1;display:block;}
+  .hr-wrap select,.hr-wrap input[type=date]{width:auto !important;min-width:120px;}
+  .hr-wrap .btn{width:auto;}
+  .hr-grid{display:grid;grid-template-columns:150px 1fr;gap:8px 12px;align-items:center;}
+  .hr-open{display:flex;gap:8px;align-items:center;font-size:14px;}
+  .hr-times{display:flex;gap:8px;align-items:center;font-size:14px;}
+  .hr-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+  .hr-chip{background:#f4eee3;border:1px solid var(--line);border-radius:999px;padding:3px 6px 3px 10px;font-size:13px;}
+  .hr-chip button{border:0;background:transparent;cursor:pointer;color:#b23b3b;}
 </style>
 </head>
 <body>
@@ -1426,6 +1450,7 @@
     <div class="admin-panel active" id="adminOverview">
       <div id="currencySettingsWrap"></div>
       <div id="clientLoginWrap"></div>
+      <div id="hoursWrap"></div>
       <div id="waTemplatesWrap"></div>
       <div id="brandPhotosWrap"></div>
       <div class="stat-row">
@@ -2039,6 +2064,8 @@ const CLOUD_TABLES={
       ? {key:'image_focus',value:JSON.stringify(STORE.imageFocus||{})}
       : id==='destinations'
       ? {key:'destinations',value:JSON.stringify(STORE.destinations||{})}
+      : id==='hours'
+      ? {key:'hours',value:JSON.stringify(STORE.hours||{})}
       : id==='wa_templates'
       ? {key:'wa_templates',value:JSON.stringify(STORE.waTemplates||{})}
       : id==='client_login'
@@ -2454,7 +2481,7 @@ async function pullCatalog(){
       supa.from('products').select('*'),
       supa.from('offers').select('*'),
       supa.from('brand_images').select('*'),
-      supa.from('settings').select('*').in('key',['usd_to_iqd','image_focus','destinations','client_login','wa_templates','categories:dolce','categories:polished','categories:core']),
+      supa.from('settings').select('*').in('key',['usd_to_iqd','image_focus','destinations','client_login','wa_templates','hours','categories:dolce','categories:polished','categories:core']),
     ]);
     if(svc.error||prod.error||off.error) return false;
 
@@ -2490,6 +2517,10 @@ async function pullCatalog(){
       // framed the same way on all of them.
       // Home-screen destination settings (subtitle, order, shown/hidden, logo).
       // Client login on/off (Admin → Overview). Missing row = off.
+      const hrRow=row('hours');
+      if(hrRow && hrRow.value){
+        try{ const v=typeof hrRow.value==='string'?JSON.parse(hrRow.value):hrRow.value; if(v&&typeof v==='object') STORE.hours=v; }catch(e){}
+      }
       const waRow=row('wa_templates');
       if(waRow && waRow.value){
         try{ const v=typeof waRow.value==='string'?JSON.parse(waRow.value):waRow.value; if(v&&typeof v==='object') STORE.waTemplates=v; }catch(e){}
@@ -3031,6 +3062,7 @@ Object.assign(I18N.en,{
   apptPhoneLabel:'Mobile number for your appointments',
   gateTitle:'Welcome to Dolce+',gateLedeEmail:"Log in or create your account with your email — we'll send you a 6-digit code, no password needed. One account for Dolce, Polished and Core.",gateLede:"Log in or create your account with your number — we'll send you a 6-digit code. One account for Dolce, Polished and Core.",orWord:'or',continueGuest:'Continue as guest',
   countryCode:'Country code',birthLabel:'Date of birth',needBirth:'Please enter your date of birth.',
+  closedTag:'Closed',openNow:'Open now',closedNow:'Closed now',todayWord:'Today',alsoClosed:'Also closed on',noTimesLeft:'No more times today — please choose another day.',closedThatDay:'Closed that day — please choose another day.',timePassed:'That time has passed — please choose a later one.',
   emailPrivacy:'We only use your email to log you in, and your number to contact you about your appointments.'
 });
 Object.assign(I18N.ar,{
@@ -3064,6 +3096,7 @@ Object.assign(I18N.ar,{
   apptPhoneLabel:'رقم الموبايل للتواصل بخصوص مواعيدك',
   gateTitle:'أهلاً بك في <bdi>Dolce+</bdi>',gateLedeEmail:'سجّل الدخول أو أنشئ حسابك ببريدك الإلكتروني — سنرسل لك رمزاً من 6 أرقام، بدون كلمة سر. حساب واحد لـ Dolce و Polished و Core.',gateLede:'سجّل الدخول أو أنشئ حسابك برقمك — سنرسل لك رمزاً من 6 أرقام. حساب واحد لـ Dolce و Polished و Core.',orWord:'أو',continueGuest:'المتابعة كضيف',
   countryCode:'رمز الدولة',birthLabel:'تاريخ الميلاد',needBirth:'يرجى إدخال تاريخ ميلادك.',
+  closedTag:'مغلق',openNow:'مفتوح الآن',closedNow:'مغلق الآن',todayWord:'اليوم',alsoClosed:'مغلق أيضاً في',noTimesLeft:'لا توجد أوقات أخرى اليوم — يرجى اختيار يوم آخر.',closedThatDay:'مغلق في هذا اليوم — يرجى اختيار يوم آخر.',timePassed:'لقد فات هذا الوقت — يرجى اختيار وقت لاحق.',
   emailPrivacy:'نستخدم بريدك فقط لتسجيل دخولك، ورقمك للتواصل معك بخصوص مواعيدك.'
 });
 Object.assign(I18N.ku,{
@@ -3097,6 +3130,7 @@ Object.assign(I18N.ku,{
   apptPhoneLabel:'ژمارەی مۆبایل بۆ کاتەکانت',
   gateTitle:'بەخێربێیت بۆ <bdi>Dolce+</bdi>',gateLedeEmail:'بە ئیمەیڵەکەت بچۆ ژوورەوە یان هەژمار دروست بکە — کۆدێکی ٦ ژمارەییت بۆ دەنێرین، بێ وشەی نهێنی. یەک هەژمار بۆ Dolce و Polished و Core.',gateLede:'بە ژمارەکەت بچۆ ژوورەوە یان هەژمار دروست بکە — کۆدێکی ٦ ژمارەییت بۆ دەنێرین. یەک هەژمار بۆ Dolce و Polished و Core.',orWord:'یان',continueGuest:'وەک میوان بەردەوامبە',
   countryCode:'کۆدی وڵات',birthLabel:'بەرواری لەدایکبوون',needBirth:'تکایە بەرواری لەدایکبوونت بنووسە.',
+  closedTag:'داخراوە',openNow:'ئێستا کراوەیە',closedNow:'ئێستا داخراوە',todayWord:'ئەمڕۆ',alsoClosed:'هەروەها داخراوە لە',noTimesLeft:'ئەمڕۆ کاتی تر نەماوە — تکایە ڕۆژێکی تر هەڵبژێرە.',closedThatDay:'ئەو ڕۆژە داخراوە — تکایە ڕۆژێکی تر هەڵبژێرە.',timePassed:'ئەو کاتە تێپەڕیوە — تکایە کاتێکی دواتر هەڵبژێرە.',
   emailPrivacy:'ئیمەیڵەکەت تەنها بۆ چوونەژوورەوە بەکاردەهێنین، و ژمارەکەت بۆ پەیوەندیکردن سەبارەت بە کاتەکانت.'
 });
 
@@ -3114,29 +3148,72 @@ const BRAND_WHATSAPP={dolce:'9647509000200',polished:'9647519000200',core:'96475
 // request to anything in the catalog.
 const CLINIC_PHONE='9647509000200';
 
+/* ---------------- Opening hours (per brand, set in Admin) ----------------
+   STORE.hours[brand] = {days:{0..6:{off,o:'HH:MM',c:'HH:MM'}}, step:60, closed:['YYYY-MM-DD']}
+   (0 = Sunday, as in JavaScript). Clients see the week on each brand's
+   page; the booking picker only offers open days and times, never a time
+   that has passed, and nothing sooner than BOOK_LEAD_MIN from now. */
+const BOOK_LEAD_MIN=60;
+const DEFAULT_DAY={off:false,o:'10:00',c:'18:00'};
+const WEEK_ORDER=[6,0,1,2,3,4,5];   // Saturday first, as the week runs in Iraq
+const DAY_NAMES={en:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
+  ar:['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'],
+  ku:['یەکشەممە','دووشەممە','سێشەممە','چوارشەممە','پێنجشەممە','هەینی','شەممە']};
+function brandHours(brand){
+  const h=(STORE.hours&&STORE.hours[brand])||{};
+  const days={}; for(let i=0;i<7;i++) days[i]={...DEFAULT_DAY,...((h.days||{})[i]||{})};
+  return {days,step:[15,30,45,60,90,120].includes(Number(h.step))?Number(h.step):60,closed:Array.isArray(h.closed)?h.closed:[]};
+}
+function hmToMin(hm){ const m=String(hm||'').match(/^(\d{1,2}):(\d{2})$/); return m?Number(m[1])*60+Number(m[2]):null; }
+function minToLabel(min){ let h=Math.floor(min/60), m=min%60; const ap=h>=12?'PM':'AM'; h=h%12||12; return `${h}:${String(m).padStart(2,'0')} ${ap}`; }
+function isoOf(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+// Today's (or a date's) hours, or null when closed that day.
+function dayHours(brand,d){
+  const h=brandHours(brand);
+  if(h.closed.includes(isoOf(d))) return null;
+  const dh=h.days[d.getDay()];
+  const o=hmToMin(dh.o), c=hmToMin(dh.c);
+  if(dh.off || o==null || c==null || c<=o) return null;
+  return {o,c,step:h.step};
+}
+function slotsForDay(brand,d){
+  const dh=dayHours(brand,d); if(!dh) return [];
+  const out=[]; for(let m=dh.o; m+dh.step<=dh.c; m+=dh.step) out.push(m);
+  if(!out.length) out.push(dh.o);
+  return out;
+}
 function upcomingDates(n){
   const out=[]; const base=new Date(); base.setHours(0,0,0,0);
-  for(let i=1;i<=n;i++){ const d=new Date(base); d.setDate(base.getDate()+i); out.push(d); }
+  for(let i=0;i<n;i++){ const d=new Date(base); d.setDate(base.getDate()+i); out.push(d); }
   return out;
 }
 function sameDay(a,b){ return a && b && a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
 function fmtDate(d){ return d.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}); }
 function fmtDow(d){ return d.toLocaleDateString(undefined,{weekday:'short'}); }
-function availableTimesForDate(brand,dateStr){
+function availableTimesForDate(brand,dateStr,dObj){
+  const d=dObj||selectedDateObj||new Date();
   const taken=new Set(STORE.bookings.filter(bk=>bk.brand===brand&&bk.date===dateStr&&bk.status!=='Cancelled').map(bk=>bk.time));
-  return BUSINESS_HOURS.map(time=>({time,taken:taken.has(time)}));
+  const earliest=Date.now()+BOOK_LEAD_MIN*60000;
+  return slotsForDay(brand,d).map(m=>{
+    const time=minToLabel(m);
+    const at=new Date(d.getFullYear(),d.getMonth(),d.getDate(),Math.floor(m/60),m%60).getTime();
+    const past=at<earliest;
+    return {time,taken:taken.has(time),past};
+  });
 }
 // Keeps the current date/time selection valid — defaults to the earliest
 // open slot the first time you land here, and reassigns if the previously
 // selected slot has since been taken (e.g. by a WhatsApp booking).
 function ensureBookingSelection(){
-  const dates=upcomingDates(7);
-  if(!selectedDateObj || !dates.some(d=>sameDay(d,selectedDateObj))) selectedDateObj=dates[0];
+  const dates=upcomingDates(14);
+  const usable=d=>availableTimesForDate(currentBrand,fmtDate(d),d).some(s=>!s.taken&&!s.past);
+  if(!selectedDateObj || !dates.some(d=>sameDay(d,selectedDateObj)) || !dayHours(currentBrand,selectedDateObj))
+    selectedDateObj=dates.find(usable)||dates.find(d=>dayHours(currentBrand,d))||dates[0];
   const dateStr=fmtDate(selectedDateObj);
   const slots=availableTimesForDate(currentBrand,dateStr);
-  const stillOpen=selectedTime && slots.find(s=>s.time===selectedTime && !s.taken);
+  const stillOpen=selectedTime && slots.find(s=>s.time===selectedTime && !s.taken && !s.past);
   if(!stillOpen){
-    const free=slots.find(s=>!s.taken);
+    const free=slots.find(s=>!s.taken&&!s.past);
     selectedTime=free?free.time:null;
   }
   return dates;
@@ -3253,9 +3330,35 @@ function renderServices(){
   // like the app failed to load.
   const empty=`<div style="padding:30px 6px;color:var(--muted);font-size:14px;text-align:center;">${t('noServicesYet')}</div>`;
   return `
+    ${hoursCardHtml(currentBrand)}
     <div class="cat-tabs cat-glass" id="catRow"><div class="cat-lens" aria-hidden="true"></div>${tabs}</div>
     <div class="svc-list ${CatGlass.listClass()}">${list||empty}</div>
   `;
+}
+
+let hoursOpen=false;
+function hoursLabel(dh){ return dh?`${minToLabel(dh.o)} – ${minToLabel(dh.c)}`:t('closedTag'); }
+function hoursCardHtml(brand){
+  const now=new Date(), today=dayHours(brand,now);
+  const nowMin=now.getHours()*60+now.getMinutes();
+  const openNow=today && nowMin>=today.o && nowMin<today.c;
+  const names=DAY_NAMES[lang]||DAY_NAMES.en;
+  const h=brandHours(brand);
+  const rows=WEEK_ORDER.map(i=>{
+    const dh=h.days[i]; const o=hmToMin(dh.o), c=hmToMin(dh.c);
+    const val=(dh.off||o==null||c==null||c<=o)?t('closedTag'):`${minToLabel(o)} – ${minToLabel(c)}`;
+    return `<div class="hrs-row ${i===now.getDay()?'today':''}"><span>${names[i]}</span><span dir="ltr">${val}</span></div>`;
+  }).join('');
+  const upcomingClosed=h.closed.filter(x=>x>=isoOf(now)).sort().slice(0,4);
+  return `<div class="hrs-card ${hoursOpen?'open':''}">
+    <button class="hrs-sum" id="hoursToggle" aria-expanded="${hoursOpen}">
+      <span class="hrs-dot ${openNow?'on':''}"></span>
+      <span class="hrs-now">${openNow?t('openNow'):t('closedNow')}</span>
+      <span class="hrs-today">${t('todayWord')}: <span dir="ltr">${hoursLabel(today)}</span></span>
+      <span class="hrs-chev">${hoursOpen?'▴':'▾'}</span>
+    </button>
+    ${hoursOpen?`<div class="hrs-week">${rows}${upcomingClosed.length?`<div class="hrs-note">${t('alsoClosed')}: <span dir="ltr">${upcomingClosed.join(', ')}</span></div>`:''}</div>`:''}
+  </div>`;
 }
 
 /* Every photo a service has, the main one first (or the brand photo). */
@@ -3305,12 +3408,14 @@ function renderBooking(){
   const s=svcList(currentBrand).find(x=>x.id===currentService);
   const dates=ensureBookingSelection();
   const dateStr=fmtDate(selectedDateObj);
-  const slots=availableTimesForDate(currentBrand,dateStr);
-  const dateChips=dates.map(d=>`
-    <button class="date-chip ${sameDay(d,selectedDateObj)?'active':''}" data-date="${d.toISOString()}">
-      <span class="dow">${fmtDow(d)}</span><span class="day">${d.getDate()}</span>
-    </button>`).join('');
-  const timeChips=slots.map(sl=>`
+  const slots=availableTimesForDate(currentBrand,dateStr,selectedDateObj);
+  const dayOpen=!!dayHours(currentBrand,selectedDateObj);
+  const dateChips=dates.map(d=>{
+    const off=!dayHours(currentBrand,d);
+    return `<button class="date-chip ${sameDay(d,selectedDateObj)?'active':''} ${off?'off':''}" ${off?'disabled':''} data-date="${d.toISOString()}">
+      <span class="dow">${fmtDow(d)}</span><span class="day">${d.getDate()}</span>${off?`<span class="off-tag">${t('closedTag')}</span>`:''}
+    </button>`;}).join('');
+  const timeChips=slots.filter(sl=>!sl.past).map(sl=>`
     <button class="time-chip ${sl.time===selectedTime?'active':''} ${sl.taken?'taken':''}" ${sl.taken?'disabled':''} data-time="${sl.time}">${sl.time}${sl.taken?` · ${t('bookedTag')||'Booked'}`:''}</button>`).join('');
   const canBook=!!selectedTime;
   const waText=encodeURIComponent(`Hi! I'd like to book ${esc(s.n)} at ${b.name} — ${fmtMoney(effectivePrice(s))}, ${esc(s.dur)}. Preferred: ${dateStr}${selectedTime?' at '+selectedTime:''}.`);
@@ -3326,7 +3431,7 @@ function renderBooking(){
     <div class="date-chip-row">${dateChips}</div>
     <div class="section-label">${t('preferredTime')}</div>
     <div class="time-chip-grid">${timeChips}</div>
-    ${!canBook?`<div style="font-size:13px;color:#b23b3b;margin-top:8px;">No open times that day — try another date.</div>`:''}
+    ${!canBook?`<div style="font-size:13px;color:#b23b3b;margin-top:8px;">${t(dayOpen?'noTimesLeft':'closedThatDay')}</div>`:''}
     ${clientIn()?'':guestDetailsHtml()}
     <div style="font-size:13px;color:var(--muted);margin-top:10px;">${t('confirmNote')}</div>
     <button class="primary-btn" id="confirmBooking" ${canBook?'':'disabled style="opacity:.5;"'}>${t('confirmBookingBtn')}</button>
@@ -6096,10 +6201,14 @@ function bindScreen(){
     else goto(backTarget());
   });
 
-  screenEl.querySelectorAll('[data-date]').forEach(el=>el.addEventListener('click',()=>{
+  const hoursToggle=document.getElementById('hoursToggle');
+  if(hoursToggle) hoursToggle.addEventListener('click',()=>{ hoursOpen=!hoursOpen; navDirection='none'; render(); });
+  screenEl.querySelectorAll('[data-date]:not([disabled])').forEach(el=>el.addEventListener('click',()=>{
     selectedDateObj=new Date(el.dataset.date); selectedTime=null; render();
   }));
   screenEl.querySelectorAll('.time-chip:not(.taken)').forEach(el=>el.addEventListener('click',()=>{
+    const sl=availableTimesForDate(currentBrand,fmtDate(selectedDateObj),selectedDateObj).find(x=>x.time===el.dataset.time);
+    if(!sl||sl.past){ toast(t('timePassed')); render(); return; }
     selectedTime=el.dataset.time; render();
   }));
 
@@ -6137,6 +6246,8 @@ function bindScreen(){
     const dateStr=fmtDate(selectedDateObj);
     const taken=STORE.bookings.some(bk=>bk.brand===currentBrand&&bk.date===dateStr&&bk.time===selectedTime&&bk.status!=='Cancelled');
     if(taken){ toast('That time was just taken — pick another slot.'); render(); return; }
+    const slNow=availableTimesForDate(currentBrand,dateStr,selectedDateObj).find(x=>x.time===selectedTime);
+    if(!slNow||slNow.past){ toast(t('timePassed')); selectedTime=null; render(); return; }
     const req=guest
       ? {id:nextId('b',STORE.bookings),brand:currentBrand,serviceId:currentService,serviceName:s.n,
          date:dateStr,time:selectedTime,status:'Requested',clientName:guest.name,
@@ -7167,7 +7278,8 @@ function aiFact(id,L){
   const rewards=['r1','r2','r3','r4'].map(k=>t(k)).join(C.rewardsJoin);
   const goal=REWARD_GOAL_PTS.toLocaleString('en-US');
   switch(id){
-    case 'hours': return aiTextHtml(aiSay(L,'hours',{open:BUSINESS_HOURS[0],close:BUSINESS_HOURS[BUSINESS_HOURS.length-1]}))+aiWaLinks(AI_TEXT[L]);
+    case 'hours': { const hb=currentBrand||'dolce'; const tdh=dayHours(hb,new Date())||{o:hmToMin(brandHours(hb).days[1].o),c:hmToMin(brandHours(hb).days[1].c)};
+      return aiTextHtml(aiSay(L,'hours',{open:minToLabel(tdh.o),close:minToLabel(tdh.c)}))+aiWaLinks(AI_TEXT[L]); }
     case 'location': return aiTextHtml(aiSay(L,'location'))+aiWaAll();
     case 'points': {
       let loggedIn=false; try{ loggedIn=typeof clientIn==='function'&&clientIn(); }catch(e){}
@@ -7689,7 +7801,7 @@ function showAdminForRole(){
   });
   if(!canSeeBrand(currentUser,svcBrandTab)) svcBrandTab=userBrands(currentUser)[0];
   document.querySelectorAll('#svcBrandTabs [data-svc-brand-tab]').forEach(x=>x.classList.toggle('active',x.dataset.svcBrandTab===svcBrandTab));
-  renderAdminProducts(); renderAdminServices(); renderAdminOffers(); renderAdminGallery(); renderAdminBookings(); renderBrandPhotos(); renderCurrencySettings(); renderClientLoginSetting(); renderWaTemplates(); renderAdminEmployees(); renderAdminPurchases(); renderAdminReports();
+  renderAdminProducts(); renderAdminServices(); renderAdminOffers(); renderAdminGallery(); renderAdminBookings(); renderBrandPhotos(); renderCurrencySettings(); renderClientLoginSetting(); renderWaTemplates(); renderHoursAdmin(); renderAdminEmployees(); renderAdminPurchases(); renderAdminReports();
 }
 
 /* ---------------- Full-screen client app ---------------- */
@@ -8724,6 +8836,63 @@ function renderReminders(){
   wrap.querySelectorAll('[data-rem-skip]').forEach(b=>b.addEventListener('click',()=>{ const d=due[Number(b.dataset.remSkip)]; markWaSent(d.bk,d.kind,'skipped'); renderReminders(); }));
 }
 setInterval(()=>{ try{ if(currentUser) renderReminders(); }catch(e){} },60*1000);
+
+/* Admin → Overview: opening hours and days off, per brand (owner only). */
+let hoursEditBrand='dolce';
+function renderHoursAdmin(){
+  const wrap=document.getElementById('hoursWrap'); if(!wrap) return;
+  if(!currentUser || !currentUser.isOwner){ wrap.innerHTML=''; return; }
+  const b=hoursEditBrand, h=brandHours(b), names=DAY_NAMES.en;
+  const times=[]; for(let m=6*60;m<=24*60;m+=15) times.push(m===24*60?'23:59':`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`);
+  const sel=(id,val)=>`<select id="${id}">${times.map(x=>`<option value="${x}" ${x===val?'selected':''}>${minToLabel(hmToMin(x))}</option>`).join('')}</select>`;
+  wrap.innerHTML=`
+    <div class="section-label" style="margin:0 0 10px;">Opening hours &amp; days off</div>
+    <div class="admin-form" style="max-width:620px;"><div class="hr-wrap">
+      <div class="wa-langs" style="margin-bottom:10px;">${Object.keys(BRANDS).map(k=>`<button class="btn btn-sm ${k===b?'btn-primary':'btn-ghost'}" data-hr-brand="${k}">${BRANDS[k].name}</button>`).join('')}</div>
+      <div class="hr-grid">${WEEK_ORDER.map(i=>{ const d=h.days[i]; return `
+        <label class="hr-open"><input type="checkbox" id="hr_on_${i}" ${d.off?'':'checked'}> ${names[i]}</label>
+        <span class="hr-times" ${d.off?'style="opacity:.35"':''}>${sel('hr_o_'+i,d.o)} <span>to</span> ${sel('hr_c_'+i,d.c)}</span>`;}).join('')}
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0;">
+        <label style="font-size:14px;">Appointment every
+          <select id="hr_step">${[15,30,45,60,90,120].map(x=>`<option value="${x}" ${x===h.step?'selected':''}>${x} min</option>`).join('')}</select></label>
+      </div>
+      <div style="font-size:14px;font-weight:600;margin:6px 0;">Extra days off (holidays)</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <input type="date" id="hr_newclosed" min="${isoOf(new Date())}">
+        <button class="btn btn-ghost btn-sm" id="hr_addclosed">Add day off</button>
+      </div>
+      <div class="hr-chips">${h.closed.slice().sort().map(x=>`<span class="hr-chip">${x} <button data-hr-del="${x}" aria-label="Remove">✕</button></span>`).join('')||'<span style="font-size:13px;color:var(--muted);">None</span>'}</div>
+      <div style="font-size:13px;color:var(--muted);margin:10px 0 12px;">Clients see these hours on ${esc(BRANDS[b].name)}'s page. They can only book open days and times, and never less than ${BOOK_LEAD_MIN} minutes from now.</div>
+      <button class="btn btn-primary btn-sm" id="hr_save">Save ${esc(BRANDS[b].name)} hours</button>
+    </div></div>
+    <div style="margin-bottom:22px;"></div>`;
+  const collect=()=>{
+    const days={};
+    for(let i=0;i<7;i++){
+      const o=document.getElementById('hr_o_'+i).value, c=document.getElementById('hr_c_'+i).value;
+      days[i]={off:!document.getElementById('hr_on_'+i).checked,o,c};
+    }
+    return {days,step:Number(document.getElementById('hr_step').value),closed:brandHours(b).closed.slice()};
+  };
+  const store=(v)=>{ STORE.hours=STORE.hours||{}; STORE.hours[b]=v; };
+  wrap.querySelectorAll('[data-hr-brand]').forEach(x=>x.addEventListener('click',()=>{ hoursEditBrand=x.dataset.hrBrand; renderHoursAdmin(); }));
+  for(let i=0;i<7;i++) document.getElementById('hr_on_'+i).addEventListener('change',e=>{ e.target.closest('label').nextElementSibling.style.opacity=e.target.checked?'':'.35'; });
+  document.getElementById('hr_addclosed').addEventListener('click',()=>{
+    const v=document.getElementById('hr_newclosed').value; if(!v) return;
+    const cur=collect(); if(!cur.closed.includes(v)) cur.closed.push(v); store(cur); renderHoursAdmin();
+  });
+  wrap.querySelectorAll('[data-hr-del]').forEach(x=>x.addEventListener('click',()=>{
+    const cur=collect(); cur.closed=cur.closed.filter(d=>d!==x.dataset.hrDel); store(cur); renderHoursAdmin();
+  }));
+  document.getElementById('hr_save').addEventListener('click',()=>{
+    const v=collect();
+    for(let i=0;i<7;i++){ if(!v.days[i].off && hmToMin(v.days[i].c)<=hmToMin(v.days[i].o)){ toast(`${names[i]}: closing time must be after opening time.`); return; } }
+    const today=isoOf(new Date()); v.closed=v.closed.filter(d=>d>=today);
+    store(v); saveStore(); cloudSave('settings','hours');
+    toast(`${BRANDS[b].name} hours saved.`); renderHoursAdmin(); render();
+  });
+}
 
 /* Admin → Overview: the wording of the WhatsApp messages (owner only). */
 let waEditLang='en';
