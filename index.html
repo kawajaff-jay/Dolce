@@ -1276,6 +1276,32 @@
     body>*:not(#printArea){display:none!important;}
     #printArea{display:block!important;}
   }
+
+  /* Opening login screen (start gate) */
+  #screen[data-gate="1"] .bottom-nav,#screen[data-gate="1"] .fab-ai{display:none !important;}
+  #screen[data-gate="1"] .screen-body{padding-bottom:calc(40px + env(safe-area-inset-bottom,0px));}
+  .cl-or{display:flex;align-items:center;gap:12px;margin:22px 0 14px;color:var(--ink-soft);font-size:12px;letter-spacing:.14em;text-transform:uppercase;}
+  .cl-or::before,.cl-or::after{content:"";flex:1;height:1px;background:rgba(28,26,22,.14);}
+  .cl-guest{display:block;width:100%;padding:15px 18px;border-radius:999px;border:1px solid rgba(28,26,22,.22);background:transparent;color:var(--ink);font:inherit;font-size:15px;font-weight:600;cursor:pointer;}
+  .cl-guest:active{background:rgba(28,26,22,.05);}
+
+  /* Phone number with country picker */
+  .ph-field{display:flex;gap:8px;align-items:stretch;margin-bottom:14px;}
+  .ph-field .ph-num{flex:1;min-width:0;margin:0 !important;}
+  .ph-cc{position:relative;flex:none;display:flex;align-items:center;gap:4px;padding:0 12px;border:1px solid var(--line,rgba(28,26,22,.14));border-radius:14px;background:#fff;font-size:15px;white-space:nowrap;cursor:pointer;}
+  .ph-cc-caret{font-size:10px;opacity:.55;}
+  .ph-cc select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px;}
+  .book-card .ph-cc{border-radius:9px;}
+  .gp-input{width:100%;border:1px solid var(--line);border-radius:9px;padding:10px 12px;font-size:16px;box-sizing:border-box;font-family:inherit;background:#fff;}
+  .cl-date{min-height:48px;}
+  /* WhatsApp messages (admin) */
+  .wa-langs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;}
+  .wa-text{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:14px;line-height:1.45;margin:6px 0 10px;}
+  .rem-card{border:1px solid #e7c98a;background:#fff8ea;border-radius:14px;padding:14px 16px;margin:0 0 16px;}
+  .rem-head{font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+  .rem-n{background:#a9884f;color:#fff;border-radius:999px;padding:1px 9px;font-size:12px;}
+  .rem-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-top:1px solid rgba(0,0,0,.06);}
+  .rem-meta{font-size:13px;color:var(--muted);}
 </style>
 </head>
 <body>
@@ -1400,6 +1426,7 @@
     <div class="admin-panel active" id="adminOverview">
       <div id="currencySettingsWrap"></div>
       <div id="clientLoginWrap"></div>
+      <div id="waTemplatesWrap"></div>
       <div id="brandPhotosWrap"></div>
       <div class="stat-row">
         <div class="stat"><div class="lbl">Total Bookings</div><div class="val">1,256</div></div>
@@ -1510,6 +1537,7 @@
       </div>
       <div id="bookingFormWrap"></div>
       <div id="aftercarePanel"></div>
+      <div id="remindersPanel"></div>
       <div class="admin-table-wrap">
         <table class="admin-table">
           <thead><tr><th>Client</th><th>Brand</th><th>Service</th><th>Date / Time</th><th>Status</th><th></th></tr></thead>
@@ -1945,10 +1973,11 @@ const CLOUD_TABLES={
     row:(b)=>({id:b.id,brand:b.brand,service_id:b.serviceId||'',service_name:b.serviceName||'',
       date_label:b.date||'',time_label:b.time||'',date_iso:toIsoDate(b.date),
       status:b.status||'Requested',client_name:b.clientName||'',client_id:b.clientId||null,
-      client_phone:b.phone||'',aftercare_ok:!!b.aftercareOk}),
+      client_phone:b.phone||'',aftercare_ok:!!b.aftercareOk,lang:b.lang||'',reminders:b.reminders||{}}),
     app:(r)=>({id:r.id,brand:r.brand,serviceId:r.service_id||'',serviceName:r.service_name||'',
       date:r.date_label||'',time:r.time_label||'',status:r.status,clientName:r.client_name||'',
-      clientId:r.client_id||undefined,phone:r.client_phone||'',aftercareOk:!!r.aftercare_ok}),
+      clientId:r.client_id||undefined,phone:r.client_phone||'',aftercareOk:!!r.aftercare_ok,
+      lang:r.lang||'',reminders:(r.reminders&&typeof r.reminders==='object')?r.reminders:{}}),
   },
   media:{
     table:'media',
@@ -2010,6 +2039,8 @@ const CLOUD_TABLES={
       ? {key:'image_focus',value:JSON.stringify(STORE.imageFocus||{})}
       : id==='destinations'
       ? {key:'destinations',value:JSON.stringify(STORE.destinations||{})}
+      : id==='wa_templates'
+      ? {key:'wa_templates',value:JSON.stringify(STORE.waTemplates||{})}
       : id==='client_login'
       ? {key:'client_login',value:['on','email'].includes(STORE.settings.clientLogin)?STORE.settings.clientLogin:'off'}
       : String(id).startsWith('categories:')
@@ -2423,7 +2454,7 @@ async function pullCatalog(){
       supa.from('products').select('*'),
       supa.from('offers').select('*'),
       supa.from('brand_images').select('*'),
-      supa.from('settings').select('*').in('key',['usd_to_iqd','image_focus','destinations','client_login','categories:dolce','categories:polished','categories:core']),
+      supa.from('settings').select('*').in('key',['usd_to_iqd','image_focus','destinations','client_login','wa_templates','categories:dolce','categories:polished','categories:core']),
     ]);
     if(svc.error||prod.error||off.error) return false;
 
@@ -2459,6 +2490,10 @@ async function pullCatalog(){
       // framed the same way on all of them.
       // Home-screen destination settings (subtitle, order, shown/hidden, logo).
       // Client login on/off (Admin → Overview). Missing row = off.
+      const waRow=row('wa_templates');
+      if(waRow && waRow.value){
+        try{ const v=typeof waRow.value==='string'?JSON.parse(waRow.value):waRow.value; if(v&&typeof v==='object') STORE.waTemplates=v; }catch(e){}
+      }
       const loginRow=row('client_login');
       const loginVal=loginRow?String(loginRow.value):'off';
       STORE.settings.clientLogin=(loginVal==='on'||loginVal==='email')?loginVal:'off';
@@ -2766,6 +2801,65 @@ function toLoginPhone(raw){
   if(d.startsWith('964')) return /^9647\d{9}$/.test(d)?d:'';
   return (intl && d.length>=8 && d.length<=15)?d:'';
 }
+const COUNTRIES=[["AF",93,"Afghanistan","أفغانستان","ئەفغانستان",[9],"0"],["AL",355,"Albania","ألبانيا","ئەڵبانیا",[9],"0"],["DZ",213,"Algeria","الجزائر","جەزایر",[9],"0"],["AS",1,"American Samoa","ساموا الأمريكية","ساموای ئەمەریکایی",[10],"1"],["AD",376,"Andorra","أندورا","ئاندۆرا",[6,9],""],["AO",244,"Angola","أنغولا","ئەنگۆلا",[9],""],["AI",1,"Anguilla","أنغويلا","ئانگویلا",[10],"1"],["AG",1,"Antigua & Barbuda","أنتيغوا وبربودا","ئانتیگوا و باربودا",[10],"1"],["AR",54,"Argentina","الأرجنتين","ئەرژەنتین",[10,11],"0"],["AM",374,"Armenia","أرمينيا","ئەرمەنستان",[8],"0"],["AW",297,"Aruba","أروبا","ئارووبا",[7],""],["AC",247,"Ascension Island","جزيرة أسينشيون","دوورگەی ئاسینسیۆن",[5],""],["AU",61,"Australia","أستراليا","ئوسترالیا",[9],"0"],["AT",43,"Austria","النمسا","نەمسا",[7,8,9,10,11,12,13],"0"],["AZ",994,"Azerbaijan","أذربيجان","ئازەربایجان",[9],"0"],["BS",1,"Bahamas","جزر البهاما","بەھاما",[10],"1"],["BH",973,"Bahrain","البحرين","بەحرەین",[8],""],["BD",880,"Bangladesh","بنغلاديش","بەنگلادیش",[10],"0"],["BB",1,"Barbados","بربادوس","باربادۆس",[10],"1"],["BY",375,"Belarus","بيلاروس","بیلاڕووس",[9],"8"],["BE",32,"Belgium","بلجيكا","بەلژیک",[9],"0"],["BZ",501,"Belize","بليز","بەلیز",[7],""],["BJ",229,"Benin","بنين","بێنین",[10],""],["BM",1,"Bermuda","برمودا","بێرموودا",[10],"1"],["BT",975,"Bhutan","بوتان","بووتان",[8],""],["BO",591,"Bolivia","بوليفيا","بۆلیڤیا",[8],"0"],["BA",387,"Bosnia & Herzegovina","البوسنة والهرسك","بۆسنیا و ھەرزەگۆڤینا",[8,9],"0"],["BW",267,"Botswana","بوتسوانا","بۆتسوانا",[8],""],["BR",55,"Brazil","البرازيل","برازیل",[10,11],"0"],["IO",246,"British Indian Ocean Territory","الإقليم البريطاني في المحيط الهندي","ھەرێمی بەریتانی لە ئۆقیانووسی ھیند",[7],""],["VG",1,"British Virgin Islands","جزر فيرجن البريطانية","دوورگەکانی ڤیرجنی بەریتانیا",[10],"1"],["BN",673,"Brunei","بروناي","بروونای",[7],""],["BG",359,"Bulgaria","بلغاريا","بولگاریا",[8,9],"0"],["BF",226,"Burkina Faso","بوركينا فاسو","بورکینافاسۆ",[8],""],["BI",257,"Burundi","بوروندي","بوروندی",[8],""],["KH",855,"Cambodia","كمبوديا","کەمبۆدیا",[8,9],"0"],["CM",237,"Cameroon","الكاميرون","کامیرۆن",[9],""],["CA",1,"Canada","كندا","کەنەدا",[10],"1"],["CV",238,"Cape Verde","الرأس الأخضر","کەیپڤەرد",[7],""],["BQ",599,"Caribbean Netherlands","هولندا الكاريبية","دوورگە کاریبیەکانی هۆڵەندا",[7],""],["KY",1,"Cayman Islands","جزر كايمان","دوورگەکانی کایمان",[10],"1"],["CF",236,"Central African Republic","جمهورية أفريقيا الوسطى","کۆماری ئەفریقای ناوەڕاست",[8],""],["TD",235,"Chad","تشاد","چاد",[8],""],["CL",56,"Chile","تشيلي","چیلی",[9],""],["CN",86,"China","الصين","چین",[11],"0"],["CX",61,"Christmas Island","جزيرة كريسماس","دوورگەی کریسمس",[9],"0"],["CC",61,"Cocos (Keeling) Islands","جزر كوكوس (كيلينغ)","دوورگەکانی کیلینگ",[9],"0"],["CO",57,"Colombia","كولومبيا","کۆلۆمبیا",[10],"0"],["KM",269,"Comoros","جزر القمر","دوورگەکانی کۆمۆر",[7],""],["CG",242,"Congo - Brazzaville","الكونغو - برازافيل","کۆنگۆ برازاڤیل",[9],""],["CD",243,"Congo - Kinshasa","الكونغو - كينشاسا","کۆنگۆ کینشاسا",[7,9],"0"],["CK",682,"Cook Islands","جزر كوك","دوورگەکانی کوک",[5],""],["CR",506,"Costa Rica","كوستاريكا","کۆستاریکا",[8],""],["HR",385,"Croatia","كرواتيا","کرۆواتیا",[8,9],"0"],["CU",53,"Cuba","كوبا","کووبا",[8],"0"],["CW",599,"Curaçao","كوراساو","کوراچاو",[7,8],""],["CY",357,"Cyprus","قبرص","قیبرس",[8],""],["CZ",420,"Czechia","التشيك","کۆماری چیک",[9],""],["CI",225,"Côte d’Ivoire","ساحل العاج","کۆتدیڤوار",[10],""],["DK",45,"Denmark","الدانمرك","دانمارک",[8],""],["DJ",253,"Djibouti","جيبوتي","جیبووتی",[8],""],["DM",1,"Dominica","دومينيكا","دۆمینیکا",[10],"1"],["DO",1,"Dominican Republic","جمهورية الدومينيكان","کۆماری دۆمینیکا",[10],"1"],["EC",593,"Ecuador","الإكوادور","ئیکوادۆر",[9],"0"],["EG",20,"Egypt","مصر","میسر",[10],"0"],["SV",503,"El Salvador","السلفادور","ئێلسالڤادۆر",[8],""],["GQ",240,"Equatorial Guinea","غينيا الاستوائية","گینێی ئیستوایی",[9],""],["ER",291,"Eritrea","إريتريا","ئەریتریا",[7],"0"],["EE",372,"Estonia","إستونيا","ئیستۆنیا",[7,8],""],["SZ",268,"Eswatini","إسواتيني","سوازیلاند",[8],""],["ET",251,"Ethiopia","إثيوبيا","ئەتیۆپیا",[9],"0"],["FK",500,"Falkland Islands","جزر فوكلاند","دوورگەکانی مالڤیناس (دوورگەکانی فاڵکلاند)",[5],""],["FO",298,"Faroe Islands","جزر فارو","دوورگەکانی فارەو",[6],""],["FJ",679,"Fiji","فيجي","فیجی",[7],""],["FI",358,"Finland","فنلندا","فینلاند",[6,7,8,9,10],"0"],["FR",33,"France","فرنسا","فەڕەنسا",[9],"0"],["GF",594,"French Guiana","غويانا الفرنسية","گیانای فەرەنسا",[9],"0"],["PF",689,"French Polynesia","بولينيزيا الفرنسية","پۆلینیسیای فەرەنسا",[8],""],["GA",241,"Gabon","الغابون","گابۆن",[7,8],""],["GM",220,"Gambia","غامبيا","گامبیا",[7,9],""],["GE",995,"Georgia","جورجيا","گورجستان",[9],"0"],["DE",49,"Germany","ألمانيا","ئەڵمانیا",[10,11],"0"],["GH",233,"Ghana","غانا","غەنا",[9],"0"],["GI",350,"Gibraltar","جبل طارق","گیبرالتار",[8],""],["GR",30,"Greece","اليونان","یۆنان",[10],""],["GL",299,"Greenland","غرينلاند","گرینلاند",[6],""],["GD",1,"Grenada","غرينادا","گرینادا",[10],"1"],["GP",590,"Guadeloupe","غوادلوب","گوادێلۆپ",[9],"0"],["GU",1,"Guam","غوام","گوام",[10],"1"],["GT",502,"Guatemala","غواتيمالا","گواتیمالا",[8],""],["GG",44,"Guernsey","غيرنزي","گێرنزی",[10],"0"],["GN",224,"Guinea","غينيا","گینێ",[9],""],["GW",245,"Guinea-Bissau","غينيا بيساو","گینێ بیساو",[9],""],["GY",592,"Guyana","غيانا","گویانا",[7],""],["HT",509,"Haiti","هايتي","ھایتی",[8],""],["HN",504,"Honduras","هندوراس","ھۆندووراس",[8],""],["HK",852,"Hong Kong SAR China","هونغ كونغ الصينية (منطقة إدارية خاصة)","هۆنگ کۆنگ",[8],""],["HU",36,"Hungary","هنغاريا","هەنگاریا",[9],"06"],["IS",354,"Iceland","آيسلندا","ئایسلەند",[7,9],""],["IN",91,"India","الهند","ھیندستان",[10],"0"],["ID",62,"Indonesia","إندونيسيا","ئیندۆنیزیا",[9,10,11,12],"0"],["IR",98,"Iran","إيران","ئێران",[10],"0"],["IQ",964,"Iraq","العراق","عێراق",[10],"0"],["IE",353,"Ireland","أيرلندا","ئیرلەند",[9],"0"],["IM",44,"Isle of Man","جزيرة مان","دوورگەی مان",[10],"0"],["IL",972,"Israel","إسرائيل","ئیسرائیل",[9],"0"],["IT",39,"Italy","إيطاليا","ئیتالیا",[9,10],""],["JM",1,"Jamaica","جامايكا","جامایکا",[10],"1"],["JP",81,"Japan","اليابان","ژاپۆن",[10],"0"],["JE",44,"Jersey","جيرسي","جێرسی",[10],"0"],["JO",962,"Jordan","الأردن","ئوردن",[9],"0"],["KZ",7,"Kazakhstan","كازاخستان","کازاخستان",[10],"8"],["KE",254,"Kenya","كينيا","کینیا",[9],"0"],["KI",686,"Kiribati","كيريباتي","کیریباس",[8],"0"],["XK",383,"Kosovo","كوسوفو","کۆسۆڤۆ",[8],"0"],["KW",965,"Kuwait","الكويت","کوەیت",[8],""],["KG",996,"Kyrgyzstan","قيرغيزستان","کرگیزستان",[9],"0"],["LA",856,"Laos","لاوس","لاوس",[9,10],"0"],["LV",371,"Latvia","لاتفيا","لاتڤیا",[8],""],["LB",961,"Lebanon","لبنان","لوبنان",[7,8],"0"],["LS",266,"Lesotho","ليسوتو","لەسۆتۆ",[8],""],["LR",231,"Liberia","ليبيريا","لیبەریا",[7,9],"0"],["LY",218,"Libya","ليبيا","لیبیا",[9],"0"],["LI",423,"Liechtenstein","ليختنشتاين","لیختنشتاین",[7,9],"0"],["LT",370,"Lithuania","ليتوانيا","لیتوانایا",[8],"0"],["LU",352,"Luxembourg","لوكسمبورغ","لوکسەمبورگ",[9],""],["MO",853,"Macao SAR China","منطقة ماكاو الإدارية الخاصة","ماکائۆ",[8],""],["MG",261,"Madagascar","مدغشقر","ماداگاسکار",[9],"0"],["MW",265,"Malawi","ملاوي","مالاوی",[9],"0"],["MY",60,"Malaysia","ماليزيا","مالیزیا",[9,10],"0"],["MV",960,"Maldives","جزر المالديف","مالدیڤ",[7],""],["ML",223,"Mali","مالي","مالی",[8],""],["MT",356,"Malta","مالطا","ماڵتا",[8],""],["MH",692,"Marshall Islands","جزر مارشال","دوورگەکانی مارشاڵ",[7],"1"],["MQ",596,"Martinique","جزر المارتينيك","مارتینیک",[9],"0"],["MR",222,"Mauritania","موريتانيا","مۆریتانیا",[8],""],["MU",230,"Mauritius","موريشيوس","مووریتیووس",[8],""],["YT",262,"Mayotte","مايوت","مایۆت",[9],"0"],["MX",52,"Mexico","المكسيك","مەکسیک",[10],""],["FM",691,"Micronesia","ميكرونيزيا","مایکرۆنیزیا",[7],""],["MD",373,"Moldova","مولدوفا","مۆلدۆڤا",[8],"0"],["MC",377,"Monaco","موناكو","مۆناکۆ",[8,9],"0"],["MN",976,"Mongolia","منغوليا","مەنگۆلیا",[8],"0"],["ME",382,"Montenegro","الجبل الأسود","مۆنتینیگرۆ",[8],"0"],["MS",1,"Montserrat","مونتسرات","مۆنتسێرات",[10],"1"],["MA",212,"Morocco","المغرب","مەغریب",[9],"0"],["MZ",258,"Mozambique","موزمبيق","مۆزامبیک",[9],""],["MM",95,"Myanmar (Burma)","ميانمار (بورما)","میانمار",[7,8,9,10],"0"],["NA",264,"Namibia","ناميبيا","نامیبیا",[9],"0"],["NR",674,"Nauru","ناورو","نائوروو",[7],""],["NP",977,"Nepal","نيبال","نیپال",[10],"0"],["NL",31,"Netherlands","هولندا","ھۆڵەندا",[9,11],"0"],["NC",687,"New Caledonia","كاليدونيا الجديدة","نیووکالێدۆنیا",[6],""],["NZ",64,"New Zealand","نيوزيلندا","نیوزیلاند",[8,9,10],"0"],["NI",505,"Nicaragua","نيكاراغوا","نیکاراگوا",[8],""],["NE",227,"Niger","النيجر","نیجەر",[8],""],["NG",234,"Nigeria","نيجيريا","نیجریا",[10],"0"],["NU",683,"Niue","نيوي","نیووئی",[4,7],""],["NF",672,"Norfolk Island","جزيرة نورفولك","دوورگەی نۆرفۆڵک",[6],""],["KP",850,"North Korea","كوريا الشمالية","کۆریای باکوور",[10],"0"],["MK",389,"North Macedonia","مقدونيا الشمالية","مەکدۆنیای باکوور",[8],"0"],["MP",1,"Northern Mariana Islands","جزر ماريانا الشمالية","دوورگەکانی ماریانای باکوور",[10],"1"],["NO",47,"Norway","النرويج","نۆرویژ",[8],""],["OM",968,"Oman","عُمان","عومان",[8],""],["PK",92,"Pakistan","باكستان","پاکستان",[10],"0"],["PW",680,"Palau","بالاو","پالاو",[7],""],["PS",970,"Palestinian Territories","الأراضي الفلسطينية","ناوچە فەلەستینیەکان",[9],"0"],["PA",507,"Panama","بنما","پاناما",[7,8],""],["PG",675,"Papua New Guinea","بابوا غينيا الجديدة","پاپوا گینێی نوێ",[8],""],["PY",595,"Paraguay","باراغواي","پاراگوای",[9],"0"],["PE",51,"Peru","بيرو","پێروو",[9],"0"],["PH",63,"Philippines","الفلبين","فلیپین",[10],"0"],["PL",48,"Poland","بولندا","پۆڵەندا",[9],""],["PT",351,"Portugal","البرتغال","پورتوگال",[9],""],["PR",1,"Puerto Rico","بورتوريكو","پۆرتۆڕیکۆ",[10],"1"],["QA",974,"Qatar","قطر","قەتەر",[8],""],["RO",40,"Romania","رومانيا","ڕۆمانیا",[9],"0"],["RU",7,"Russia","روسيا","ڕووسیا",[10],"8"],["RW",250,"Rwanda","رواندا","ڕواندا",[9],"0"],["RE",262,"Réunion","روينيون","ڕییوونیەن",[9],"0"],["WS",685,"Samoa","ساموا","ساموا",[7,10],""],["SM",378,"San Marino","سان مارينو","سان مارینۆ",[8],""],["SA",966,"Saudi Arabia","المملكة العربية السعودية","عەرەبستانی سەعوودی",[9],"0"],["SN",221,"Senegal","السنغال","سێنێگاڵ",[9],""],["RS",381,"Serbia","صربيا","سربیا",[8,9,10],"0"],["SC",248,"Seychelles","سيشل","سیشێل",[7],""],["SL",232,"Sierra Leone","سيراليون","سیەرالیۆن",[8],"0"],["SG",65,"Singapore","سنغافورة","سینگاپور",[8],""],["SX",1,"Sint Maarten","سانت مارتن","سینت مارتن",[10],"1"],["SK",421,"Slovakia","سلوفاكيا","سلۆڤاکیا",[9],"0"],["SI",386,"Slovenia","سلوفينيا","سلۆڤێنیا",[8],"0"],["SB",677,"Solomon Islands","جزر سليمان","دوورگەکانی سلێمان",[5,7],""],["SO",252,"Somalia","الصومال","سۆمالیا",[7,8,9],"0"],["ZA",27,"South Africa","جنوب أفريقيا","ئەفریقای باشوور",[5,6,7,8,9],"0"],["KR",82,"South Korea","كوريا الجنوبية","کۆریای باشوور",[9,10],"0"],["SS",211,"South Sudan","جنوب السودان","سوودانی باشوور",[9],"0"],["ES",34,"Spain","إسبانيا","ئیسپانیا",[9],""],["LK",94,"Sri Lanka","سريلانكا","سریلانکا",[9],"0"],["BL",590,"St. Barthélemy","سان بارتليمي","سەن بارتێلێمی",[9],"0"],["SH",290,"St. Helena","سانت هيلينا","سەن هێلێنا",[5],""],["KN",1,"St. Kitts & Nevis","سانت كيتس ونيفيس","سەن کیتس و نیڤیس",[10],"1"],["LC",1,"St. Lucia","سانت لوسيا","سەن لووسیا",[10],"1"],["MF",590,"St. Martin","سان مارتن","سەن مارتین",[9],"0"],["PM",508,"St. Pierre & Miquelon","سان بيير ومكويلون","سەن پیێر و میکێلۆن",[6,9],"0"],["VC",1,"St. Vincent & Grenadines","سانت فنسنت وجزر غرينادين","سەینت ڤینسەنت و گرینادینز",[10],"1"],["SD",249,"Sudan","السودان","سوودان",[9],"0"],["SR",597,"Suriname","سورينام","سورینام",[7],""],["SJ",47,"Svalbard & Jan Mayen","سفالبارد وجان ماين","سڤالبارد و یان مایەن",[8],""],["SE",46,"Sweden","السويد","سوید",[9],"0"],["CH",41,"Switzerland","سويسرا","سویسڕا",[9],"0"],["SY",963,"Syria","سوريا","سووریا",[9],"0"],["ST",239,"São Tomé & Príncipe","ساو تومي وبرينسيبي","ساوتۆمێ و پرینسیپی",[7],""],["TW",886,"Taiwan","تايوان","تایوان",[9],"0"],["TJ",992,"Tajikistan","طاجيكستان","تاجیکستان",[9],""],["TZ",255,"Tanzania","تنزانيا","تانزانیا",[9],"0"],["TH",66,"Thailand","تايلاند","تایلەند",[9],"0"],["TL",670,"Timor-Leste","تيمور - ليشتي","تیمۆری ڕۆژھەڵات",[8],""],["TG",228,"Togo","توغو","تۆگۆ",[8],""],["TK",690,"Tokelau","توكيلاو","تۆکێلاو",[4,5,6,7],""],["TO",676,"Tonga","تونغا","تۆنگا",[7],""],["TT",1,"Trinidad & Tobago","ترينيداد وتوباغو","ترینیداد و تۆباگو",[10],"1"],["TA",290,"Tristan da Cunha","تريستان دا كونا","تریستێن دا کوونا",[4],""],["TN",216,"Tunisia","تونس","توونس",[8],""],["TM",993,"Turkmenistan","تركمانستان","تورکمانستان",[8],"8"],["TC",1,"Turks & Caicos Islands","جزر توركس وكايكوس","دوورگەکانی تورکس و کایکۆس",[10],"1"],["TV",688,"Tuvalu","توفالو","تووڤالوو",[6,7],""],["TR",90,"Türkiye","تركيا","تورکیا",[10],"0"],["VI",1,"U.S. Virgin Islands","جزر فيرجن الأمريكية","دوورگەکانی ڤیرجنی ئەمەریکا",[10],"1"],["UG",256,"Uganda","أوغندا","ئوگاندا",[9],"0"],["UA",380,"Ukraine","أوكرانيا","ئۆکرانیا",[9],"0"],["AE",971,"United Arab Emirates","الإمارات العربية المتحدة","میرنشینە یەکگرتووە عەرەبییەکان",[9],"0"],["GB",44,"United Kingdom","المملكة المتحدة","شانشینی یەکگرتوو",[10],"0"],["US",1,"United States","الولايات المتحدة","ویلایەتە یەکگرتووەکان",[10],"1"],["UY",598,"Uruguay","أورغواي","ئوروگوای",[8],"0"],["UZ",998,"Uzbekistan","أوزبكستان","ئوزبەکستان",[9],""],["VU",678,"Vanuatu","فانواتو","ڤانوواتوو",[7],""],["VA",39,"Vatican City","الفاتيكان","ڤاتیکان",[9,10],""],["VE",58,"Venezuela","فنزويلا","ڤەنزوێلا",[10],"0"],["VN",84,"Vietnam","فيتنام","ڤیەتنام",[9],"0"],["WF",681,"Wallis & Futuna","جزر والس وفوتونا","والیس و فوتونا",[6],""],["EH",212,"Western Sahara","الصحراء الغربية","سەحرای ڕۆژاوا",[9],"0"],["YE",967,"Yemen","اليمن","یەمەن",[9],"0"],["ZM",260,"Zambia","زامبيا","زامبیا",[9],"0"],["ZW",263,"Zimbabwe","زيمبابوي","زیمبابوی",[9],"0"],["AX",358,"Åland Islands","جزر آلاند","دوورگەکانی ئالاند",[6,7,8,9,10],"0"]];
+/* Country picker for phone numbers. Numbers are stored in international form
+   without "+" (9647501234567). Iraq stays first and checked strictly. */
+const CC_TOP=['IQ','TR','IR','SY','JO','LB','AE','SA','KW','QA','DE','GB','SE','NL','US'];
+const CC_PREF={1:'US',7:'RU',44:'GB',47:'NO',61:'AU',39:'IT',212:'MA',262:'RE',290:'SH',358:'FI',590:'GP',599:'CW'};
+function ccName(c){ return lang==='ar'?c[3]:lang==='ku'?c[4]:c[2]; }
+function ccFlag(iso){ return String(iso).toUpperCase().replace(/./g,ch=>String.fromCodePoint(127397+ch.charCodeAt(0))); }
+function ccByIso(iso){ return COUNTRIES.find(c=>c[0]===iso); }
+function splitIntl(d){
+  d=String(d||'').replace(/\D/g,'');
+  if(!d) return ['IQ',''];
+  if(/^07\d{9}$/.test(d)) return ['IQ',d.slice(1)];
+  let len=0; COUNTRIES.forEach(c=>{ const k=String(c[1]); if(d.startsWith(k)&&k.length>len) len=k.length; });
+  if(!len) return ['IQ',d];
+  const code=Number(d.slice(0,len));
+  const iso=CC_PREF[code]||(COUNTRIES.find(c=>c[1]===code)||[])[0]||'IQ';
+  return [iso,d.slice(len)];
+}
+function validIntl(d){
+  if(/^964/.test(d)) return /^9647\d{9}$/.test(d);
+  return d.length>=8 && d.length<=15;
+}
+function phoneFieldHtml(id,intl,cls,iso0,nat0){
+  let [iso,nat]=splitIntl(intl);
+  if(iso0){ iso=iso0; nat=nat0||''; }
+  const c=ccByIso(iso)||ccByIso('IQ');
+  const opt=x=>`<option value="${x[0]}" ${x[0]===c[0]?'selected':''}>${ccFlag(x[0])} ${esc(ccName(x))} (+${x[1]})</option>`;
+  const top=CC_TOP.map(ccByIso).filter(Boolean);
+  return `<div class="ph-field" dir="ltr">
+    <label class="ph-cc"><span class="ph-cc-shown" id="${id}_ccShown">${ccFlag(c[0])} +${c[1]}</span><span class="ph-cc-caret">▾</span>
+      <select id="${id}_cc" data-ph-for="${id}" aria-label="${attr(t('countryCode'))}">${top.map(opt).join('')}<option disabled>──────────</option>${COUNTRIES.map(opt).join('')}</select></label>
+    <input class="${cls||'cl-input'} ph-num" id="${id}" type="tel" inputmode="tel" autocomplete="tel-national" dir="ltr" placeholder="${c[0]==='IQ'?'750 123 4567':''}" value="${attr(nat)}">
+  </div>`;
+}
+function bindPhoneFields(root){
+  (root||document).querySelectorAll('select[data-ph-for]').forEach(sel=>{
+    if(sel.dataset.bound) return; sel.dataset.bound='1';
+    sel.addEventListener('change',()=>{
+      const c=ccByIso(sel.value); if(!c) return;
+      const id=sel.dataset.phFor;
+      const shown=document.getElementById(id+'_ccShown'); if(shown) shown.textContent=`${ccFlag(c[0])} +${c[1]}`;
+      const inp=document.getElementById(id); if(inp){ inp.placeholder=c[0]==='IQ'?'750 123 4567':''; inp.dispatchEvent(new Event('change')); }
+    });
+  });
+}
+/* International number from a picker + field, or '' if not usable. */
+function readPhoneField(id){
+  const el=document.getElementById(id); if(!el) return '';
+  const raw=latinDigits(el.value).trim();
+  if(/^(\+|00)/.test(raw)){ let d=raw.replace(/\D/g,''); if(raw.startsWith('00')) d=d.slice(2); return validIntl(d)?d:''; }
+  let d=raw.replace(/\D/g,'');
+  const sel=document.getElementById(id+'_cc');
+  const c=ccByIso(sel?sel.value:'IQ')||ccByIso('IQ'); const dial=String(c[1]);
+  const ok=n=>!c[5].length||c[5].includes(n.length);
+  if(!ok(d)&&d.startsWith(dial)&&ok(d.slice(dial.length))) d=d.slice(dial.length);
+  if(!ok(d)&&c[6]&&d.startsWith(c[6])&&ok(d.slice(c[6].length))) d=d.slice(c[6].length);
+  if(c[0]==='IQ') return /^7\d{9}$/.test(d)?'964'+d:'';
+  return (d && ok(d))?dial+d:'';
+}
 function clientPhoneText(p){
   let d=normalizedPhone(p);
   if(/^07\d{9}$/.test(d)) d='964'+d.slice(1);
@@ -2778,8 +2872,32 @@ function clientIn(){ return !!loggedInClient && clientLoginOn(); }
 let authStep='phone', authPhone='', authEmail='', pendingScreen=null, authBusy=false, authResendAt=0, deleteArmed=false, authFlowStarted=false;
 try{ localStorage.removeItem(CLIENT_KEY); }catch(e){}
 
+/* Opening screen: when client login is on and nobody is logged in, the app
+   opens on the login / sign-up screen (same steps create a new account),
+   with "Continue as guest" for people who only want to browse. A guest is
+   not asked again for 7 days. Apple allows this because browsing never
+   requires an account. */
+const GUEST_GATE_KEY='odc_guest_until';
+let startGate=false;
+function guestRecently(){ try{ return Number(localStorage.getItem(GUEST_GATE_KEY)||0)>Date.now(); }catch(e){ return false; } }
+function hasSavedClientLogin(){ try{ return !!localStorage.getItem('dolce-client-auth'); }catch(e){ return false; } }
+function maybeShowStartGate(){
+  if(startGate || !clientLoginOn() || clientIn() || loggedInClient) return;
+  if(currentScreen!=='welcome' || hasSavedClientLogin() || guestRecently()) return;
+  if(typeof previewActive==='function' && previewActive()) return;
+  startGate=true; pendingScreen='welcome'; authStep='phone'; authPhone=''; authEmail='';
+  currentScreen='auth'; navDirection='none';
+  try{ history.replaceState({dolce:1,screen:'auth'},''); }catch(e){}
+  render();
+}
+function continueAsGuest(){
+  try{ localStorage.setItem(GUEST_GATE_KEY,String(Date.now()+7*24*3600*1000)); }catch(e){}
+  startGate=false; pendingScreen=null; authStep='phone';
+  goto('welcome','back');
+}
+
 function setLoggedInClient(row){
-  loggedInClient={id:row.id,name:row.name||'',phone:row.phone||row.contact_phone||'',email:row.email||'',points:Number(row.points)||0};
+  loggedInClient={id:row.id,name:row.name||'',phone:row.phone||row.contact_phone||'',email:row.email||'',birth:row.birth_date||'',points:Number(row.points)||0};
   try{ localStorage.setItem(CLIENT_CACHE_KEY,JSON.stringify(loggedInClient)); }catch(e){}
 }
 function clearClientState(){
@@ -2788,10 +2906,13 @@ function clearClientState(){
 }
 /* After a successful code check (or on start-up with a saved login): link
    the login to its client record. 'ok' | 'needName' | 'staff' | 'offline' | 'error' */
-async function clientAfterLogin(name,phone){
+async function clientAfterLogin(name,phone,birth){
   const cs=clientSupa(); if(!cs) return 'error';
   let res;
-  try{ res=await cs.rpc('claim_my_client_account',phone?{p_name:name||null,p_phone:phone}:{p_name:name||null}); }
+  const args={p_name:name||null};
+  if(phone) args.p_phone=phone;
+  if(birth) args.p_birth=birth;
+  try{ res=await cs.rpc('claim_my_client_account',args); }
   catch(e){ return 'offline'; }
   if(res.error){
     const m=String(res.error.message||'');
@@ -2851,6 +2972,7 @@ async function sendClientCode(target){
 }
 function finishClientLogin(isNew){
   toast(`${isNew?t('accountCreated'):t('welcomeBack')} ${loggedInClient.name}`);
+  startGate=false;
   authStep='phone'; authPhone=''; authEmail='';
   const next=pendingScreen; pendingScreen=null;
   goto(next||'profile');
@@ -2907,6 +3029,8 @@ Object.assign(I18N.en,{
   changeEmail:'Use a different email',
   nameLedeEmail:'What should we call you, and which number can we reach you on about your appointments?',
   apptPhoneLabel:'Mobile number for your appointments',
+  gateTitle:'Welcome to Dolce+',gateLedeEmail:"Log in or create your account with your email — we'll send you a 6-digit code, no password needed. One account for Dolce, Polished and Core.",gateLede:"Log in or create your account with your number — we'll send you a 6-digit code. One account for Dolce, Polished and Core.",orWord:'or',continueGuest:'Continue as guest',
+  countryCode:'Country code',birthLabel:'Date of birth',needBirth:'Please enter your date of birth.',
   emailPrivacy:'We only use your email to log you in, and your number to contact you about your appointments.'
 });
 Object.assign(I18N.ar,{
@@ -2938,6 +3062,8 @@ Object.assign(I18N.ar,{
   changeEmail:'استخدم بريداً آخر',
   nameLedeEmail:'ما الاسم الذي تحب أن نناديك به، وما الرقم الذي نتواصل معك عليه بخصوص مواعيدك؟',
   apptPhoneLabel:'رقم الموبايل للتواصل بخصوص مواعيدك',
+  gateTitle:'أهلاً بك في <bdi>Dolce+</bdi>',gateLedeEmail:'سجّل الدخول أو أنشئ حسابك ببريدك الإلكتروني — سنرسل لك رمزاً من 6 أرقام، بدون كلمة سر. حساب واحد لـ Dolce و Polished و Core.',gateLede:'سجّل الدخول أو أنشئ حسابك برقمك — سنرسل لك رمزاً من 6 أرقام. حساب واحد لـ Dolce و Polished و Core.',orWord:'أو',continueGuest:'المتابعة كضيف',
+  countryCode:'رمز الدولة',birthLabel:'تاريخ الميلاد',needBirth:'يرجى إدخال تاريخ ميلادك.',
   emailPrivacy:'نستخدم بريدك فقط لتسجيل دخولك، ورقمك للتواصل معك بخصوص مواعيدك.'
 });
 Object.assign(I18N.ku,{
@@ -2969,6 +3095,8 @@ Object.assign(I18N.ku,{
   changeEmail:'ئیمەیڵێکی تر بەکاربهێنە',
   nameLedeEmail:'حەز دەکەیت بە چ ناوێک بانگت بکەین، و بە چ ژمارەیەک پەیوەندیت پێوە بکەین سەبارەت بە کاتەکانت؟',
   apptPhoneLabel:'ژمارەی مۆبایل بۆ کاتەکانت',
+  gateTitle:'بەخێربێیت بۆ <bdi>Dolce+</bdi>',gateLedeEmail:'بە ئیمەیڵەکەت بچۆ ژوورەوە یان هەژمار دروست بکە — کۆدێکی ٦ ژمارەییت بۆ دەنێرین، بێ وشەی نهێنی. یەک هەژمار بۆ Dolce و Polished و Core.',gateLede:'بە ژمارەکەت بچۆ ژوورەوە یان هەژمار دروست بکە — کۆدێکی ٦ ژمارەییت بۆ دەنێرین. یەک هەژمار بۆ Dolce و Polished و Core.',orWord:'یان',continueGuest:'وەک میوان بەردەوامبە',
+  countryCode:'کۆدی وڵات',birthLabel:'بەرواری لەدایکبوون',needBirth:'تکایە بەرواری لەدایکبوونت بنووسە.',
   emailPrivacy:'ئیمەیڵەکەت تەنها بۆ چوونەژوورەوە بەکاردەهێنین، و ژمارەکەت بۆ پەیوەندیکردن سەبارەت بە کاتەکانت.'
 });
 
@@ -3236,7 +3364,7 @@ function guestDetailsHtml(){
       <label style="font-size:13px;font-weight:700;color:var(--ink-soft);display:block;margin-bottom:6px;">${t('yourName')}</label>
       <input id="guestName" type="text" value="${esc(g.name||'')}" placeholder="${t('yourName')}" style="${inputStyle}">
       <label style="font-size:13px;font-weight:700;color:var(--ink-soft);display:block;margin:12px 0 6px;">${t('yourPhone')}</label>
-      <input id="guestPhone" type="tel" inputmode="tel" value="${esc(g.phone||'')}" placeholder="+964 750 123 4567" style="${inputStyle}">
+      ${phoneFieldHtml('guestPhone',g.phoneIso?'':g.phone,'gp-input',g.phoneIso,g.phoneNat)}
       <label style="display:flex;align-items:flex-start;gap:9px;margin-top:14px;font-size:13.5px;color:var(--ink-soft);cursor:pointer;">
         <input id="guestConsent" type="checkbox" ${g.consent?'checked':''} style="width:16px;height:16px;flex:none;margin-top:2px;accent-color:var(--gold-dark);">
         <span>${t('aftercareConsent')}</span>
@@ -3249,14 +3377,15 @@ function readGuestDetails(){
   const nameEl=document.getElementById('guestName');
   if(!nameEl) return null;
   const name=nameEl.value.trim();
-  const phone=document.getElementById('guestPhone').value.trim();
+  const phone=readPhoneField('guestPhone');
   const consent=!!document.getElementById('guestConsent').checked;
   if(!name){ toast(t('needName')); nameEl.focus(); return null; }
   // Long enough to be a real number, whatever way it has been written.
-  if(normalizedPhone(phone).length<9){
+  if(!phone){
     toast(t('needPhone')); document.getElementById('guestPhone').focus(); return null;
   }
-  saveGuestDetails({name,phone,consent});
+  const ccEl=document.getElementById('guestPhone_cc');
+  saveGuestDetails({name,phone,consent,phoneIso:ccEl?ccEl.value:'',phoneNat:document.getElementById('guestPhone').value});
   return {name,phone,consent};
 }
 
@@ -3283,7 +3412,9 @@ function renderClientAuth(){
       <label class="cl-label" for="authNameInput">${t('yourName')}</label>
       <input class="cl-input" id="authNameInput" type="text" autocomplete="name" maxlength="80">
       ${byEmail?`<label class="cl-label" for="authNamePhone">${t('apptPhoneLabel')}</label>
-      <input class="cl-input" id="authNamePhone" type="tel" inputmode="tel" autocomplete="tel" dir="ltr" placeholder="0750 123 4567">`:''}
+      ${phoneFieldHtml('authNamePhone','','cl-input')}`:''}
+      <label class="cl-label" for="authBirth">${t('birthLabel')}</label>
+      <input class="cl-input cl-date" id="authBirth" type="date" min="1910-01-01" max="${new Date().toISOString().slice(0,10)}" dir="ltr">
       <button class="primary-btn" id="authSaveName">${t('continueBtn')}</button>
     </section>`;
   }
@@ -3306,24 +3437,26 @@ function renderClientAuth(){
   if(byEmail){
     return `<section class="cl-auth">
     <div class="lux-eyebrow"><bdi>Dolce+</bdi></div>
-    <h2 class="lux-h2">${t('emailLoginTitle')}</h2>
-    <p class="lux-lede">${t('emailLoginLede')}</p>
+    <h2 class="lux-h2">${t(startGate?'gateTitle':'emailLoginTitle')}</h2>
+    <p class="lux-lede">${t(startGate?'gateLedeEmail':'emailLoginLede')}</p>
     <label class="cl-label" for="authEmailInput">${t('emailLabel')}</label>
     <input class="cl-input" id="authEmailInput" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" dir="ltr" placeholder="name@example.com" value="${attr(authEmail)}">
     <button class="primary-btn" id="authSendCode">${t('sendCodeEmail')}</button>
     <p class="cl-note">${t('emailPrivacy')}</p>
-    ${isNativeApp()?`<button class="pv-open" id="previewMemberBtn">Preview a member profile</button>`:''}
+    ${startGate?`<div class="cl-or"><span>${t('orWord')}</span></div><button class="cl-guest" id="authGuest">${t('continueGuest')}</button>`:''}
+    ${isNativeApp()&&!startGate?`<button class="pv-open" id="previewMemberBtn">Preview a member profile</button>`:''}
   </section>`;
   }
   return `<section class="cl-auth">
     <div class="lux-eyebrow"><bdi>Dolce+</bdi></div>
-    <h2 class="lux-h2">${t('loginTitle')}</h2>
+    <h2 class="lux-h2">${t(startGate?'gateTitle':'loginTitle')}</h2>
     <p class="lux-lede">${t('loginLede')}</p>
     <label class="cl-label" for="authPhoneInput">${t('phoneLabel')}</label>
-    <input class="cl-input" id="authPhoneInput" type="tel" inputmode="tel" autocomplete="tel" dir="ltr" placeholder="0750 123 4567" value="${attr(authPhone?clientPhoneText(authPhone):'')}">
+    ${phoneFieldHtml('authPhoneInput',authPhone,'cl-input')}
     <button class="wa-btn" id="authSendCode">${t('sendCode')}</button>
     <p class="cl-note">${t('loginPrivacy')}</p>
-    ${isNativeApp()?`<button class="pv-open" id="previewMemberBtn">Preview a member profile</button>`:''}
+    ${startGate?`<div class="cl-or"><span>${t('orWord')}</span></div><button class="cl-guest" id="authGuest">${t('continueGuest')}</button>`:''}
+    ${isNativeApp()&&!startGate?`<button class="pv-open" id="previewMemberBtn">Preview a member profile</button>`:''}
   </section>`;
 }
 
@@ -4392,6 +4525,7 @@ function renderProfile(){
         <h2 class="pv-name">${esc(c.name)}</h2>
         <div class="pv-sub" dir="ltr" style="text-align:start;">${esc(clientPhoneText(c.phone))}</div>
         ${c.email?`<div class="pv-sub" dir="ltr" style="text-align:start;word-break:break-all;">${esc(c.email)}</div>`:''}
+        ${c.birth?`<div class="pv-sub">🎂 <span dir="ltr">${esc(c.birth)}</span></div>`:''}
       </div>
     </section>
     <section class="pv-loyalty">
@@ -4446,7 +4580,7 @@ function screenTitle(){
   return {title:'',small:''};
 }
 
-function showBack(){return ['services','detail','booking','auth','product'].includes(currentScreen);}
+function showBack(){ if(startGate&&currentScreen==='auth') return false; return ['services','detail','booking','auth','product'].includes(currentScreen);}
 
 function goBack(){ navDirection='back'; }
 function backTarget(){
@@ -5882,6 +6016,8 @@ const NAV_ICONS=(()=>{
 function render(){
   const {title,small}=screenTitle();
   screenEl.dataset.screen=currentScreen;
+  if(currentScreen!=='auth') startGate=false;
+  screenEl.dataset.gate=(startGate&&currentScreen==='auth')?'1':'0';
   // Every screen starts at the top: #screen itself must never carry an
   // offset from a previous screen (see revealInRow). Each screen's own
   // scroll area is created fresh below, so tabs never share a position.
@@ -5889,7 +6025,7 @@ function render(){
   screenEl.innerHTML=`
     <div class="screen-head">
       ${showBack()?`<button class="back" id="backBtn">‹</button>`:''}
-      ${currentScreen==='welcome'
+      ${(currentScreen==='welcome'||(startGate&&currentScreen==='auth'))
         ? `<div class="title home-mark"><img src="data:image/png;base64,${DOLCE_PLUS_MARK_B64}" alt="Dolce+"><div class="home-tagline" dir="ltr">Beauty<i>·</i>Aesthetics<i>·</i>Movement</div></div>`
         : currentScreen==='shop'
         ? `<div class="title lux-shop-head"><h1 class="lux-h1">${t('navShop')}</h1><div class="lux-tagline" dir="ltr">Beauty<i>·</i>Aesthetics<i>·</i>Movement</div></div>`
@@ -5978,7 +6114,9 @@ function bindScreen(){
     if(!el) return;
     const keep=()=>saveGuestDetails({
       name:(document.getElementById('guestName')||{}).value||'',
-      phone:(document.getElementById('guestPhone')||{}).value||'',
+      phone:readPhoneField('guestPhone'),
+      phoneIso:(document.getElementById('guestPhone_cc')||{}).value||'',
+      phoneNat:(document.getElementById('guestPhone')||{}).value||'',
       consent:!!(document.getElementById('guestConsent')||{}).checked
     });
     el.addEventListener('input',keep);
@@ -6002,10 +6140,10 @@ function bindScreen(){
     const req=guest
       ? {id:nextId('b',STORE.bookings),brand:currentBrand,serviceId:currentService,serviceName:s.n,
          date:dateStr,time:selectedTime,status:'Requested',clientName:guest.name,
-         phone:guest.phone,aftercareOk:guest.consent}
+         phone:guest.phone,aftercareOk:guest.consent,lang}
       : {id:nextId('b',STORE.bookings),brand:currentBrand,serviceId:currentService,serviceName:s.n,
          date:dateStr,time:selectedTime,status:'Requested',clientName:loggedInClient.name,clientId:loggedInClient.id,
-         phone:loggedInClient.phone};
+         phone:loggedInClient.phone,lang};
     STORE.bookings.push(req);
     const ok=saveStore();
     if(!ok){ STORE.bookings.pop(); toast("This browser's demo storage is full."); return; }
@@ -6037,10 +6175,10 @@ function bindScreen(){
       const waReq=waGuest
         ? {id:nextId('b',STORE.bookings),brand:currentBrand,serviceId:currentService,serviceName:s.n,
            date:dateStr,time:selectedTime,status:'Requested',clientName:waGuest.name,
-           phone:waGuest.phone,aftercareOk:waGuest.consent}
+           phone:waGuest.phone,aftercareOk:waGuest.consent,lang}
         : {id:nextId('b',STORE.bookings),brand:currentBrand,serviceId:currentService,serviceName:s.n,
            date:dateStr,time:selectedTime,status:'Requested',clientName:loggedInClient.name,clientId:loggedInClient.id,
-           phone:loggedInClient.phone};
+           phone:loggedInClient.phone,lang};
       STORE.bookings.push(waReq);
       saveStore(); cloudSave('bookings',waReq.id,null,waGuest?{guest:true}:{clientAuth:true});
     }
@@ -6093,7 +6231,7 @@ function bindScreen(){
     if(authBusy) return;
     const byEmail=clientLoginMethod()==='email';
     const emailEl=document.getElementById('authEmailInput');
-    const target=byEmail?toLoginEmail(emailEl&&emailEl.value):toLoginPhone(document.getElementById('authPhoneInput').value);
+    const target=byEmail?toLoginEmail(emailEl&&emailEl.value):readPhoneField('authPhoneInput');
     if(!target){ toast(t(byEmail?'emailInvalid':'phoneInvalid')); return; }
     authBusy=true; busyBtn(authSendCode,t('sending'));
     const ok=await sendClientCode(target);
@@ -6105,6 +6243,9 @@ function bindScreen(){
   });
   const authPhoneInput=document.getElementById('authPhoneInput');
   if(authPhoneInput) authPhoneInput.addEventListener('keydown',e=>{ if(e.key==='Enter') authSendCode&&authSendCode.click(); });
+  bindPhoneFields(screenEl);
+  const authGuest=document.getElementById('authGuest');
+  if(authGuest) authGuest.addEventListener('click',continueAsGuest);
   const authEmailInput=document.getElementById('authEmailInput');
   if(authEmailInput) authEmailInput.addEventListener('keydown',e=>{ if(e.key==='Enter') authSendCode&&authSendCode.click(); });
   const authVerify=document.getElementById('authVerify');
@@ -6178,11 +6319,14 @@ function bindScreen(){
     const phoneEl=document.getElementById('authNamePhone');
     let phone='';
     if(phoneEl){
-      phone=toLoginPhone(phoneEl.value);
+      phone=readPhoneField('authNamePhone');
       if(!phone){ toast(t('phoneInvalid')); phoneEl.focus(); return; }
     }
+    const birthEl=document.getElementById('authBirth');
+    const birth=birthEl?String(birthEl.value||''):'';
+    if(birthEl && (!/^\d{4}-\d{2}-\d{2}$/.test(birth) || birth<'1910-01-01' || birth>new Date().toISOString().slice(0,10))){ toast(t('needBirth')); birthEl.focus(); return; }
     authBusy=true; busyBtn(authSaveName,'…');
-    const r=await clientAfterLogin(name,phone);
+    const r=await clientAfterLogin(name,phone,birth);
     authBusy=false;
     if(r==='ok') return finishClientLogin(true);
     freeBtn(authSaveName);
@@ -7545,7 +7689,7 @@ function showAdminForRole(){
   });
   if(!canSeeBrand(currentUser,svcBrandTab)) svcBrandTab=userBrands(currentUser)[0];
   document.querySelectorAll('#svcBrandTabs [data-svc-brand-tab]').forEach(x=>x.classList.toggle('active',x.dataset.svcBrandTab===svcBrandTab));
-  renderAdminProducts(); renderAdminServices(); renderAdminOffers(); renderAdminGallery(); renderAdminBookings(); renderBrandPhotos(); renderCurrencySettings(); renderClientLoginSetting(); renderAdminEmployees(); renderAdminPurchases(); renderAdminReports();
+  renderAdminProducts(); renderAdminServices(); renderAdminOffers(); renderAdminGallery(); renderAdminBookings(); renderBrandPhotos(); renderCurrencySettings(); renderClientLoginSetting(); renderWaTemplates(); renderAdminEmployees(); renderAdminPurchases(); renderAdminReports();
 }
 
 /* ---------------- Full-screen client app ---------------- */
@@ -8345,9 +8489,11 @@ function renderAdminBookings(){
   if(scopeLabel) scopeLabel.textContent = userBrands(currentUser).length>=Object.keys(BRANDS).length ? 'across all brands' : `for ${brandsLabel(currentUser&&currentUser.brands)}`;
   const rows=document.getElementById('bookingRows');
   if(!scoped.length){
+    renderReminders();
     rows.innerHTML=`<tr><td colspan="6"><div class="admin-empty">No bookings yet.</div></td></tr>`;
     return;
   }
+  renderReminders();
   const nextStatus={Requested:'Confirmed',Confirmed:'Completed'};
   rows.innerHTML=scoped.slice().reverse().map((bk)=>{
     const i=STORE.bookings.indexOf(bk);
@@ -8376,6 +8522,7 @@ function renderAdminBookings(){
     // The client is at the desk on their way out — this is the moment the
     // aftercare note is worth sending, not days later.
     if(bk.status==='Completed') offerAftercare(bk);
+    if(bk.status==='Confirmed') offerWhatsApp(bk,'confirm');
   }));
   rows.querySelectorAll('[data-cancel-booking]').forEach(b=>b.addEventListener('click',()=>{
     const i=parseInt(b.dataset.cancelBooking); const bk=STORE.bookings[i];
@@ -8421,7 +8568,7 @@ function bookingPhone(booking){
   // A booking made from the Client App carries an account rather than a
   // typed-in number.
   const c=booking.clientId ? (STORE.clients||[]).find(x=>x.id===booking.clientId) : null;
-  return c ? normalizedPhone(c.phone||'') : '';
+  return c ? normalizedPhone(c.phone||c.contactPhone||'') : '';
 }
 
 function offerAftercare(booking){
@@ -8461,6 +8608,150 @@ function offerAftercare(booking){
     close();
     toast('Aftercare note opened in WhatsApp.');
   });
+}
+
+
+/* ---------------- WhatsApp: booking confirmation + reminders ----------------
+   Like the aftercare note: reception presses a button and WhatsApp opens with
+   the message written out, from the brand's own WhatsApp. (Sending on its own
+   needs the WhatsApp Business API, which waits on Meta's verification.)
+   - "Your booking is confirmed" is offered the moment a booking is marked
+     Confirmed (or added already confirmed by staff).
+   - Reminders 12 hours and 1 hour before appear at the top of Bookings when
+     they are due, until sent or skipped. What was sent is stored on the
+     booking (bookings.reminders), so every device agrees.
+   The owner edits the wording in Admin → Overview → WhatsApp messages, in
+   English, Arabic and Kurdish. By default the messages do not name the
+   treatment — a phone's lock screen is read over shoulders. */
+const WA_KINDS={confirm:'Booking confirmed',r12:'Reminder · 12 hours before',r1:'Reminder · 1 hour before'};
+const DEFAULT_WA_TEMPLATES={
+  en:{confirm:"Hi {name}, your appointment at {brand} is confirmed ✅\n📅 {date} at {time}\n\nIf you need to change it, just reply to this message. See you soon!",
+      r12:"Hi {name}, a friendly reminder of your appointment at {brand}:\n📅 {date} at {time}\n\nReply here if you need to change it.",
+      r1:"Hi {name}, see you in about an hour at {brand} — {time}. 🌿"},
+  ar:{confirm:"مرحباً {name}، تم تأكيد موعدك في {brand} ✅\n📅 {date} الساعة {time}\n\nإذا أردت تغييره، فقط ردّ على هذه الرسالة. نراك قريباً!",
+      r12:"مرحباً {name}، تذكير بموعدك في {brand}:\n📅 {date} الساعة {time}\n\nردّ هنا إذا أردت تغييره.",
+      r1:"مرحباً {name}، نراك بعد ساعة تقريباً في {brand} — الساعة {time}. 🌿"},
+  ku:{confirm:"سڵاو {name}، کاتەکەت لە {brand} پشتڕاستکرایەوە ✅\n📅 {date} کاتژمێر {time}\n\nئەگەر پێویستت بە گۆڕینی هەیە، تەنها وەڵامی ئەم نامەیە بدەرەوە. بەم زووانە دەتبینین!",
+      r12:"سڵاو {name}، بیرخستنەوەی کاتەکەت لە {brand}:\n📅 {date} کاتژمێر {time}\n\nئەگەر پێویستت بە گۆڕینی هەیە لێرە وەڵام بدەرەوە.",
+      r1:"سڵاو {name}، نزیکەی یەک کاتژمێری تر لە {brand} دەتبینین — {time}. 🌿"}
+};
+function waTemplate(L,kind){
+  const own=STORE.waTemplates&&STORE.waTemplates[L]&&STORE.waTemplates[L][kind];
+  return (own&&String(own).trim())?String(own):DEFAULT_WA_TEMPLATES[L][kind];
+}
+function bookingStart(bk){
+  const iso=toIsoDate(bk.date); if(!iso) return null;
+  const [y,m,d]=iso.split('-').map(Number);
+  const tm=String(bk.time||'').match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i); if(!tm) return null;
+  let h=Number(tm[1]); const mi=Number(tm[2]); const ap=(tm[3]||'').toUpperCase();
+  if(ap==='PM'&&h<12) h+=12; if(ap==='AM'&&h===12) h=0;
+  return new Date(y,m-1,d,h,mi);
+}
+function waFill(text,bk){
+  const first=(bk.clientName||'').split(' ')[0]||'';
+  return String(text).replace(/\{name\}/g,first).replace(/\{brand\}/g,BRANDS[bk.brand]?BRANDS[bk.brand].name:'')
+    .replace(/\{service\}/g,bk.serviceName||'').replace(/\{date\}/g,bk.date||'').replace(/\{time\}/g,bk.time||'');
+}
+function markWaSent(bk,kind,how){
+  const live=STORE.bookings.find(x=>String(x.id)===String(bk.id))||bk;
+  live.reminders={...(live.reminders||{}),[kind]:how||new Date().toISOString()};
+  // A confirmation sent less than 12 hours before the appointment already
+  // does the 12-hour reminder's job.
+  if(kind==='confirm' && how!=='skipped'){ const st=bookingStart(live); if(st && st.getTime()-Date.now()<12*3600*1000 && !live.reminders.r12) live.reminders.r12='covered'; }
+  saveStore(); cloudSave('bookings',live.id);
+}
+function offerWhatsApp(bk,kind){
+  const phone=bookingPhone(bk);
+  const wrap=document.getElementById('aftercarePanel'); if(!wrap) return;
+  if(!phone){ toast(`No phone number on ${bk.clientName}'s booking — message them yourself.`); return; }
+  let L=['en','ar','ku'].includes(bk.lang)?bk.lang:'en';
+  const draw=()=>{
+    const body=waFill(waTemplate(L,kind),bk);
+    wrap.innerHTML=`
+      <div class="ac-card">
+        <div class="ac-head">${esc(WA_KINDS[kind])}: send to ${esc(bk.clientName)}?</div>
+        <div class="ac-meta">${esc(bk.serviceName)} · ${esc(bk.date)} ${esc(bk.time)} · ${esc(prettyPhone(phone))}</div>
+        <div class="wa-langs">${[['en','English'],['ar','عربي'],['ku','کوردی']].map(([k,l])=>`<button class="btn btn-sm ${k===L?'btn-primary':'btn-ghost'}" data-wa-lang="${k}">${l}</button>`).join('')}</div>
+        <textarea class="wa-text" id="wa_text" rows="6" dir="auto">${esc(body)}</textarea>
+        <div class="ac-from"><span style="flex:none;">📱</span><span>Send this from the <b>${esc(BRANDS[bk.brand].name)}</b> WhatsApp — <b>${esc(prettyPhone(BRAND_WHATSAPP[bk.brand]||''))}</b>.</span></div>
+        <div class="ac-actions">
+          <button class="btn btn-ghost btn-sm" id="wa_skip">Not this time</button>
+          <button class="btn btn-primary btn-sm" id="wa_send">Send on WhatsApp</button>
+        </div>
+        <div class="ac-foot">Opens WhatsApp with the message ready — check it, then press send there.</div>
+      </div>`;
+    wrap.classList.add('open');
+    wrap.querySelectorAll('[data-wa-lang]').forEach(b=>b.addEventListener('click',()=>{ L=b.dataset.waLang; draw(); }));
+    const close=()=>{ wrap.classList.remove('open'); wrap.innerHTML=''; };
+    document.getElementById('wa_skip').addEventListener('click',()=>{ if(kind!=='confirm') markWaSent(bk,kind,'skipped'); close(); renderReminders(); });
+    document.getElementById('wa_send').addEventListener('click',()=>{
+      const text=document.getElementById('wa_text').value;
+      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`,'_blank','noopener');
+      markWaSent(bk,kind); close(); renderReminders();
+      toast('Message opened in WhatsApp.');
+    });
+    try{ wrap.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){}
+  };
+  draw();
+}
+function dueReminders(){
+  const now=Date.now(), H=3600*1000, out=[];
+  (STORE.bookings||[]).forEach(bk=>{
+    if(bk.status!=='Confirmed' || !canSeeBrand(currentUser,bk.brand)) return;
+    const st=bookingStart(bk); if(!st) return;
+    const t0=st.getTime(); const rem=bk.reminders||{};
+    if(now>=t0-H && now<t0 && !rem.r1) out.push({bk,kind:'r1',t0});
+    else if(now>=t0-12*H && now<t0-H && !rem.r12) out.push({bk,kind:'r12',t0});
+  });
+  return out.sort((a,b)=>a.t0-b.t0);
+}
+let lastDueCount=0;
+function renderReminders(){
+  const wrap=document.getElementById('remindersPanel'); if(!wrap||!currentUser) return;
+  const due=dueReminders();
+  if(due.length>lastDueCount && lastDueCount>=0 && (()=>{ const aa=document.querySelector('.admin-app'); return !!(aa&&aa.offsetParent!==null); })()) toast(`${due.length} WhatsApp reminder${due.length>1?'s':''} due — see Bookings.`);
+  lastDueCount=due.length;
+  if(!due.length){ wrap.innerHTML=''; return; }
+  wrap.innerHTML=`<div class="rem-card">
+    <div class="rem-head">⏰ WhatsApp reminders to send now <span class="rem-n">${due.length}</span></div>
+    ${due.map((d,i)=>`<div class="rem-row">
+      <div><b>${esc(d.bk.clientName)}</b> · <span class="brand-tag" style="background:${brandColor[d.bk.brand]}">${BRANDS[d.bk.brand].name}</span><br>
+        <span class="rem-meta">${esc(d.bk.date)} ${esc(d.bk.time)} · ${d.kind==='r1'?'1-hour reminder':'12-hour reminder'}</span></div>
+      <div class="rowbtns"><button class="btn btn-ghost btn-sm" data-rem-skip="${i}">Skip</button><button class="btn btn-primary btn-sm" data-rem-send="${i}">Send</button></div>
+    </div>`).join('')}
+  </div>`;
+  wrap.querySelectorAll('[data-rem-send]').forEach(b=>b.addEventListener('click',()=>{ const d=due[Number(b.dataset.remSend)]; offerWhatsApp(d.bk,d.kind); }));
+  wrap.querySelectorAll('[data-rem-skip]').forEach(b=>b.addEventListener('click',()=>{ const d=due[Number(b.dataset.remSkip)]; markWaSent(d.bk,d.kind,'skipped'); renderReminders(); }));
+}
+setInterval(()=>{ try{ if(currentUser) renderReminders(); }catch(e){} },60*1000);
+
+/* Admin → Overview: the wording of the WhatsApp messages (owner only). */
+let waEditLang='en';
+function renderWaTemplates(){
+  const wrap=document.getElementById('waTemplatesWrap'); if(!wrap) return;
+  if(!currentUser || !currentUser.isOwner){ wrap.innerHTML=''; return; }
+  const L=waEditLang;
+  wrap.innerHTML=`
+    <div class="section-label" style="margin:0 0 10px;">WhatsApp messages</div>
+    <div class="admin-form" style="max-width:620px;">
+      <div class="wa-langs" style="margin-bottom:10px;">${[['en','English'],['ar','عربي'],['ku','کوردی']].map(([k,l])=>`<button class="btn btn-sm ${k===L?'btn-primary':'btn-ghost'}" data-wat-lang="${k}">${l}</button>`).join('')}</div>
+      ${Object.keys(WA_KINDS).map(k=>`<div class="field full" style="grid-column:1/-1;"><label>${WA_KINDS[k]}</label>
+        <textarea id="wat_${k}" rows="4" dir="auto">${esc(waTemplate(L,k))}</textarea></div>`).join('')}
+      <div style="font-size:13px;color:var(--muted);margin:4px 0 12px;">Use {name}, {brand}, {date} and {time}. {service} also works, but it shows on the phone's lock screen.</div>
+      <div style="display:flex;gap:8px;"><button class="btn btn-primary btn-sm" id="wat_save">Save</button><button class="btn btn-ghost btn-sm" id="wat_reset">Back to default wording</button></div>
+    </div>
+    <div style="margin-bottom:22px;"></div>`;
+  wrap.querySelectorAll('[data-wat-lang]').forEach(b=>b.addEventListener('click',()=>{ waEditLang=b.dataset.watLang; renderWaTemplates(); }));
+  const save=(reset)=>{
+    STORE.waTemplates=STORE.waTemplates||{};
+    STORE.waTemplates[L]={};
+    if(!reset) Object.keys(WA_KINDS).forEach(k=>{ STORE.waTemplates[L][k]=document.getElementById('wat_'+k).value; });
+    saveStore(); cloudSave('settings','wa_templates');
+    toast(reset?'Default wording restored.':'WhatsApp messages saved.');
+    renderWaTemplates();
+  };
+  document.getElementById('wat_save').addEventListener('click',()=>save(false));
+  document.getElementById('wat_reset').addEventListener('click',()=>save(true));
 }
 
 function openBookingForm(){
@@ -8507,6 +8798,7 @@ function openBookingForm(){
     document.getElementById('bookingFormWrap').innerHTML='';
     renderAdminBookings();
     toast(`Booking added for ${clientName}.`);
+    offerWhatsApp(newBooking,'confirm');
   });
 }
 document.getElementById('addBookingBtn').addEventListener('click',openBookingForm);
@@ -9466,8 +9758,10 @@ render();
 // Services cached on this device under a renamed category.
 Object.keys(STORE.services||{}).forEach(b=>(STORE.services[b]||[]).forEach(sv=>{ sv.cat=renamedCat(sv.cat); }));
 restoreClientSession();   // a saved client login, using the last known on/off setting
+maybeShowStartGate();     // opening login screen (uses the last known on/off setting)
 loadCatalogFromSupabase().then(ok=>{
   restoreClientSession();
+  maybeShowStartGate();
   if(ok){
     applyBrandImages();
     if(['welcome','services','detail','shop'].indexOf(currentScreen)!==-1) render();
