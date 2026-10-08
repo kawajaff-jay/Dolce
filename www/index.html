@@ -6116,8 +6116,19 @@ function bindScreen(){
     const cs=clientSupa(); if(!cs){ toast(t('offline')); return; }
     authBusy=true; busyBtn(authVerify,t('verifying'));
     let res;
-    try{ res=await cs.auth.verifyOtp(clientLoginMethod()==='email'?{email:authEmail,token:code,type:'email'}:{phone:'+'+authPhone,token:code,type:'sms'}); }
-    catch(e){ res={error:{message:'fetch'}}; }
+    // Email codes: Supabase labels a first-time code "signup" and a returning
+    // one "magiclink"; newer servers accept "email" for both. Try each in turn
+    // (a wrong type is simply refused, it does not use up the code).
+    const tries=clientLoginMethod()==='email'
+      ?['email','signup','magiclink'].map(type=>({email:authEmail,token:code,type}))
+      :[{phone:'+'+authPhone,token:code,type:'sms'}];
+    for(const args of tries){
+      try{ res=await cs.auth.verifyOtp(args); }
+      catch(e){ res={error:{message:'fetch'}}; break; }
+      if(!res.error) break;
+      if(/fetch|network/i.test(String(res.error.message))) break;
+    }
+    if(res.error) console.warn('Login code refused:',res.error.status,res.error.code||'',res.error.message);
     if(res.error){
       authBusy=false; freeBtn(authVerify);
       toast(/fetch|network/i.test(String(res.error.message))?t('offline'):t('codeWrong'));
