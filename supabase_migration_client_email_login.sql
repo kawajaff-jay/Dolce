@@ -51,12 +51,14 @@ begin
 
   select regexp_replace(coalesce(u.phone, ''), '\D', '', 'g') into ph
     from auth.users u where u.id = uid and u.phone_confirmed_at is not null;
-  -- Only an email proven by a login code counts. An account made with a
-  -- password (possible because "Confirm email" stays off for staff logins)
-  -- never proves the address, so it cannot become a client account.
+  -- Only an email proven by a login code counts: this session must have been
+  -- started with an emailed code (Supabase records how in the token's "amr").
+  -- An account made with a password (possible because "Confirm email" stays
+  -- off for staff logins) never proves the address.
   select lower(btrim(coalesce(u.email, ''))) into em
     from auth.users u where u.id = uid and u.email_confirmed_at is not null
-     and coalesce(u.encrypted_password, '') = '';
+     and exists (select 1 from jsonb_array_elements(coalesce(auth.jwt()->'amr', '[]'::jsonb)) a
+                  where a->>'method' in ('otp', 'magiclink', 'email/signup'));
   ph := coalesce(ph, ''); em := coalesce(em, '');
   if length(given) < 8 then given := ''; end if;
 
