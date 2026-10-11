@@ -219,6 +219,20 @@
   .login-pin input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(196,164,108,.2);}
   .login-pin .row{display:flex;gap:10px;margin-top:12px;align-items:center;justify-content:space-between;}
   .login-pin .btn-primary{flex:1;}
+  /* Full-width admin: the page wrapper (.wrap, max 1180px) is released only
+     while the Admin App is showing, so the client app keeps its own layout. */
+  body.admin-mode .wrap{max-width:none;padding:0 32px;}
+  #adminView,#adminView .admin-app{max-width:100%;min-width:0;}
+  .adm-shell{grid-template-columns:220px minmax(0,1fr);gap:24px;}
+  #adminView .adm-grid2{gap:24px;}
+  #adminView .admin-table-wrap{overflow-x:auto;}
+  #adminView .chart-row{gap:24px;}
+  /* Settings: wide columns, but inputs keep a sensible length */
+  #adminSettings .admin-form input:not([type=checkbox]):not([type=radio]):not([type=file]),
+  #adminSettings .admin-form select{max-width:360px;}
+  #adminSettings .admin-form textarea{max-width:100%;}
+  #adminView .adm-grid2 .hr-times select{max-width:150px !important;}
+  #adminView .adm-grid2 .hr-times{max-width:340px;}
   /* mobile */
   @media (max-width:900px){
     #adminView .admin-app{padding:16px 0 50px;}
@@ -228,6 +242,8 @@
     .adm-menu-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;}
     .adm-who{width:100%;justify-content:space-between;}
     .adm-shell{grid-template-columns:1fr;gap:14px;}
+    body.admin-mode .wrap{padding:0 16px;}
+    #adminView .adm-grid2{gap:16px;}
     #adminView .admin-tabs.adm-side{position:static;display:none;}
     #adminView .admin-tabs.adm-side.open{display:flex;}
     .adm-grid2{grid-template-columns:1fr;}
