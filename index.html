@@ -234,6 +234,11 @@
   #adminView .adm-grid2 .hr-times select{max-width:150px !important;}
   #adminView .adm-grid2 .hr-times{max-width:340px;}
   /* Admin → Clients */
+  #adminClients,#adminSettings,#adminOverview{position:relative;}
+  #adminClients>.admin-toolbar,#adminSettings>.admin-toolbar,#adminOverview>.admin-toolbar{position:absolute;top:0;right:0;margin:0;z-index:1;}
+  #adminClients .adm-page-title,#adminSettings .adm-page-title,#ovToday .adm-page-title{margin-top:0;min-height:40px;display:flex;align-items:center;padding-right:130px;}
+  .clt-go{color:var(--adm-taupe);font-size:13px;font-weight:600;white-space:nowrap;text-align:right;opacity:.75;}
+  .clt-row:hover .clt-go,.clt-row:focus .clt-go{opacity:1;text-decoration:underline;text-underline-offset:3px;}
   .cl-search{display:flex;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:wrap;}
   .cl-search input{flex:1 1 320px;max-width:520px;height:42px;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;padding:0 14px;font:inherit;font-size:14.5px;background:var(--card);color:var(--ink);}
   .cl-search input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(196,164,108,.2);}
@@ -2362,7 +2367,7 @@ const CLOUD_TABLES={
     table:'clients',
     list:()=>STORE.clients,
     row:(c)=>({id:c.id,phone:c.phone,name:c.name}),
-    app:(r)=>({id:r.id,phone:r.phone,name:r.name,points:r.points||0,contactPhone:r.contact_phone||'',email:r.email||'',createdAt:r.created_at||'',birth:r.birth_date||''}),
+    app:(r)=>({id:r.id,phone:r.phone,name:r.name,points:r.points||0,contactPhone:r.contact_phone||'',email:r.email||'',createdAt:r.created_at||'',birth:r.birth_date||'',userId:r.user_id||''}),
   },
   // D+ Rewards Shop (owner edits; everyone can read).
   rewards:{
@@ -2963,7 +2968,9 @@ async function pullOperational(){
     if(!ps.error) STORE.productSales  =mergeFromCloud(STORE.productSales,  ps.data||[],CLOUD_TABLES.productSales,scope);
     if(!rc.error) STORE.registerCloses=mergeFromCloud(STORE.registerCloses,rc.data||[],CLOUD_TABLES.registerCloses,
                         (item)=>(item.brands||[]).every(b=>canSeeBrand(currentUser,b)));
-    if(!cl.error) STORE.clients       =mergeFromCloud(STORE.clients,       cl.data||[],CLOUD_TABLES.clients,()=>false);
+    // The cloud is the truth for client records: a record deleted there (a client
+    // who deleted their account) must not linger on this device as a duplicate.
+    if(!cl.error) STORE.clients       =mergeFromCloud(STORE.clients,       cl.data||[],CLOUD_TABLES.clients,()=>true);
     saveStore();
     await pullEarnedBookings();
     return true;
@@ -8075,12 +8082,12 @@ function renderOverviewStats(){
   set('stBookings',n(last30.length));
   const diff=last30.length-prev30.length;
   set('stBookingsSub',prev30.length?`${diff>=0?'+':''}${n(diff)} vs the 30 days before`:`${n(last30.filter(x=>x.b.status==='Completed').length)} completed`);
-  const members=STORE.clients.length;
-  const new30=STORE.clients.filter(c=>c.createdAt&&String(c.createdAt).slice(0,10)>=from30).length;
+  const members=uniqueClientCount();
+  const new30=clientGroups().groups.map(g=>g.main).filter(c=>c.createdAt&&String(c.createdAt).slice(0,10)>=from30).length;
   set('stClients',n(members));
   set('stClientsSub',members?(new30?`${n(new30)} joined in the last 30 days`:'client accounts in the app'):'no client accounts yet');
   set('stPoints',loyaltyIssued===null?'—':n(loyaltyIssued));
-  const held=STORE.clients.reduce((s,c)=>s+(Number(c.points)||0),0);
+  const held=clientGroups().groups.reduce((s,g)=>s+(Number(g.main.points)||0),0);
   set('stPointsSub',`${n(held)} held by clients now`);
   set('stRevenue',fmtMoney(Math.round(rev30)));
   set('stRevenueSub',`${n(last30.filter(x=>x.b.status==='Completed').length)} completed visits + product sales`);
@@ -9688,7 +9695,7 @@ async function addPointRow(row){
 function findClientsFor(q){
   const s=String(q||'').trim().toLowerCase(); if(!s) return [];
   const digits=normalizedPhone(s);
-  return STORE.clients.filter(c=>{
+  return clientGroups().groups.map(g=>g.main).filter(c=>{
     if(String(c.name||'').toLowerCase().includes(s)) return true;
     if(String(c.email||'').toLowerCase().includes(s)) return true;
     if(digits.length>=4 && (normalizedPhone(c.phone).includes(digits.slice(-10))||normalizedPhone(c.contactPhone).includes(digits.slice(-10)))) return true;
@@ -9696,9 +9703,10 @@ function findClientsFor(q){
   }).slice(0,12);
 }
 function clientForBooking(bk){
-  if(bk.clientId){ const c=STORE.clients.find(x=>String(x.id)===String(bk.clientId)); if(c) return c; }
-  const p=last10(bk.phone); if(!p) return null;
-  return STORE.clients.find(c=>last10(c.phone)===p)||STORE.clients.find(c=>last10(c.contactPhone)===p)||null;
+  if(bk.clientId){ const c=STORE.clients.find(x=>String(x.id)===String(bk.clientId)); if(c) return mainClient(c); }
+  const p=phoneCore(bk.phone); if(p.length<6) return null;
+  const c=STORE.clients.find(x=>phoneCore(x.phone)===p)||STORE.clients.find(x=>phoneCore(x.contactPhone)===p)||null;
+  return mainClient(c);
 }
 function clientLine(c){ return `${esc(c.name||'(no name)')} · <span dir="ltr">${esc(clientPhoneText(c.phone||c.contactPhone||'')||c.email||'')}</span>`; }
 
@@ -9778,6 +9786,49 @@ function offerPoints(bk,after){
   draw(); loadLevel();
 }
 
+/* ---- One client, one row ----
+   The same person can end up with more than one client record (an account
+   deleted and made again, an email login next to an older reception record).
+   Records are shown together only when they clearly belong to one person:
+     - the same email address (letter case ignored), or
+     - the same phone number (spaces / +964 / 0 ignored) AND the same name.
+   Never by name alone. Nothing is merged or deleted in the database: the
+   group is shown under one "main" record — the one linked to the client's
+   login (newest first) — whose points balance is the one shown, because
+   that is the balance the client sees in the app. The other records, their
+   points and their bookings stay visible inside the profile. */
+var _cgCache={key:'',val:null};
+function clientEmailKey(c){ return String(c&&c.email||'').trim().toLowerCase(); }
+function clientNameKey(c){ return String(c&&c.name||'').trim().toLowerCase().replace(/\s+/g,' '); }
+function clientGroups(){
+  const list=STORE.clients||[];
+  const key=list.map(c=>c.id+':'+(c.points||0)+':'+clientEmailKey(c)+':'+(c.phone||'')+':'+(c.contactPhone||'')+':'+clientNameKey(c)+':'+(c.userId?1:0)).join('|');
+  if(_cgCache.key===key && _cgCache.val) return _cgCache.val;
+  const parent=list.map((_,i)=>i);
+  const find=(i)=>{ while(parent[i]!==i){ parent[i]=parent[parent[i]]; i=parent[i]; } return i; };
+  const union=(a,b)=>{ a=find(a); b=find(b); if(a!==b) parent[b]=a; };
+  const byEmail={}, byPhoneName={};
+  list.forEach((c,i)=>{
+    const e=clientEmailKey(c);
+    if(e){ if(byEmail[e]!==undefined) union(byEmail[e],i); else byEmail[e]=i; }
+    const n=clientNameKey(c);
+    if(n) clientPhones(c).forEach(p=>{ const k=p+'|'+n; if(byPhoneName[k]!==undefined) union(byPhoneName[k],i); else byPhoneName[k]=i; });
+  });
+  const sets={};
+  list.forEach((c,i)=>{ const r=find(i); (sets[r]=sets[r]||[]).push(c); });
+  const rank=(c)=>[c.userId?1:0, Date.parse(c.createdAt||'')||0];
+  const groups=Object.values(sets).map(members=>{
+    const sorted=members.slice().sort((a,b)=>{ const x=rank(a), y=rank(b); return (y[0]-x[0])||(y[1]-x[1]); });
+    return {id:String(sorted[0].id), main:sorted[0], members:sorted};
+  });
+  const byId={}; groups.forEach(g=>g.members.forEach(m=>{ byId[String(m.id)]=g; }));
+  _cgCache={key,val:{groups,byId}};
+  return _cgCache.val;
+}
+function clientGroupOf(id){ return clientGroups().byId[String(id)]||null; }
+function mainClient(c){ if(!c) return c; const g=clientGroupOf(c.id); return g?g.main:c; }
+function uniqueClientCount(){ return clientGroups().groups.length; }
+
 /* ======================= Admin → Clients =======================
    One row per client record (the shared `clients` table — one account across
    Dolce, Polished and Core), never one row per booking. Bookings are linked
@@ -9804,11 +9855,13 @@ function clientMatches(c,q){
 }
 // Bookings that belong to this client, from the departments this login can see.
 function bookingsForClient(c){
-  const phones=clientPhones(c);
+  const g=clientGroupOf(c.id), members=g?g.members:[c];
+  const ids=new Set(members.map(m=>String(m.id)));
+  const phones=[...new Set(members.flatMap(clientPhones))];
   return STORE.bookings.filter(b=>{
     if(!canSeeBrand(currentUser,b.brand)) return false;
-    if(b.clientId && String(b.clientId)===String(c.id)) return true;
-    if(b.clientId) return false;
+    if(b.clientId && ids.has(String(b.clientId))) return true;
+    if(b.clientId && STORE.clients.some(x=>String(x.id)===String(b.clientId))) return false;
     const p=phoneCore(b.phone); return p.length>=6 && phones.includes(p);
   });
 }
@@ -9840,12 +9893,13 @@ function fmtBkWhen(b){ return b?`${esc(b.date||'—')}${b.time?' · '+esc(b.time
 function renderAdminClients(){
   const wrap=document.getElementById('clientsWrap'); if(!wrap||!currentUser) return;
   if(clSel){
-    const c=STORE.clients.find(x=>String(x.id)===String(clSel));
+    const c=mainClient(STORE.clients.find(x=>String(x.id)===String(clSel)));
     if(c) return renderClientProfile(wrap,c);
     clSel=null;
   }
-  const all=STORE.clients.slice().sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'en',{sensitivity:'base'}));
-  const list=all.filter(c=>clientMatches(c,clQuery));
+  const G=clientGroups();
+  const all=G.groups.map(g=>g.main).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'en',{sensitivity:'base'}));
+  const list=all.filter(c=>G.byId[String(c.id)].members.some(m=>clientMatches(m,clQuery)));
   const pages=Math.max(1,Math.ceil(list.length/CL_PAGE)); if(clPage>=pages) clPage=pages-1;
   const shown=list.slice(clPage*CL_PAGE,(clPage+1)*CL_PAGE).map(c=>({c,s:clientSummary(c)}));
   const loading=supa && !lastRefreshAt && !all.length;
@@ -9857,14 +9911,14 @@ function renderAdminClients(){
   else body=`
     <div class="admin-table-wrap cl-table">
       <table class="admin-table">
-        <thead><tr><th>Client</th><th>Phone</th><th>Email</th><th>Last appointment</th><th style="text-align:right;">Points</th><th>Tier</th></tr></thead>
-        <tbody>${shown.map(({c,s})=>`<tr class="clt-row" data-cl-open="${esc(String(c.id))}" tabindex="0">
+        <thead><tr><th>Client</th><th>Phone</th><th>Email</th><th>Last appointment</th><th style="text-align:right;">Points</th><th>Tier</th><th aria-hidden="true"></th></tr></thead>
+        <tbody>${shown.map(({c,s})=>`<tr class="clt-row" data-cl-open="${esc(String(c.id))}" tabindex="0" role="link" aria-label="Open ${esc(c.name||'client')}">
           <td><b>${esc(c.name||'(no name)')}</b></td>
           <td dir="ltr">${esc(clientPhoneText(c.phone||c.contactPhone||''))||'<span class="cl-muted">—</span>'}</td>
           <td class="cl-email">${c.email?esc(c.email):'<span class="cl-muted">—</span>'}</td>
           <td>${s.last?`${fmtBkWhen(s.last)}<div class="cl-muted">${esc(BRANDS[s.last.brand]?BRANDS[s.last.brand].name:'')} · ${esc(s.last.serviceName||'')}</div>`:'<span class="cl-muted">None yet</span>'}</td>
           <td style="text-align:right;font-variant-numeric:tabular-nums;">${(Number(c.points)||0).toLocaleString('en-US')}</td>
-          <td>${tierBadge(c)}</td></tr>`).join('')}</tbody>
+          <td>${tierBadge(c)}</td><td class="clt-go" aria-hidden="true">View ›</td></tr>`).join('')}</tbody>
       </table>
     </div>
     <div class="cl-cards">${shown.map(({c,s})=>`<button class="cl-card" data-cl-open="${esc(String(c.id))}">
@@ -9905,6 +9959,17 @@ async function openClientProfile(id){
   else clLedger=r.rows;
   await fetchClientPoints(id);
   if(clSel===String(id) && adminTab==='clients') renderAdminClients();
+}
+function linkedRecordsHtml(c){
+  const g=clientGroupOf(c.id); if(!g||g.members.length<2) return '';
+  return `<section class="adm-card" style="margin-top:18px;">
+    <h3>Linked records</h3>
+    <p class="adm-cap">This client has ${g.members.length} records with the same ${g.members.every(m=>clientEmailKey(m)===clientEmailKey(g.main))?'email':'phone and name'}, so they are shown as one client. Bookings from all of them are listed above. The points shown are from the main record — the one linked to their app login, which is the balance the client sees. Nothing has been merged or deleted.</p>
+    <div class="adm-list">${g.members.map(m=>`<div class="adm-li" style="grid-template-columns:minmax(0,1fr) auto;">
+      <span class="w"><b>${esc(m.name||'(no name)')}${m===g.main?' · main record':''}</b>
+        <span>${m.userId?'Linked to an app login':'No app login'}${m.createdAt?' · created '+esc(new Date(m.createdAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})):''}</span></span>
+      <b>${(Number(m.points)||0).toLocaleString('en-US')} pts</b></div>`).join('')}</div>
+  </section>`;
 }
 function renderClientProfile(wrap,c){
   const s=clientSummary(c);
@@ -9960,6 +10025,7 @@ function renderClientProfile(wrap,c){
         ${past.length>12?`<div class="cl-muted" style="margin-top:8px;">+ ${past.length-12} older</div>`:''}
       </section>
     </div>
+    ${linkedRecordsHtml(c)}
     ${userBrandsAll(currentUser).length<Object.keys(BRANDS).length||adminBrandView?`<p class="cl-muted" style="margin-top:12px;">Bookings shown are from ${esc(brandsLabel(userBrands(currentUser)))} only.</p>`:''}`;
   document.getElementById('cl_back').addEventListener('click',()=>{ clSel=null; renderAdminClients(); });
   const tl=document.getElementById('cl_toLoyalty');
@@ -9975,8 +10041,8 @@ function renderAdminLoyalty(){
   const wrap=document.getElementById('loyaltyWrap'); if(!wrap||!currentUser) return;
   const owner=!!currentUser.isOwner;
   const L=loyaltySettings();
-  const members=STORE.clients.length;
-  const outstanding=STORE.clients.reduce((s,c)=>s+(Number(c.points)||0),0);
+  const members=uniqueClientCount();
+  const outstanding=clientGroups().groups.reduce((s,g)=>s+(Number(g.main.points)||0),0);
   const notReady=loyaltyReady===false;
   const sel=loSel?STORE.clients.find(c=>String(c.id)===String(loSel)):null;
   const lv=loyaltyFromRows(loRows);
