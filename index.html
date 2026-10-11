@@ -233,6 +233,34 @@
   #adminSettings .admin-form textarea{max-width:100%;}
   #adminView .adm-grid2 .hr-times select{max-width:150px !important;}
   #adminView .adm-grid2 .hr-times{max-width:340px;}
+  /* Admin → Clients */
+  .cl-search{display:flex;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:wrap;}
+  .cl-search input{flex:1 1 320px;max-width:520px;height:42px;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;padding:0 14px;font:inherit;font-size:14.5px;background:var(--card);color:var(--ink);}
+  .cl-search input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(196,164,108,.2);}
+  .cl-muted{font-size:12.5px;color:var(--muted);}
+  .clt-row{cursor:pointer;transition:background .12s;}
+  .clt-row:hover,.clt-row:focus{background:#fbf5ea;outline:none;}
+  .clt-row td{vertical-align:top;}
+  .cl-email{max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .cl-cards{display:none;}
+  .cl-card{display:flex;flex-direction:column;gap:6px;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--adm-shadow);padding:12px 14px;margin-bottom:10px;}
+  .cl-card-top,.cl-card-bot{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+  .cl-card-top b{font-size:15px;font-weight:600;}
+  .cl-card-bot{font-size:13px;color:var(--ink-soft);}
+  .cl-pager{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;font-size:13px;color:var(--muted);}
+  .cl-head{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;}
+  .cl-dl{display:grid;grid-template-columns:max-content 1fr;gap:8px 16px;margin:0;font-size:14px;}
+  .cl-dl dt{color:var(--muted);}
+  .cl-dl dd{margin:0;word-break:break-word;}
+  .cl-dl a{color:var(--adm-taupe);}
+  .cl-loy{display:flex;gap:28px;}
+  .cl-loy .k-v{font-family:var(--display);font-size:28px;line-height:1.1;}
+  @media (max-width:900px){
+    .cl-table{display:none;}
+    .cl-cards{display:block;}
+    .cl-dl{grid-template-columns:1fr;gap:2px;}
+    .cl-dl dd{margin-bottom:8px;}
+  }
   /* mobile */
   @media (max-width:900px){
     #adminView .admin-app{padding:16px 0 50px;}
@@ -1702,6 +1730,7 @@
       <button data-admin-tab="overview" class="active"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg><span>Overview</span></button>
       <button data-admin-tab="bookings"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg><span>Bookings</span></button>
       <button data-admin-tab="loyalty"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.8l2.5 5.1 5.6.8-4 3.9.9 5.6-5-2.6-5 2.6.9-5.6-4-3.9 5.6-.8z"/></svg><span>Loyalty</span></button>
+      <button data-admin-tab="clients"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c.8-3.6 3.6-5.6 7-5.6s6.2 2 7 5.6"/></svg><span>Clients</span></button>
       <button data-admin-tab="products"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 12.5H6.2z"/><path d="M9 8V6.5a3 3 0 016 0V8"/></svg><span>Products</span></button>
       <button data-admin-tab="services"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l1.8 5.2 5.2 1.8-5.2 1.8L12 17.5l-1.8-5.2L5 10.5l5.2-1.8z"/><path d="M18.5 16v4M16.5 18h4"/></svg><span>Services</span></button>
       <button data-admin-tab="offers"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 12.2V4.5a1 1 0 011-1h7.7l8.3 8.3-8.7 8.7z"/><circle cx="8" cy="8" r="1.4"/></svg><span>Offers</span></button>
@@ -1883,6 +1912,10 @@
         <input type="file" id="backupFile" accept="application/json,.json" style="display:none;">
       </div>
       <div style="font-size:13px;color:var(--muted);margin-top:14px;max-width:560px;">Unlike the export above, a backup ignores department limits and includes everything, so only an owner can take or restore one. Staff logins live with the login provider and are not included — after a restore your team may need new PINs.</div>
+    </div>
+
+    <div class="admin-panel" id="adminClients">
+      <div id="clientsWrap"></div>
     </div>
 
     <div class="admin-panel" id="adminLoyalty">
@@ -2329,7 +2362,7 @@ const CLOUD_TABLES={
     table:'clients',
     list:()=>STORE.clients,
     row:(c)=>({id:c.id,phone:c.phone,name:c.name}),
-    app:(r)=>({id:r.id,phone:r.phone,name:r.name,points:r.points||0,contactPhone:r.contact_phone||'',email:r.email||'',createdAt:r.created_at||''}),
+    app:(r)=>({id:r.id,phone:r.phone,name:r.name,points:r.points||0,contactPhone:r.contact_phone||'',email:r.email||'',createdAt:r.created_at||'',birth:r.birth_date||''}),
   },
   // D+ Rewards Shop (owner edits; everyone can read).
   rewards:{
@@ -8123,6 +8156,7 @@ const TAB_DEFS=[
   {key:'overview',label:'Overview'},
   {key:'bookings',label:'Bookings'},
   {key:'loyalty',label:'Loyalty'},
+  {key:'clients',label:'Clients'},
   {key:'products',label:'Products'},
   {key:'services',label:'Services'},
   {key:'offers',label:'Offers'},
@@ -8500,6 +8534,8 @@ function showAdminForRole(){
   const allowed=[...(currentUser.tabs||[])];
   if(!allowed.includes('loyalty') && (currentUser.isOwner || allowed.includes('bookings'))) allowed.push('loyalty');
   // Settings holds what used to sit at the top of Overview, for the same people.
+  // Clients comes with Bookings or Loyalty (the people who serve clients).
+  if(!allowed.includes('clients') && (currentUser.isOwner || allowed.includes('bookings') || allowed.includes('loyalty'))) allowed.push('clients');
   if(!allowed.includes('settings') && (currentUser.isOwner || allowed.includes('overview'))) allowed.push('settings');
   currentAllowedTabs=allowed;
   document.querySelectorAll('#adminTabsRow [data-admin-tab]').forEach(btn=>{
@@ -8508,7 +8544,7 @@ function showAdminForRole(){
   });
   if(!allowed.includes(adminTab)) adminTab=allowed[0]||'bookings';
   document.querySelectorAll('#adminTabsRow [data-admin-tab]').forEach(x=>x.classList.toggle('active',x.dataset.adminTab===adminTab));
-  ['overview','bookings','loyalty','products','services','offers','gallery','employees','reports','purchases','settings'].forEach(p=>{
+  ['overview','bookings','loyalty','clients','products','services','offers','gallery','employees','reports','purchases','settings'].forEach(p=>{
     document.getElementById('admin'+p[0].toUpperCase()+p.slice(1)).classList.toggle('active',adminTab===p);
   });
   // Services has its own brand sub-tabs — hide any brand this account isn't
@@ -8518,7 +8554,7 @@ function showAdminForRole(){
   });
   if(!canSeeBrand(currentUser,svcBrandTab)) svcBrandTab=userBrands(currentUser)[0];
   document.querySelectorAll('#svcBrandTabs [data-svc-brand-tab]').forEach(x=>x.classList.toggle('active',x.dataset.svcBrandTab===svcBrandTab));
-  renderAdminProducts(); renderAdminServices(); renderAdminOffers(); renderAdminGallery(); renderAdminBookings(); renderBrandPhotos(); renderCurrencySettings(); renderClientLoginSetting(); renderWaTemplates(); renderHoursAdmin(); renderAdminEmployees(); renderAdminPurchases(); renderAdminReports(); renderAdminLoyalty(); renderOverviewStats(); pullLoyaltyIssued(); updateSettingsEmpty(); updateAdmMenuLabel();
+  renderAdminProducts(); renderAdminServices(); renderAdminOffers(); renderAdminGallery(); renderAdminBookings(); renderBrandPhotos(); renderCurrencySettings(); renderClientLoginSetting(); renderWaTemplates(); renderHoursAdmin(); renderAdminEmployees(); renderAdminPurchases(); renderAdminReports(); renderAdminLoyalty(); renderOverviewStats(); pullLoyaltyIssued(); updateSettingsEmpty(); updateAdmMenuLabel(); if(adminTab==='clients') renderAdminClients();
 }
 
 /* ---------------- Full-screen client app ---------------- */
@@ -8588,6 +8624,8 @@ document.querySelectorAll('[data-admin-tab]').forEach(b=>{
     document.getElementById('adminPurchases').classList.toggle('active',adminTab==='purchases');
     document.getElementById('adminLoyalty').classList.toggle('active',adminTab==='loyalty');
     document.getElementById('adminSettings').classList.toggle('active',adminTab==='settings');
+    document.getElementById('adminClients').classList.toggle('active',adminTab==='clients');
+    if(adminTab==='clients'){ renderAdminClients(); pullClientTiers().then(()=>{ if(adminTab==='clients') renderAdminClients(); }); }
     closeAdmMenu(); updateAdmMenuLabel();
     try{ window.scrollTo({top:Math.min(window.scrollY,(document.querySelector('.admin-app')||{offsetTop:0}).offsetTop),behavior:'smooth'}); }catch(e){}
     if(adminTab==='loyalty'){ renderAdminLoyalty(); pullEarnedBookings().then(()=>{ if(loSel) selectLoyaltyClient(loSel); else renderAdminLoyalty(); }); }
@@ -9738,6 +9776,197 @@ function offerPoints(bk,after){
     if(!busy) draw();
   };
   draw(); loadLevel();
+}
+
+/* ======================= Admin → Clients =======================
+   One row per client record (the shared `clients` table — one account across
+   Dolce, Polished and Core), never one row per booking. Bookings are linked
+   to a client by the account (client_id) or by the phone number. Booking
+   details only ever come from the departments this login may see; the
+   database decides which client records a staff login can read. */
+var clSel=null, clQuery='', clPage=0, clTiers=null, clTiersAt=0, clTiersErr=false, clLedger=null, clLedgerErr='';
+const CL_PAGE=25;
+// The local part of a number, so "0750 123 4567", "+964 750 123 4567" and
+// "7501234567" all compare equal.
+function phoneCore(p){
+  let d=normalizedPhone(p);
+  if(d.startsWith('00')) d=d.slice(2);
+  if(d.startsWith('964')) d=d.slice(3);
+  return d.replace(/^0+/,'');
+}
+function clientPhones(c){ return [c.phone,c.contactPhone].map(phoneCore).filter(x=>x.length>=6); }
+function clientMatches(c,q){
+  const s=String(q||'').trim().toLowerCase(); if(!s) return true;
+  if(String(c.name||'').toLowerCase().includes(s)) return true;
+  if(String(c.email||'').toLowerCase().includes(s)) return true;
+  const qd=phoneCore(s);
+  return qd.length>=3 && /^[\d\s+()\-.]+$/.test(s) && clientPhones(c).some(p=>p.includes(qd));
+}
+// Bookings that belong to this client, from the departments this login can see.
+function bookingsForClient(c){
+  const phones=clientPhones(c);
+  return STORE.bookings.filter(b=>{
+    if(!canSeeBrand(currentUser,b.brand)) return false;
+    if(b.clientId && String(b.clientId)===String(c.id)) return true;
+    if(b.clientId) return false;
+    const p=phoneCore(b.phone); return p.length>=6 && phones.includes(p);
+  });
+}
+function bookingTime(b){ const d=bookingStart(b); if(d) return d.getTime(); const iso=toIsoDate(b.date); return iso?new Date(iso+'T12:00:00').getTime():NaN; }
+function clientSummary(c){
+  const bks=bookingsForClient(c), now=Date.now();
+  const past=bks.filter(b=>b.status!=='Cancelled' && (b.status==='Completed' || bookingTime(b)<now)).sort((a,b)=>bookingTime(b)-bookingTime(a));
+  const up=bks.filter(b=>b.status!=='Cancelled' && b.status!=='Completed' && !(bookingTime(b)<now)).sort((a,b)=>bookingTime(a)-bookingTime(b));
+  return {bks,past,up,last:past[0]||null,next:up[0]||null};
+}
+// Levels for everyone at once: one read of last year's earned spend.
+async function pullClientTiers(force){
+  if(!supa) return;
+  if(!force && clTiers && Date.now()-clTiersAt<60000) return;
+  clTiersAt=Date.now();
+  try{
+    const since=new Date(Date.now()-365*24*3600*1000).toISOString();
+    const res=await supa.from('point_transactions').select('client_id,kind,spend,created_at').eq('kind','earn').gte('created_at',since);
+    if(res.error){ clTiersErr=true; return; }
+    const by={}; (res.data||[]).forEach(r=>{ (by[r.client_id]=by[r.client_id]||[]).push(r); });
+    clTiers={}; Object.keys(by).forEach(id=>{ clTiers[id]=loyaltyFromRows(by[id]); });
+    clTiersErr=false;
+  }catch(e){ clTiersErr=true; }
+}
+function clientTier(c){ return clTiers ? (clTiers[String(c.id)]||loyaltyFromRows([])) : null; }
+function tierBadge(c){ const lv=clientTier(c); return lv?`<span class="lo-badge lo-${lv.tier}">${esc(tierNameEn(lv.tier))}</span>`:'<span class="cl-muted">—</span>'; }
+function fmtBkWhen(b){ return b?`${esc(b.date||'—')}${b.time?' · '+esc(b.time):''}`:'—'; }
+
+function renderAdminClients(){
+  const wrap=document.getElementById('clientsWrap'); if(!wrap||!currentUser) return;
+  if(clSel){
+    const c=STORE.clients.find(x=>String(x.id)===String(clSel));
+    if(c) return renderClientProfile(wrap,c);
+    clSel=null;
+  }
+  const all=STORE.clients.slice().sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'en',{sensitivity:'base'}));
+  const list=all.filter(c=>clientMatches(c,clQuery));
+  const pages=Math.max(1,Math.ceil(list.length/CL_PAGE)); if(clPage>=pages) clPage=pages-1;
+  const shown=list.slice(clPage*CL_PAGE,(clPage+1)*CL_PAGE).map(c=>({c,s:clientSummary(c)}));
+  const loading=supa && !lastRefreshAt && !all.length;
+  const err=(typeof lastSyncError!=='undefined' && lastSyncError) ? `<div class="adm-note err">Couldn't reach the shared database just now — showing the client list last saved on this device.</div>` : '';
+  let body;
+  if(loading) body=`<div class="adm-card"><div class="adm-empty">Loading clients…</div></div>`;
+  else if(!all.length) body=`<div class="adm-card"><div class="adm-empty">No clients yet. Clients appear here once they create a Dolce+ account in the app.</div></div>`;
+  else if(!list.length) body=`<div class="adm-card"><div class="adm-empty">No clients match “${esc(clQuery)}”. Check the spelling, or search by part of the phone number.</div></div>`;
+  else body=`
+    <div class="admin-table-wrap cl-table">
+      <table class="admin-table">
+        <thead><tr><th>Client</th><th>Phone</th><th>Email</th><th>Last appointment</th><th style="text-align:right;">Points</th><th>Tier</th></tr></thead>
+        <tbody>${shown.map(({c,s})=>`<tr class="clt-row" data-cl-open="${esc(String(c.id))}" tabindex="0">
+          <td><b>${esc(c.name||'(no name)')}</b></td>
+          <td dir="ltr">${esc(clientPhoneText(c.phone||c.contactPhone||''))||'<span class="cl-muted">—</span>'}</td>
+          <td class="cl-email">${c.email?esc(c.email):'<span class="cl-muted">—</span>'}</td>
+          <td>${s.last?`${fmtBkWhen(s.last)}<div class="cl-muted">${esc(BRANDS[s.last.brand]?BRANDS[s.last.brand].name:'')} · ${esc(s.last.serviceName||'')}</div>`:'<span class="cl-muted">None yet</span>'}</td>
+          <td style="text-align:right;font-variant-numeric:tabular-nums;">${(Number(c.points)||0).toLocaleString('en-US')}</td>
+          <td>${tierBadge(c)}</td></tr>`).join('')}</tbody>
+      </table>
+    </div>
+    <div class="cl-cards">${shown.map(({c,s})=>`<button class="cl-card" data-cl-open="${esc(String(c.id))}">
+        <span class="cl-card-top"><b>${esc(c.name||'(no name)')}</b>${tierBadge(c)}</span>
+        <span class="cl-muted" dir="ltr" style="text-align:start;">${esc(clientPhoneText(c.phone||c.contactPhone||''))}${c.email?' · '+esc(c.email):''}</span>
+        <span class="cl-card-bot"><span>${s.last?'Last: '+fmtBkWhen(s.last):'No appointments yet'}</span><b>${(Number(c.points)||0).toLocaleString('en-US')} pts</b></span>
+      </button>`).join('')}</div>
+    ${pages>1?`<div class="cl-pager">
+      <button class="btn btn-ghost btn-sm" data-cl-page="${clPage-1}" ${clPage===0?'disabled':''}>← Previous</button>
+      <span>Page ${clPage+1} of ${pages} · ${list.length} client${list.length===1?'':'s'}</span>
+      <button class="btn btn-ghost btn-sm" data-cl-page="${clPage+1}" ${clPage>=pages-1?'disabled':''}>Next →</button></div>`:''}`;
+  wrap.innerHTML=`
+    <h2 class="adm-page-title">Clients</h2>
+    ${err}
+    <div class="cl-search">
+      <input id="cl_q" type="search" placeholder="Search clients by name, phone, or email" value="${esc(clQuery)}" autocomplete="off" aria-label="Search clients by name, phone, or email">
+      <span class="cl-muted" id="cl_count">${all.length?(clQuery?`${list.length} of ${all.length} clients`:`${all.length} client${all.length===1?'':'s'}`):''}</span>
+    </div>
+    ${clTiersErr?`<div class="cl-muted" style="margin:-6px 0 10px;">Tiers couldn't be loaded right now — points are still shown.</div>`:''}
+    <div id="cl_list">${body}</div>`;
+  const q=document.getElementById('cl_q');
+  q.addEventListener('input',()=>{ clQuery=q.value; clPage=0; renderAdminClients();
+    const q2=document.getElementById('cl_q'); if(q2){ q2.focus(); const n=q2.value.length; try{ q2.setSelectionRange(n,n); }catch(e){} } });
+  wrap.querySelectorAll('[data-cl-page]').forEach(b=>b.addEventListener('click',()=>{ clPage=Number(b.dataset.clPage)||0; renderAdminClients(); try{ wrap.scrollIntoView({block:'start',behavior:'smooth'}); }catch(e){} }));
+  wrap.querySelectorAll('[data-cl-open]').forEach(el=>{
+    el.addEventListener('click',()=>openClientProfile(el.dataset.clOpen));
+    el.addEventListener('keydown',e=>{ if(e.key==='Enter') openClientProfile(el.dataset.clOpen); });
+  });
+  if(!clTiers && supa && !clTiersErr) pullClientTiers().then(()=>{ if(adminTab==='clients'&&!clSel) renderAdminClients(); });
+}
+async function openClientProfile(id){
+  clSel=String(id); clLedger=null; clLedgerErr='';
+  renderAdminClients();
+  try{ window.scrollTo({top:(document.querySelector('.admin-app')||{offsetTop:0}).offsetTop,behavior:'smooth'}); }catch(e){}
+  const r=await fetchClientLedger(id);
+  if(clSel!==String(id)) return;
+  if(r.error){ clLedgerErr=/point_transactions|relation|schema cache/i.test(r.error)?'The loyalty program is not switched on in the database yet.':'Loyalty history could not be loaded — check the connection.'; }
+  else clLedger=r.rows;
+  await fetchClientPoints(id);
+  if(clSel===String(id) && adminTab==='clients') renderAdminClients();
+}
+function renderClientProfile(wrap,c){
+  const s=clientSummary(c);
+  const lv=clLedger?loyaltyFromRows(clLedger):clientTier(c);
+  const L=loyaltySettings();
+  const row=(b)=>`<div class="adm-li"><span class="t" style="white-space:normal;">${esc(shortDay(b.date))}<div class="cl-muted" style="font-weight:400;">${esc(b.time||'')}</div></span>
+      <span class="w"><b>${esc(b.serviceName||'')}</b><span><span class="adm-dot" style="background:${ADMIN_BRAND_DOT[b.brand]||'#bba891'}"></span>${esc(BRANDS[b.brand]?BRANDS[b.brand].name:'')}</span></span>
+      <span class="status-badge ${esc(b.status)}">${esc(b.status)}</span></div>`;
+  const past=s.bks.filter(b=>!s.up.includes(b)).sort((a,b)=>bookingTime(b)-bookingTime(a));
+  const canLoyalty=currentAllowedTabs.includes('loyalty');
+  wrap.innerHTML=`
+    <button class="adm-link" id="cl_back" style="margin-bottom:12px;">← All clients</button>
+    <div class="adm-card cl-head">
+      <div style="display:flex;align-items:center;gap:14px;min-width:0;">
+        <span class="adm-av" style="width:48px;height:48px;font-size:22px;">${esc((c.name||'?')[0])}</span>
+        <div style="min-width:0;"><h2 class="adm-page-title" style="margin:0;">${esc(c.name||'(no name)')}</h2>
+          <div class="cl-muted">${c.createdAt?'Client since '+esc(new Date(c.createdAt).toLocaleDateString('en-GB',{month:'long',year:'numeric'})):'Dolce+ client'} · one account for Dolce, Polished &amp; Core</div></div>
+      </div>
+      ${lv?`<span class="lo-badge lo-${lv.tier}">${esc(tierNameEn(lv.tier))}</span>`:''}
+    </div>
+    <div class="adm-grid2" style="margin-top:18px;">
+      <section class="adm-card">
+        <h3>Contact</h3><p class="adm-cap">From the client's account</p>
+        <dl class="cl-dl">
+          ${c.phone?`<dt>Phone (verified)</dt><dd dir="ltr">${esc(clientPhoneText(c.phone))}</dd>`:''}
+          ${c.contactPhone&&phoneCore(c.contactPhone)!==phoneCore(c.phone)?`<dt>Phone for appointments</dt><dd dir="ltr">${esc(clientPhoneText(c.contactPhone))}</dd>`:''}
+          ${!c.phone&&!c.contactPhone?`<dt>Phone</dt><dd class="cl-muted">Not given</dd>`:''}
+          <dt>Email</dt><dd>${c.email?`<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>`:'<span class="cl-muted">Not given</span>'}</dd>
+          ${c.birth?`<dt>Date of birth</dt><dd dir="ltr">${esc(c.birth)}</dd>`:''}
+        </dl>
+        ${(c.phone||c.contactPhone)?`<a class="btn btn-ghost btn-sm" style="margin-top:12px;" href="https://wa.me/${esc(normalizedPhone(c.phone||c.contactPhone))}" target="_blank" rel="noopener">Message on WhatsApp</a>`:''}
+      </section>
+      <section class="adm-card">
+        <h3>Loyalty</h3><p class="adm-cap">D+ points and level</p>
+        <div class="cl-loy"><div><div class="k-v">${(Number(c.points)||0).toLocaleString('en-US')}</div><div class="cl-muted">points balance</div></div>
+          ${lv?`<div><div class="k-v">$${lv.spend.toLocaleString('en-US')}</div><div class="cl-muted">spent in 12 months</div></div>`:''}</div>
+        ${lv?`<div class="cl-muted" style="margin-top:8px;">${lv.next?`$${Math.max(0,Math.ceil(lv.next.at-lv.spend)).toLocaleString('en-US')} more to ${esc(tierNameEn(lv.next.tier))}`:'Top level'} · earns ${lv.mult}× (${L.appMult}× when booked in the app — the higher one counts)</div>`:''}
+        ${clLedgerErr?`<div class="adm-note err" style="margin-top:12px;">${esc(clLedgerErr)}</div>`:''}
+        ${clLedger===null&&!clLedgerErr?`<div class="adm-empty">Loading points history…</div>`:''}
+        ${clLedger&&clLedger.length?`<div class="adm-list" style="margin-top:10px;">${clLedger.slice(0,6).map(r=>`<div class="adm-li" style="grid-template-columns:minmax(0,1fr) auto;">
+            <span class="w"><b>${esc(PT_KIND_EN[r.kind]||r.kind)}${r.reason?' · '+esc(r.reason):''}</b><span>${esc(new Date(r.created_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}))}${r.staff_name?' · '+esc(r.staff_name):''}</span></span>
+            <b style="color:${r.points<0?'#8a3226':'#3c5e33'};">${r.points>0?'+':''}${Number(r.points).toLocaleString('en-US')}</b></div>`).join('')}</div>`
+          :(clLedger?`<div class="adm-empty">No points yet.</div>`:'')}
+        ${canLoyalty?`<button class="btn btn-ghost btn-sm" id="cl_toLoyalty" style="margin-top:12px;">Redeem or adjust points</button>`:''}
+      </section>
+      <section class="adm-card">
+        <h3>Upcoming bookings</h3><p class="adm-cap">${s.up.length?`${s.up.length} booked`:'Nothing booked'}</p>
+        <div class="adm-list">${s.up.length?s.up.map(row).join(''):`<div class="adm-empty">No upcoming bookings.</div>`}</div>
+      </section>
+      <section class="adm-card">
+        <h3>Past bookings</h3><p class="adm-cap">${past.length?`${past.length} in total, newest first`:'No history yet'}</p>
+        <div class="adm-list">${past.length?past.slice(0,12).map(row).join(''):`<div class="adm-empty">No past bookings.</div>`}</div>
+        ${past.length>12?`<div class="cl-muted" style="margin-top:8px;">+ ${past.length-12} older</div>`:''}
+      </section>
+    </div>
+    ${userBrandsAll(currentUser).length<Object.keys(BRANDS).length||adminBrandView?`<p class="cl-muted" style="margin-top:12px;">Bookings shown are from ${esc(brandsLabel(userBrands(currentUser)))} only.</p>`:''}`;
+  document.getElementById('cl_back').addEventListener('click',()=>{ clSel=null; renderAdminClients(); });
+  const tl=document.getElementById('cl_toLoyalty');
+  if(tl) tl.addEventListener('click',()=>{
+    const t=document.querySelector('#adminTabsRow [data-admin-tab="loyalty"]'); if(t) t.click();
+    selectLoyaltyClient(c.id);
+  });
 }
 
 /* ---- Admin → Loyalty tab ---- */
