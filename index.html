@@ -219,6 +219,34 @@
   .login-pin input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(196,164,108,.2);}
   .login-pin .row{display:flex;gap:10px;margin-top:12px;align-items:center;justify-content:space-between;}
   .login-pin .btn-primary{flex:1;}
+  /* Admin login — polish & movement (150–300ms, no bounce) */
+  #adminView .login-cards{grid-auto-rows:1fr;}
+  #adminView .login-card{position:relative;height:100%;box-sizing:border-box;justify-content:flex-start;
+    transition:transform .2s cubic-bezier(.2,.7,.3,1),border-color .2s,background .2s,box-shadow .2s;}
+  #adminView .login-card:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+  #adminView .login-card.sel{transform:translateY(-3px);box-shadow:0 0 0 3px rgba(196,164,108,.18),0 10px 22px -14px rgba(59,46,36,.35);}
+  #adminView .login-card .lc-role{min-height:24px;display:flex;align-items:center;justify-content:center;}
+  #adminView .login-card .lc-role .role-pill{margin:0;white-space:nowrap;}
+  .lc-check{position:absolute;top:8px;right:8px;width:20px;height:20px;border-radius:50%;background:var(--gold,#c4a46c);
+    display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(.6);transition:opacity .18s,transform .2s cubic-bezier(.2,.7,.3,1);}
+  .lc-check svg,.lg-check{width:12px;height:12px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+  #adminView .login-card.sel .lc-check{opacity:1;transform:scale(1);}
+  .login-pin[hidden]{display:none;}
+  .login-pin.has-err input{border-color:#c9877c;box-shadow:0 0 0 3px rgba(160,71,58,.12);}
+  .login-err{min-height:0;font-size:13px;color:#8a3226;margin-top:6px;}
+  .login-err:empty{display:none;}
+  #loginGo{position:relative;gap:8px;transition:background .2s,border-color .2s;}
+  #loginGo.busy,#loginGo.ok{opacity:1 !important;}
+  #loginGo.ok{background:#6f7f5c;border-color:#6f7f5c;}
+  .lg-spin{width:15px;height:15px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;animation:lgSpin .7s linear infinite;flex:none;}
+  @keyframes lgSpin{to{transform:rotate(360deg);}}
+  .lg-check{width:15px;height:15px;stroke-dasharray:20;stroke-dashoffset:20;animation:lgDraw .28s ease-out forwards;}
+  @keyframes lgDraw{to{stroke-dashoffset:0;}}
+  @media (prefers-reduced-motion:reduce){
+    #adminView .login-card.sel{transform:none;}
+    .lg-check{animation:none;stroke-dashoffset:0;}
+    .lg-spin{animation-duration:1.4s;}
+  }
   /* Full-width admin: the page wrapper (.wrap, max 1180px) is released only
      while the Admin App is showing, so the client app keeps its own layout. */
   body.admin-mode .wrap{max-width:none;padding:0 32px;}
@@ -8342,92 +8370,146 @@ if(typeof window!=='undefined'){
   });
 }
 
+var loginBusy=false;
+const loginReduced=()=>{ try{ return matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; } };
+function loginRoleText(u){ return (u && ((u.tabs&&u.tabs.length)||u.isOwner)) ? shortRole(u) : ''; }
 function renderLogin(){
+  if(loginBusy) return;                       // never redraw under a sign-in in progress
   // Once a real, cloud-verified account exists for someone (it has a
-  // loginSlug), hide the old local-only demo card with the same name —
-  // otherwise the same person shows up twice.
+  // loginSlug), hide the old local-only demo card with the same name.
   const visibleUsers = supa
     ? STORE.users.filter(u=>u.loginSlug || !STORE.users.some(x=>x.loginSlug && x.name===u.name))
     : STORE.users;
   if(loginSelected && !visibleUsers.some(u=>u.id===loginSelected)) loginSelected=null;
-  const sel=visibleUsers.find(u=>u.id===loginSelected);
+  const check='<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.6 8.4l2.9 2.9 5.9-6.3"/></svg>';
   document.getElementById('adminLogin').innerHTML=`
-    <div class="login-wrap">
+    <div class="login-wrap" id="loginWrap">
       <h2>Dolce+ Admin</h2>
       <p>Choose your account, then enter your PIN.</p>
       <div class="login-note">${supa?'Secure, server-verified login.':'Offline demo mode — PINs shown for convenience since there\'s no connection to verify against.'}</div>
-      ${visibleUsers.length?`<div class="login-cards" role="list">
-        ${visibleUsers.map(u=>`
-          <button class="login-card${u.id===loginSelected?' sel':''}" data-pick="${esc(u.id)}" aria-pressed="${u.id===loginSelected}" role="listitem">
+      ${visibleUsers.length?`<div class="login-cards" role="radiogroup" aria-label="Employee">
+        ${visibleUsers.map(u=>{ const role=loginRoleText(u); return `
+          <button class="login-card${u.id===loginSelected?' sel':''}" data-pick="${esc(u.id)}" role="radio" aria-checked="${u.id===loginSelected}">
+            <span class="lc-check" aria-hidden="true">${check}</span>
             <span class="av">${esc((u.name||'?')[0])}</span>
             <span class="nm">${esc(u.name)}</span>
-            ${u.tabs&&u.tabs.length?`<span class="role-pill">${esc(shortRole(u))}</span>`:''}
+            <span class="lc-role">${role?`<span class="role-pill">${esc(role)}</span>`:''}</span>
             ${!supa?`<span class="cap">Demo PIN: ${esc(u.pin)}</span>`:''}
-          </button>`).join('')}
+          </button>`; }).join('')}
       </div>`:`<div class="adm-empty">No staff accounts found yet — check the connection, then reload.</div>`}
-      ${sel?`<div class="login-pin" id="loginPin">
-        <div class="who"><span class="adm-av">${esc((sel.name||'?')[0])}</span>
-          <span><b>${esc(sel.name)}</b><span>${(sel.tabs&&sel.tabs.length)||sel.isOwner?esc(shortRole(sel))+(sel.brands&&sel.brands.length?' · '+esc(brandsLabel(sel.brands)):''):'Enter your PIN to continue'}</span></span></div>
+      <div class="login-pin${loginSelected?' show':''}" id="loginPin" ${loginSelected?'':'hidden'}>
+        <div class="who"><span class="adm-av" id="lpAv"></span><span><b id="lpName"></b><span id="lpRole"></span></span></div>
         <label for="loginPinInput">PIN</label>
-        <input type="password" id="loginPinInput" maxlength="6" inputmode="numeric" autocomplete="current-password" placeholder="••••">
+        <input type="password" id="loginPinInput" maxlength="6" inputmode="numeric" autocomplete="current-password" placeholder="••••" aria-describedby="loginErr">
+        <div class="login-err" id="loginErr" role="alert"></div>
         <div class="row">
           <button class="adm-link" id="loginSwitch" type="button">Switch account</button>
-          <button class="btn btn-primary" id="loginGo">Log in</button>
+          <button class="btn btn-primary" id="loginGo"><span class="lg-label">Log in</span></button>
         </div>
-      </div>`:''}
+      </div>
     </div>`;
-  document.querySelectorAll('[data-pick]').forEach(b=>b.addEventListener('click',()=>{
-    loginSelected=b.dataset.pick; renderLogin();
-    const pin=document.getElementById('loginPinInput');
-    if(pin){ pin.focus({preventScroll:true}); try{ document.getElementById('loginPin').scrollIntoView({block:'nearest',behavior:'smooth'}); }catch(e){} }
-  }));
-  const sw=document.getElementById('loginSwitch');
-  if(sw) sw.addEventListener('click',()=>{ loginSelected=null; renderLogin(); });
-  const go=document.getElementById('loginGo'), pinEl=document.getElementById('loginPinInput');
-  if(pinEl) pinEl.addEventListener('keydown',e=>{ if(e.key==='Enter') go.click(); });
-  if(go) go.addEventListener('click',async()=>{
-    if(go.dataset.busy==='1') return;
+  const panel=document.getElementById('loginPin'), pinEl=document.getElementById('loginPinInput'),
+        go=document.getElementById('loginGo'), err=document.getElementById('loginErr');
+  const fillPanel=()=>{
+    const u=visibleUsers.find(x=>x.id===loginSelected); if(!u) return;
+    document.getElementById('lpAv').textContent=(u.name||'?')[0];
+    document.getElementById('lpName').textContent=u.name;
+    const role=loginRoleText(u);
+    document.getElementById('lpRole').textContent=role?role+(u.brands&&u.brands.length?' · '+brandsLabel(u.brands):''):'Enter your PIN to continue';
+  };
+  const setErr=(msg)=>{ err.textContent=msg||''; panel.classList.toggle('has-err',!!msg); };
+  const pick=(id,fromUser)=>{
+    const changed=loginSelected!==id;
+    loginSelected=id;
+    document.querySelectorAll('#adminLogin [data-pick]').forEach(c=>{ const on=c.dataset.pick===id; c.classList.toggle('sel',on); c.setAttribute('aria-checked',on); });
+    fillPanel(); setErr('');
+    if(changed){ pinEl.value=''; }
+    if(panel.hidden){
+      panel.hidden=false;
+      if(!loginReduced()) panel.animate([{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'none'}],{duration:220,easing:'cubic-bezier(.2,.7,.3,1)'});
+      try{ panel.scrollIntoView({block:'nearest',behavior:loginReduced()?'auto':'smooth'}); }catch(e){}
+    }
+    if(fromUser) pinEl.focus({preventScroll:true});
+  };
+  if(loginSelected) fillPanel();
+  document.querySelectorAll('#adminLogin [data-pick]').forEach(b=>b.addEventListener('click',()=>pick(b.dataset.pick,true)));
+  document.getElementById('loginSwitch').addEventListener('click',()=>{
+    loginSelected=null; setErr(''); pinEl.value='';
+    document.querySelectorAll('#adminLogin [data-pick]').forEach(c=>{ c.classList.remove('sel'); c.setAttribute('aria-checked','false'); });
+    panel.hidden=true;
+    const first=document.querySelector('#adminLogin [data-pick]'); if(first) first.focus();
+  });
+  pinEl.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); go.click(); } });
+  pinEl.addEventListener('input',()=>{ if(err.textContent) setErr(''); });
+  go.addEventListener('click',async()=>{
+    if(loginBusy) return;                                   // one sign-in at a time
     const u=STORE.users.find(x=>x.id===loginSelected); if(!u) return;
     const entered=pinEl.value;
-    if(!entered){ toast('Enter your PIN.'); pinEl.focus(); return; }
-    go.dataset.busy='1'; go.disabled=true; go.textContent='Checking…';
-    const ok=await staffLogin(u,entered);
-    if(!ok && go.isConnected){ go.dataset.busy=''; go.disabled=false; go.textContent='Log in'; pinEl.value=''; pinEl.focus(); }
+    if(!entered){ setErr('Enter your PIN.'); pinEl.focus(); return; }
+    loginBusy=true; setErr('');
+    go.disabled=true; pinEl.readOnly=true; go.classList.add('busy');
+    go.innerHTML='<span class="lg-spin" aria-hidden="true"></span><span class="lg-label">Signing in…</span>';
+    const res=await staffAuthenticate(u,entered);
+    if(!res.ok){
+      loginBusy=false;
+      if(!go.isConnected) return;
+      go.disabled=false; pinEl.readOnly=false; go.classList.remove('busy');
+      go.innerHTML='<span class="lg-label">Log in</span>';
+      setErr(res.error); pinEl.value=''; pinEl.focus();
+      if(!loginReduced()) pinEl.animate([{transform:'translateX(0)'},{transform:'translateX(-6px)'},{transform:'translateX(5px)'},{transform:'translateX(-3px)'},{transform:'translateX(0)'}],{duration:260,easing:'ease-out'});
+      return;
+    }
+    // Authenticated by the server — only now say so, and only now open the Admin App.
+    const first=String(res.user.name||'').trim().split(/\s+/)[0]||res.user.name;
+    go.classList.remove('busy'); go.classList.add('ok');
+    go.innerHTML=`<svg class="lg-check" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.6 8.4l2.9 2.9 5.9-6.3"/></svg><span class="lg-label">Welcome, ${esc(first)}</span>`;
+    const R=loginReduced();
+    await new Promise(r=>setTimeout(r,R?150:520));
+    const wrap=document.getElementById('loginWrap');
+    if(wrap && !R) await wrap.animate([{opacity:1,transform:'none'},{opacity:0,transform:'translateY(-6px)'}],{duration:180,easing:'ease-in',fill:'forwards'}).finished.catch(()=>{});
+    loginBusy=false;
+    enterAdmin(res.user);
+    const authed=document.getElementById('adminAuthed');
+    if(authed) authed.animate(R?[{opacity:0},{opacity:1}]:[{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'none'}],{duration:R?120:240,easing:'cubic-bezier(.2,.7,.3,1)'});
   });
 }
-// The login itself — unchanged: the PIN is checked by Supabase (or, offline,
-// against this device's copy for local demo accounts only).
+// Checks the PIN — unchanged rules: Supabase verifies it (offline, only local
+// demo accounts with a real PIN on this device can sign in).
+async function staffAuthenticate(u,entered){
+  if(supa){
+    if(!u.loginSlug) return {ok:false,error:'This account isn\'t connected to a secure login yet — ask the owner to check the Employees tab.'};
+    let data,error;
+    try{ ({data,error}=await supa.auth.signInWithPassword({email:empEmail(u.loginSlug),password:empPassword(entered)})); }
+    catch(e){ return {ok:false,error:'No connection — check the internet and try again.'}; }
+    if(error || !data || !data.user) return {ok:false,error:/fetch|network/i.test(String(error&&error.message))?'No connection — check the internet and try again.':'That PIN isn\'t right. Please try again.'};
+    let profile=null, profErr=null;
+    try{ ({data:profile,error:profErr}=await supa.from('profiles').select('*').eq('id',data.user.id).maybeSingle()); }
+    catch(e){ profErr=e; }
+    if(profErr || !profile){ try{ await supa.auth.signOut(); }catch(e){} return {ok:false,error:'Signed in, but this account has no profile yet — ask the owner to check the Employees tab.'}; }
+    return {ok:true,user:{id:profile.id,name:profile.name,brands:profile.brands||[],tabs:profile.tabs||[],isOwner:!!profile.is_owner,pin:u.pin}};
+  }
+  // Offline: refuse accounts with no usable local PIN (cloud accounts are
+  // stored with pin:'' — an empty PIN must never let anyone in).
+  if(!u.pin || !/^\d{4,6}$/.test(u.pin)) return {ok:false,error:'This account can only sign in while online — check the connection and try again.'};
+  if(entered!==u.pin) return {ok:false,error:'That PIN isn\'t right. Please try again.'};
+  return {ok:true,user:u};
+}
+function enterAdmin(user){
+  currentUser=user;
+  loginSelected=null;
+  handleStaffLoginLost.shown=false;
+  try{ localStorage.setItem(CUR_USER_KEY,currentUser.id); }catch(e){}
+  showAdminForRole();
+  startAdminLiveRefresh();
+  // Protected data is fetched only now, with the new login.
+  flushOutbox();
+  refreshFromCloud({force:true}).then(ok=>{ if(ok) rerenderEverything(); else renderOverviewStats(); });
+}
+// Kept for anything that still calls the old one-step login.
 async function staffLogin(u,entered){
-    let loggedInUser=null;
-    if(supa){
-      if(!u.loginSlug){ toast('This account isn\'t connected to a secure login yet — ask the owner to check the Employees tab.'); return false; }
-      let data,error;
-      try{ ({data,error}=await supa.auth.signInWithPassword({email:empEmail(u.loginSlug),password:empPassword(entered)})); }
-      catch(e){ toast('No connection — check the internet and try again.'); return false; }
-      if(error || !data.user){ toast(/fetch|network/i.test(String(error&&error.message))?'No connection — check the internet and try again.':'Incorrect PIN for that account.'); return false; }
-      const {data:profile,error:profErr}=await supa.from('profiles').select('*').eq('id',data.user.id).maybeSingle();
-      if(profErr || !profile){ toast('Logged in, but this account has no profile set up yet — ask the owner to check the Employees tab.'); await supa.auth.signOut(); return false; }
-      loggedInUser={id:profile.id,name:profile.name,brands:profile.brands||[],tabs:profile.tabs||[],isOwner:!!profile.is_owner,pin:u.pin};
-    } else {
-      // Offline: refuse accounts with no usable local PIN (cloud accounts are
-      // stored with pin:'' — an empty PIN must never let anyone in).
-      if(!u.pin || !/^\d{4,6}$/.test(u.pin)){
-        toast('This account can only sign in while online — check the connection and try again.');
-        return false;
-      }
-      if(entered!==u.pin){ toast('Incorrect PIN for that account.'); return false; }
-      loggedInUser=u;
-    }
-    currentUser=loggedInUser;
-    loginSelected=null;
-    handleStaffLoginLost.shown=false;
-    try{ localStorage.setItem(CUR_USER_KEY,currentUser.id); }catch(e){}
-    showAdminForRole();
-    startAdminLiveRefresh();
-    toast(`Welcome, ${currentUser.name}.`);
-    flushOutbox();
-    refreshFromCloud({force:true}).then(ok=>{ if(ok) rerenderEverything(); else renderOverviewStats(); });
-    return true;
+  const r=await staffAuthenticate(u,entered);
+  if(!r.ok){ toast(r.error); return false; }
+  enterAdmin(r.user); return true;
 }
 
 /* Redraws whatever the person is currently looking at. Used after fresh data
