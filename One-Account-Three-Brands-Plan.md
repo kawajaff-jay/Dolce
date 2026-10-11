@@ -159,6 +159,14 @@ Clients see their balance, level, progress to the next level, the Rewards Shop a
 
 Still to come (phase 2): double- and triple-points campaigns, referrals, a birthday bonus, points expiring after 12 months without a visit, and loyalty reports.
 
+## The Admin App, redesigned for daily use
+
+The Admin App now uses the same soft cream, ivory and warm taupe as the rest of Dolce+. The old black buttons are gone, and every colour has been checked for easy reading. A sidebar with small icons replaces the crowded row of tabs. On a phone, it folds into a menu button that shows which section you are in. A new Settings section holds the exchange rate, client login method, opening hours, WhatsApp message wording and home-screen brand cards, for exactly the same people who could change them before.
+
+Overview now opens on today. It shows how many bookings there are today, how many client requests are waiting for confirmation, and which products are running low (5 or fewer). It also shows today's appointments in time order. Tapping a number opens the right section. The 30-day figures and charts sit underneath. Every number comes from real records, and each person only sees their own departments.
+
+The header shows just the employee's name, a short role (Owner, Reception, Staff) and a brand selector. The selector lets someone who works across several brands look at one brand at a time. It can only narrow what that person already sees, and the database still enforces access. Logging in is now two steps: pick your name, then type your PIN in a single panel that shows who is logging in and lets you switch account.
+
 ## A phased build, so you are never blocked waiting for "the whole thing"
 
 The first phase is the smallest version that is still genuinely useful: the destination picker, service browsing and pricing for all three brands, service detail screens, and booking with a real date/time picker (in-app and via WhatsApp, as the prototype now shows), plus English and Arabic (adding Kurdish shortly after). This alone replaces having three separate Instagram-DM-based booking processes with one coherent, professional experience, and it can realistically be live within a few weeks once content (service lists, prices, photos) is ready. The second phase adds the AI assistant with real recommendations, the loyalty program, and the retail shop — this is where the product starts to feel genuinely different from a normal clinic or salon website, because it actively works to cross-sell between your three brands. The third phase adds the admin dashboard with full analytics, Kurdish language support if not already included, a proper native app wrapper for the App Store and Play Store, and true staff-calendar-aware scheduling — availability that accounts for which specific provider is free, not just whether the time slot is taken by anyone.

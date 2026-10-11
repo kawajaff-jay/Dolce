@@ -106,6 +106,149 @@
   .sync-dot{width:7px;height:7px;border-radius:50%;background:var(--series-3);flex:none;box-shadow:0 0 0 3px rgba(27,175,122,.15);}
 
   /* ---------- Admin app ---------- */
+  body.admin-mode .mode-switch{background:#efe5d3;border:1px solid #e2d4bc;}
+  body.admin-mode .mode-switch button{color:#5f4f40;}
+  body.admin-mode .mode-switch button.active{background:#7a6553;color:#fff;}
+  body.admin-mode #currencySwitch{background:#efe5d3;}
+  body.admin-mode #currencySwitch button.active{background:#7a6553;color:#fff;}
+  /* ================= Admin — soft cream redesign (Oct 2026) =================
+     Everything here is scoped to #adminView, so the client app is untouched. */
+  #adminView{
+    --ink:#3b2e24; --ink-soft:#5f4f40; --muted:#76665a; --text-secondary:#5f4f40;
+    --line:#e6dbc9; --card:#fffcf6; --cream-2:#f4ebdb; --gold:#c4a46c; --gold-dark:#8c6d3c;
+    --adm-bg:#f7f1e6; --adm-taupe:#7a6553; --adm-taupe-h:#69564a; --adm-outline:#bba891;
+    --adm-sel:#f1e3c4; --adm-shadow:0 1px 2px rgba(59,46,36,.04),0 6px 18px -12px rgba(59,46,36,.22);
+    --adm-h:40px; --adm-r:12px;
+    color:var(--ink);
+  }
+  #adminView .admin-app{padding:28px 0 60px;}
+  #adminView .btn{height:var(--adm-h);padding:0 16px;border-radius:10px;font-size:14px;font-weight:600;letter-spacing:.01em;
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:background .15s,border-color .15s,color .15s,box-shadow .15s;}
+  #adminView .btn-sm{height:32px;padding:0 12px;font-size:13px;border-radius:8px;}
+  #adminView .btn-primary{background:var(--adm-taupe);color:#fff;border:1px solid var(--adm-taupe);}
+  #adminView .btn-primary:hover{background:var(--adm-taupe-h);border-color:var(--adm-taupe-h);}
+  #adminView .btn-ghost,#adminView .btn:not(.btn-primary):not(.btn-danger):not(.btn-ghost){background:var(--card);color:var(--ink-soft);border:1px solid var(--adm-outline);}
+  #adminView .btn-ghost:hover{border-color:var(--adm-taupe);color:var(--ink);}
+  #adminView .btn-danger{background:var(--card);color:#9b3a2e;border:1px solid #e3c2bb;}
+  #adminView .btn-danger:hover{border-color:#c9877c;}
+  #adminView .btn[disabled]{opacity:.5;cursor:default;}
+  #adminView .btn:focus-visible,#adminView .adm-nav-btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+  #adminView .admin-form input:not([type=checkbox]):not([type=radio]),#adminView .admin-form select{height:var(--adm-h);padding:0 12px;}
+  #adminView .admin-form textarea{padding:10px 12px;}
+  #adminView .admin-form,#adminView .admin-table-wrap,#adminView .stat,#adminView .chart-card,#adminView .lo-client,#adminView .ac-card{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--adm-r);box-shadow:var(--adm-shadow);}
+  #adminView .admin-table th{background:#f8f1e4;color:var(--muted);}
+  #adminView .status-badge{font-weight:600;padding:3px 10px;}
+  #adminView .status-badge.Requested{background:#f4e6c9;color:#6b4c18;}
+  #adminView .status-badge.Confirmed{background:#e2ebf4;color:#2c4f72;}
+  #adminView .status-badge.Completed{background:#e2eedd;color:#3c5e33;}
+  #adminView .status-badge.Cancelled{background:#f5e0db;color:#8a3226;}
+  #adminView .section-label{color:var(--muted);letter-spacing:.08em;}
+  /* header */
+  .adm-top{display:flex;align-items:center;gap:14px;margin-bottom:22px;padding:12px 16px;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--adm-shadow);}
+  .adm-title{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1;}
+  .adm-title h2{font-family:var(--display);font-weight:400;font-size:22px;margin:0;color:var(--ink);}
+  .adm-title .sync-note{font-size:12.5px;}
+  .adm-who{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
+  .adm-av{width:34px;height:34px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:var(--adm-sel);color:var(--ink);font-family:var(--display);font-size:17px;border:1px solid #e4cf9f;}
+  .adm-name{display:flex;flex-direction:column;line-height:1.2;}
+  .adm-name b{font-size:14px;font-weight:600;}
+  .adm-name span{font-size:12px;color:var(--muted);}
+  .adm-brand{height:36px;border:1px solid var(--adm-outline);border-radius:10px;background:var(--card);color:var(--ink);padding:0 30px 0 12px;font:inherit;font-size:13.5px;}
+  .adm-brand-fixed{font-size:13px;color:var(--ink-soft);padding:0 10px;height:32px;display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;background:#fbf6ec;}
+  .adm-logout{height:36px;}
+  .adm-menu-btn{display:none;}
+  /* shell + sidebar */
+  .adm-shell{display:grid;grid-template-columns:220px minmax(0,1fr);gap:24px;align-items:start;}
+  #adminView .admin-tabs.adm-side{position:sticky;top:16px;display:flex;flex-direction:column;gap:2px;margin:0;padding:8px;border:1px solid var(--line);border-bottom:1px solid var(--line);
+    background:var(--card);border-radius:14px;box-shadow:var(--adm-shadow);}
+  #adminView .admin-tabs.adm-side button{display:flex;align-items:center;gap:11px;width:100%;margin:0;padding:0 12px;height:40px;border:none;border-radius:9px;
+    background:none;color:var(--ink-soft);font-size:14px;font-weight:500;text-align:left;cursor:pointer;transition:background .15s,color .15s;}
+  #adminView .admin-tabs.adm-side button svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:.85;}
+  #adminView .admin-tabs.adm-side button:hover{background:#faf3e6;color:var(--ink);}
+  #adminView .admin-tabs.adm-side button.active{background:var(--adm-sel);color:#3b2e24;font-weight:600;}
+  #adminView .admin-tabs.adm-side .adm-nav-sep{height:1px;background:var(--line);margin:6px 8px;}
+  .adm-main{min-width:0;}
+  .adm-page-title{font-family:var(--display);font-weight:400;font-size:24px;margin:2px 0 16px;color:var(--ink);}
+  /* overview + settings layouts */
+  .adm-grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start;}
+  .adm-grid2>.span2{grid-column:1/-1;}
+  .adm-grid2 .admin-form{max-width:none !important;}
+  .adm-card{background:var(--card);border:1px solid var(--line);border-radius:var(--adm-r);box-shadow:var(--adm-shadow);padding:18px 20px;}
+  .adm-card h3{margin:0 0 2px;font-family:inherit;font-size:15px;font-weight:600;color:var(--ink);}
+  .adm-card .adm-cap{font-size:13px;color:var(--muted);margin:0 0 12px;}
+  .adm-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:18px;}
+  .adm-kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--adm-r);box-shadow:var(--adm-shadow);padding:16px 18px;text-align:left;cursor:pointer;font:inherit;color:inherit;transition:border-color .15s;}
+  .adm-kpi:hover{border-color:var(--adm-outline);}
+  .adm-kpi .k-l{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+  .adm-kpi .k-v{font-family:var(--display);font-size:30px;line-height:1.1;margin-top:6px;color:var(--ink);}
+  .adm-kpi .k-s{font-size:12.5px;color:var(--muted);margin-top:4px;}
+  .adm-kpi.warn .k-v{color:#8c5a1c;}
+  .adm-list{display:flex;flex-direction:column;}
+  .adm-li{display:grid;grid-template-columns:84px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 2px;border-top:1px solid var(--line);font-size:14px;}
+  .adm-li:first-child{border-top:0;}
+  .adm-li .t{font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap;font-size:13.5px;}
+  .adm-li .w{min-width:0;}
+  .adm-li .w b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .adm-li .w span{font-size:12.5px;color:var(--muted);}
+  .adm-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px;}
+  .adm-empty{font-size:14px;color:var(--muted);padding:18px 4px;text-align:center;}
+  .adm-note{font-size:13px;border-radius:10px;padding:9px 12px;margin-bottom:14px;}
+  .adm-note.load{background:#f8f1e4;color:var(--ink-soft);}
+  .adm-note.err{background:#f8e6e1;color:#8a3226;}
+  .adm-sub-h{font-size:12.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:26px 0 12px;}
+  .adm-link{border:none;background:none;padding:0;color:var(--adm-taupe);font:inherit;font-size:13px;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
+  /* login */
+  #adminView .login-wrap{max-width:760px;margin:40px auto;text-align:center;}
+  #adminView .login-wrap h2{font-family:var(--display);font-weight:400;font-size:28px;}
+  #adminView .login-cards{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;}
+  #adminView .login-card{display:flex;flex-direction:column;align-items:center;gap:6px;padding:18px 12px;text-align:center;cursor:pointer;font:inherit;color:inherit;
+    background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--adm-shadow);transition:border-color .15s,background .15s,transform .15s;}
+  #adminView .login-card:hover{border-color:var(--adm-outline);}
+  #adminView .login-card.sel{border-color:var(--gold);background:#fdf6e8;box-shadow:0 0 0 3px rgba(196,164,108,.18);}
+  #adminView .login-card .av{width:44px;height:44px;margin:0;background:var(--adm-sel);color:var(--ink);border:1px solid #e4cf9f;font-size:19px;}
+  #adminView .login-card .nm{font-size:15px;font-weight:600;}
+  #adminView .login-card .cap{margin:0;}
+  .login-pin{max-width:380px;margin:22px auto 0;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--adm-shadow);padding:20px;}
+  .login-pin .who{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+  .login-pin .who .adm-av{width:42px;height:42px;font-size:19px;}
+  .login-pin .who b{display:block;font-size:16px;font-weight:600;}
+  .login-pin .who span{font-size:12.5px;color:var(--muted);}
+  .login-pin label{display:block;font-size:13px;font-weight:600;color:var(--ink-soft);margin-bottom:6px;}
+  .login-pin input{width:100%;box-sizing:border-box;height:46px;border:1px solid var(--line);border-radius:10px;padding:0 14px;font-size:20px;letter-spacing:.4em;text-align:center;background:#fff;color:var(--ink);}
+  .login-pin input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(196,164,108,.2);}
+  .login-pin .row{display:flex;gap:10px;margin-top:12px;align-items:center;justify-content:space-between;}
+  .login-pin .btn-primary{flex:1;}
+  /* mobile */
+  @media (max-width:900px){
+    #adminView .admin-app{padding:16px 0 50px;}
+    .adm-top{flex-wrap:wrap;gap:10px;padding:10px 12px;}
+    .adm-title .sync-note{display:none;}
+    .adm-menu-btn{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 12px;border:1px solid var(--adm-outline);border-radius:10px;background:var(--card);color:var(--ink);font:inherit;font-size:14px;font-weight:600;}
+    .adm-menu-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;}
+    .adm-who{width:100%;justify-content:space-between;}
+    .adm-shell{grid-template-columns:1fr;gap:14px;}
+    #adminView .admin-tabs.adm-side{position:static;display:none;}
+    #adminView .admin-tabs.adm-side.open{display:flex;}
+    .adm-grid2{grid-template-columns:1fr;}
+    .adm-kpis{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
+    .adm-kpi{padding:12px;}
+    .adm-kpi .k-l{font-size:11px;letter-spacing:.03em;}
+    .adm-kpi .k-v{font-size:26px;}
+    .adm-kpi .k-s{display:none;}
+    .adm-li{grid-template-columns:64px minmax(0,1fr) auto;gap:10px;}
+    .adm-li .w b{white-space:normal;}
+    #adminView .admin-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+    #adminView .admin-table{min-width:600px;}
+    body.admin-mode .brandmark{display:none;}
+    body.admin-mode .topnav{justify-content:flex-end;}
+  }
+  #adminView .adm-grid2 .hr-grid{grid-template-columns:minmax(96px,auto) minmax(0,1fr);}
+  #adminView .adm-grid2 .hr-times{min-width:0;}
+  #adminView .adm-grid2 .hr-times select{min-width:0 !important;flex:1 1 0;width:100% !important;padding:0 6px;}
+  #adminView .adm-grid2 .admin-form{padding:18px;}
+  @media (prefers-reduced-motion:reduce){ #adminView *{transition:none !important;} }
+
   .admin-app{padding:44px 0 70px;}
   .admin-app-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:20px;flex-wrap:wrap;gap:14px;}
   .admin-app-head h2{font-size:26px;margin:0 0 4px;}
@@ -1530,35 +1673,34 @@
     <div id="adminLogin"></div>
 
     <div id="adminAuthed" style="display:none;">
-    <div class="admin-app-head">
-      <div>
-        <h2>Admin App</h2>
-        <p>Manage services, products, prices, bookings and promotions for Dolce, Polished and Core — from one place.</p>
+    <header class="adm-top">
+      <button class="adm-menu-btn" id="admMenuBtn" aria-expanded="false" aria-controls="adminTabsRow"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span id="admMenuLabel">Menu</span></button>
+      <div class="adm-title">
+        <h2>Dolce+ Admin</h2>
+        <div class="sync-note"><span class="sync-dot"></span>Live-linked to the client app — changes appear on every device</div>
       </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
-        <div class="sync-note"><span class="sync-dot"></span>Live-linked to the Client App and shared across every device — changes here appear everywhere</div>
-        <div class="user-badge" id="userBadge"></div>
-      </div>
-    </div>
-    <div class="admin-tabs" id="adminTabsRow">
-      <button data-admin-tab="overview" class="active">Overview</button>
-      <button data-admin-tab="bookings">Bookings</button>
-      <button data-admin-tab="loyalty">Loyalty</button>
-      <button data-admin-tab="products">Products</button>
-      <button data-admin-tab="services">Services</button>
-      <button data-admin-tab="offers">Offers</button>
-      <button data-admin-tab="gallery">Photos &amp; Video</button>
-      <button data-admin-tab="employees">Employees</button>
-      <button data-admin-tab="reports">Reports</button>
-      <button data-admin-tab="purchases">Restocking</button>
-    </div>
+      <div class="adm-who" id="userBadge"></div>
+    </header>
+    <div class="adm-shell">
+    <nav class="admin-tabs adm-side" id="adminTabsRow" aria-label="Admin sections">
+      <button data-admin-tab="overview" class="active"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg><span>Overview</span></button>
+      <button data-admin-tab="bookings"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg><span>Bookings</span></button>
+      <button data-admin-tab="loyalty"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.8l2.5 5.1 5.6.8-4 3.9.9 5.6-5-2.6-5 2.6.9-5.6-4-3.9 5.6-.8z"/></svg><span>Loyalty</span></button>
+      <button data-admin-tab="products"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 12.5H6.2z"/><path d="M9 8V6.5a3 3 0 016 0V8"/></svg><span>Products</span></button>
+      <button data-admin-tab="services"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l1.8 5.2 5.2 1.8-5.2 1.8L12 17.5l-1.8-5.2L5 10.5l5.2-1.8z"/><path d="M18.5 16v4M16.5 18h4"/></svg><span>Services</span></button>
+      <button data-admin-tab="offers"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 12.2V4.5a1 1 0 011-1h7.7l8.3 8.3-8.7 8.7z"/><circle cx="8" cy="8" r="1.4"/></svg><span>Offers</span></button>
+      <button data-admin-tab="gallery"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M20.5 16l-5-5-8 8.5"/></svg><span>Photos &amp; Video</span></button>
+      <button data-admin-tab="employees"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19.5c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="16.8" cy="9.2" r="2.5"/><path d="M15.8 14.6c2.4.1 4.1 1.8 4.7 4.4"/></svg><span>Employees</span></button>
+      <button data-admin-tab="reports"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20.5h16"/><path d="M7 17V11M12 17V6.5M17 17v-8"/></svg><span>Reports</span></button>
+      <button data-admin-tab="purchases"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.8 7.5L12 3.5l8.2 4v9L12 20.5l-8.2-4z"/><path d="M3.8 7.5L12 11.5l8.2-4M12 11.5v9"/></svg><span>Restocking</span></button>
+      <div class="adm-nav-sep" aria-hidden="true"></div>
+      <button data-admin-tab="settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span>Settings</span></button>
+    </nav>
+    <main class="adm-main">
 
     <div class="admin-panel active" id="adminOverview">
-      <div id="currencySettingsWrap"></div>
-      <div id="clientLoginWrap"></div>
-      <div id="hoursWrap"></div>
-      <div id="waTemplatesWrap"></div>
-      <div id="brandPhotosWrap"></div>
+      <div id="ovToday"></div>
+      <div class="adm-sub-h">Last 30 days</div>
       <div class="stat-row">
         <div class="stat"><div class="lbl">Bookings · last 30 days</div><div class="val" id="stBookings">—</div><div class="sub" id="stBookingsSub"></div></div>
         <div class="stat"><div class="lbl">Dolce+ members</div><div class="val" id="stClients">—</div><div class="sub" id="stClientsSub"></div></div>
@@ -1744,6 +1886,20 @@
           <tbody id="purchaseRows"></tbody>
         </table>
       </div>
+    </div>
+
+    <div class="admin-panel" id="adminSettings">
+      <h2 class="adm-page-title">Settings</h2>
+      <div class="adm-grid2">
+        <div id="currencySettingsWrap"></div>
+        <div id="clientLoginWrap"></div>
+        <div id="hoursWrap"></div>
+        <div id="waTemplatesWrap"></div>
+        <div id="brandPhotosWrap" class="span2"></div>
+      </div>
+      <div class="adm-empty" id="settingsEmpty" style="display:none;">There are no settings you can change with this account.</div>
+    </div>
+    </main>
     </div>
     </div>
     <div id="adminAgencyCredit"></div>
@@ -7851,6 +8007,7 @@ function handleAISend(){
 var loyaltyIssued=null;
 function overviewIso(label){ const iso=toIsoDate(label); return /^\d{4}-\d{2}-\d{2}$/.test(iso||'')?iso:''; }
 function renderOverviewStats(){
+  try{ renderOverviewToday(); }catch(e){ console.warn(e); }
   if(!document.getElementById('stBookings')) return;
   const see=(b)=>!currentUser||canSeeBrand(currentUser,b);
   const brands=Object.keys(BRANDS).filter(see);
@@ -7928,7 +8085,7 @@ document.querySelectorAll('[data-toggle]').forEach(btn=>{
 let toastTimer=null;
 function toast(msg){
   const el=document.getElementById('toast');
-  el.textContent='✓ '+msg;
+  el.textContent=(/incorrect|couldn|could not|can't|cannot|not |no connection|error|failed|please|enter |expired|refused|isn't/i.test(String(msg))?'':'✓ ')+msg;
   el.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer=setTimeout(()=>el.classList.remove('show'),2600);
@@ -7957,6 +8114,7 @@ const TAB_DEFS=[
   {key:'employees',label:'Employees'},
   {key:'reports',label:'Reports'},
   {key:'purchases',label:'Restocking'},
+  {key:'settings',label:'Settings'},
 ];
 const PRESETS={
   owner:{label:'Owner / Admin',tabs:TAB_DEFS.map(t=>t.key)},
@@ -7987,8 +8145,120 @@ function accessLabel(tabs){
 // still respects department internally, filtering the data it pulls from
 // the sections above, rather than being a data collection of its own).
 const BRAND_SCOPED_TABS=['bookings','products','services','offers','gallery','purchases'];
-function userBrands(u){ return (u&&u.brands&&u.brands.length) ? u.brands : Object.keys(BRANDS); }
+function userBrandsAll(u){ return (u&&u.brands&&u.brands.length) ? u.brands : Object.keys(BRANDS); }
+/* The brand selector in the Admin header narrows what the signed-in person is
+   looking at to one of THEIR brands. It can only ever narrow: the database
+   still decides what an account may read and write. */
+let adminBrandView='';
+try{ adminBrandView=localStorage.getItem('odc_admin_brand')||''; }catch(e){}
+function userBrands(u){
+  const all=userBrandsAll(u);
+  if(u && u===currentUser && adminBrandView && all.includes(adminBrandView)) return [adminBrandView];
+  return all;
+}
 function canSeeBrand(u,brand){ return userBrands(u).includes(brand); }
+var currentAllowedTabs=[], loginSelected=null;
+// "Owner", "Reception", "Staff / Provider" — or simply "Staff" for a custom mix.
+function shortRole(u){
+  if(!u) return '';
+  if(u.isOwner || userIsOwner(u)) return 'Owner';
+  // Loyalty and Settings come automatically with other sections, so ignore them here.
+  const core=(tabs)=>[...tabs].filter(x=>x!=='loyalty'&&x!=='settings').sort().join(',');
+  const sorted=core(u.tabs||[]);
+  const match=Object.entries(PRESETS).find(([k,p])=>k!=='owner'&&core(p.tabs)===sorted);
+  if(match) return match[1].label;
+  if((u.tabs||[]).length===1) return tabLabel(u.tabs[0]);
+  return 'Staff';
+}
+function updateSettingsEmpty(){
+  const ids=['currencySettingsWrap','clientLoginWrap','hoursWrap','waTemplatesWrap','brandPhotosWrap'];
+  const any=ids.some(id=>{ const el=document.getElementById(id); return el&&el.innerHTML.trim(); });
+  const e=document.getElementById('settingsEmpty'); if(e) e.style.display=any?'none':'';
+}
+function closeAdmMenu(){
+  const nav=document.getElementById('adminTabsRow'), b=document.getElementById('admMenuBtn');
+  if(nav) nav.classList.remove('open'); if(b) b.setAttribute('aria-expanded','false');
+}
+function updateAdmMenuLabel(){
+  const l=document.getElementById('admMenuLabel'); if(!l) return;
+  const d=TAB_DEFS.find(x=>x.key===adminTab); l.textContent=d?d.label:'Menu';
+}
+document.addEventListener('click',(e)=>{
+  const b=e.target.closest&&e.target.closest('#admMenuBtn');
+  if(b){ const nav=document.getElementById('adminTabsRow'); const open=!nav.classList.contains('open');
+    nav.classList.toggle('open',open); b.setAttribute('aria-expanded',open?'true':'false'); return; }
+});
+
+/* ---- Overview: today at a glance (real data, this account's brands only) ---- */
+const ADMIN_LOW_STOCK=5;
+const ADMIN_BRAND_DOT={dolce:'#5d9fd3',polished:'#c49a5a',core:'#86a077'};
+function renderOverviewToday(){
+  const wrap=document.getElementById('ovToday'); if(!wrap||!currentUser) return;
+  const see=(b)=>canSeeBrand(currentUser,b);
+  const todayIso=isoOf(new Date());
+  const mine=STORE.bookings.filter(b=>see(b.brand));
+  const startOf=(b)=>{ const d=bookingStart(b); return d?d.getTime():Infinity; };
+  const today=mine.filter(b=>toIsoDate(b.date)===todayIso && b.status!=='Cancelled').sort((a,b)=>startOf(a)-startOf(b));
+  const pending=mine.filter(b=>b.status==='Requested' && (!toIsoDate(b.date) || toIsoDate(b.date)>=todayIso)).sort((a,b)=>startOf(a)-startOf(b));
+  const canProducts=currentAllowedTabs.includes('products')||currentAllowedTabs.includes('purchases');
+  const low=STORE.products.filter(p=>see(p.brand) && p.active!==false && numOr0(p.stock)<=ADMIN_LOW_STOCK).sort((a,b)=>numOr0(a.stock)-numOr0(b.stock));
+  const done=today.filter(b=>b.status==='Completed').length;
+  const now=Date.now(), next=today.find(b=>b.status!=='Completed' && startOf(b)>=now-15*60000);
+  const dot=(b)=>`<span class="adm-dot" style="background:${ADMIN_BRAND_DOT[b]||'#bba891'}"></span>`;
+  const canBookings=currentAllowedTabs.includes('bookings');
+  let note='';
+  if(typeof lastSyncError!=='undefined' && lastSyncError) note=`<div class="adm-note err">Couldn't reach the shared database just now — showing what was last saved on this device. It will catch up automatically.</div>`;
+  else if(supa && !lastRefreshAt) note=`<div class="adm-note load">Loading the latest bookings…</div>`;
+  const dateTxt=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+  const row=(b,showDate)=>`<div class="adm-li"><span class="t">${esc(showDate?shortDay(b.date):b.time||'—')}</span>
+      <span class="w"><b>${esc(b.clientName||'Client')}</b><span>${dot(b.brand)}${esc(b.serviceName||'')}${showDate&&b.time?' · '+esc(b.time):''}</span></span>
+      <span class="status-badge ${esc(b.status)}">${esc(b.status)}</span></div>`;
+  wrap.innerHTML=`
+    <h2 class="adm-page-title">Today · ${esc(dateTxt)}</h2>
+    ${note}
+    <div class="adm-kpis">
+      <button class="adm-kpi" data-ov-go="bookings"><div class="k-l">Today's bookings</div><div class="k-v">${today.length}</div>
+        <div class="k-s">${today.length?`${done} completed${next?` · next ${esc(next.time)}`:''}`:'Nothing booked for today'}</div></button>
+      <button class="adm-kpi ${pending.length?'warn':''}" data-ov-go="bookings"><div class="k-l">Waiting for confirmation</div><div class="k-v">${pending.length}</div>
+        <div class="k-s">${pending.length?'Requests to confirm or decline':'All requests handled'}</div></button>
+      <button class="adm-kpi ${low.length?'warn':''}" data-ov-go="${canProducts?'products':''}"><div class="k-l">Low-stock products</div><div class="k-v">${low.length}</div>
+        <div class="k-s">${low.length?`${low.filter(p=>numOr0(p.stock)<=0).length} out of stock`:`Everything above ${ADMIN_LOW_STOCK} in stock`}</div></button>
+    </div>
+    <div class="adm-grid2">
+      <section class="adm-card">
+        <h3>Today's appointments</h3><p class="adm-cap">${today.length?`${today.length} booking${today.length===1?'':'s'}, in time order`:'Your day so far'}</p>
+        <div class="adm-list">${today.length?today.map(b=>row(b,false)).join(''):`<div class="adm-empty">No appointments today.</div>`}</div>
+        ${canBookings?`<div style="margin-top:12px;"><button class="adm-link" data-ov-go="bookings">Open bookings →</button></div>`:''}
+      </section>
+      <div style="display:flex;flex-direction:column;gap:18px;">
+        <section class="adm-card">
+          <h3>Waiting for confirmation</h3><p class="adm-cap">Booking requests from clients</p>
+          <div class="adm-list">${pending.length?pending.slice(0,6).map(b=>row(b,true)).join(''):`<div class="adm-empty">No requests waiting.</div>`}</div>
+          ${pending.length>6?`<div style="margin-top:10px;font-size:13px;color:var(--muted);">+ ${pending.length-6} more in Bookings</div>`:''}
+        </section>
+        <section class="adm-card">
+          <h3>Low stock</h3><p class="adm-cap">${ADMIN_LOW_STOCK} or fewer left</p>
+          <div class="adm-list">${low.length?low.slice(0,6).map(p=>`<div class="adm-li" style="grid-template-columns:minmax(0,1fr) auto;">
+              <span class="w"><b>${esc(p.n)}</b><span>${dot(p.brand)}${esc(BRANDS[p.brand]?BRANDS[p.brand].name:'')}</span></span>
+              <span class="status-badge ${numOr0(p.stock)<=0?'Cancelled':'Requested'}">${numOr0(p.stock)<=0?'Out of stock':numOr0(p.stock)+' left'}</span></div>`).join('')
+            :`<div class="adm-empty">Nothing running low.</div>`}</div>
+          ${low.length>6?`<div style="margin-top:10px;font-size:13px;color:var(--muted);">+ ${low.length-6} more in Products</div>`:''}
+        </section>
+      </div>
+    </div>`;
+  wrap.querySelectorAll('[data-ov-go]').forEach(b=>b.addEventListener('click',()=>{
+    const k=b.dataset.ovGo; if(!k||!currentAllowedTabs.includes(k)) return;
+    const t=document.querySelector(`#adminTabsRow [data-admin-tab="${k}"]`); if(t) t.click();
+  }));
+}
+function shortDay(label){
+  const iso=toIsoDate(label); if(!iso) return label||'—';
+  const d=new Date(iso+'T12:00:00'); const t=new Date(); t.setHours(12,0,0,0);
+  const diff=Math.round((d-t)/86400000);
+  if(diff===0) return 'Today'; if(diff===1) return 'Tomorrow';
+  return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+}
+
 function brandsLabel(brands){
   const list=(brands&&brands.length)?brands:Object.keys(BRANDS);
   if(list.length>=Object.keys(BRANDS).length) return 'All brands';
@@ -8018,73 +8288,89 @@ if(typeof window!=='undefined'){
 function renderLogin(){
   // Once a real, cloud-verified account exists for someone (it has a
   // loginSlug), hide the old local-only demo card with the same name —
-  // otherwise the same person shows up twice: one card that actually logs
-  // in, and one leftover card that never will.
+  // otherwise the same person shows up twice.
   const visibleUsers = supa
     ? STORE.users.filter(u=>u.loginSlug || !STORE.users.some(x=>x.loginSlug && x.name===u.name))
     : STORE.users;
+  if(loginSelected && !visibleUsers.some(u=>u.id===loginSelected)) loginSelected=null;
+  const sel=visibleUsers.find(u=>u.id===loginSelected);
   document.getElementById('adminLogin').innerHTML=`
     <div class="login-wrap">
-      <h2>Admin App login</h2>
-      <p>Pick your account. Each employee has their own login and only sees the sections shared with them.</p>
+      <h2>Dolce+ Admin</h2>
+      <p>Choose your account, then enter your PIN.</p>
       <div class="login-note">${supa?'Secure, server-verified login.':'Offline demo mode — PINs shown for convenience since there\'s no connection to verify against.'}</div>
-      <div class="login-cards">
+      ${visibleUsers.length?`<div class="login-cards" role="list">
         ${visibleUsers.map(u=>`
-          <div class="login-card">
-            <div class="av">${esc(u.name[0])}</div>
-            <div class="nm">${esc(u.name)}</div>
-            ${u.tabs&&u.tabs.length?`<div class="role-pill">${accessLabel(u.tabs)}</div>`:''}
-            ${u.brands&&u.brands.length?`<div class="role-pill" style="margin-top:4px;">${brandsLabel(u.brands)}</div>`:''}
-            ${!supa?`<div class="cap">Demo PIN: ${u.pin}</div>`:''}
-            <input type="password" maxlength="6" inputmode="numeric" placeholder="Enter PIN" id="pin_${u.id}">
-            <button class="btn btn-primary" data-login="${u.id}">Log in</button>
-          </div>`).join('')}
-      </div>
+          <button class="login-card${u.id===loginSelected?' sel':''}" data-pick="${esc(u.id)}" aria-pressed="${u.id===loginSelected}" role="listitem">
+            <span class="av">${esc((u.name||'?')[0])}</span>
+            <span class="nm">${esc(u.name)}</span>
+            ${u.tabs&&u.tabs.length?`<span class="role-pill">${esc(shortRole(u))}</span>`:''}
+            ${!supa?`<span class="cap">Demo PIN: ${esc(u.pin)}</span>`:''}
+          </button>`).join('')}
+      </div>`:`<div class="adm-empty">No staff accounts found yet — check the connection, then reload.</div>`}
+      ${sel?`<div class="login-pin" id="loginPin">
+        <div class="who"><span class="adm-av">${esc((sel.name||'?')[0])}</span>
+          <span><b>${esc(sel.name)}</b><span>${(sel.tabs&&sel.tabs.length)||sel.isOwner?esc(shortRole(sel))+(sel.brands&&sel.brands.length?' · '+esc(brandsLabel(sel.brands)):''):'Enter your PIN to continue'}</span></span></div>
+        <label for="loginPinInput">PIN</label>
+        <input type="password" id="loginPinInput" maxlength="6" inputmode="numeric" autocomplete="current-password" placeholder="••••">
+        <div class="row">
+          <button class="adm-link" id="loginSwitch" type="button">Switch account</button>
+          <button class="btn btn-primary" id="loginGo">Log in</button>
+        </div>
+      </div>`:''}
     </div>`;
-  document.querySelectorAll('[data-login]').forEach(b=>b.addEventListener('click',async()=>{
-    const u=STORE.users.find(x=>x.id===b.dataset.login);
-    const entered=document.getElementById('pin_'+u.id).value;
+  document.querySelectorAll('[data-pick]').forEach(b=>b.addEventListener('click',()=>{
+    loginSelected=b.dataset.pick; renderLogin();
+    const pin=document.getElementById('loginPinInput');
+    if(pin){ pin.focus({preventScroll:true}); try{ document.getElementById('loginPin').scrollIntoView({block:'nearest',behavior:'smooth'}); }catch(e){} }
+  }));
+  const sw=document.getElementById('loginSwitch');
+  if(sw) sw.addEventListener('click',()=>{ loginSelected=null; renderLogin(); });
+  const go=document.getElementById('loginGo'), pinEl=document.getElementById('loginPinInput');
+  if(pinEl) pinEl.addEventListener('keydown',e=>{ if(e.key==='Enter') go.click(); });
+  if(go) go.addEventListener('click',async()=>{
+    if(go.dataset.busy==='1') return;
+    const u=STORE.users.find(x=>x.id===loginSelected); if(!u) return;
+    const entered=pinEl.value;
+    if(!entered){ toast('Enter your PIN.'); pinEl.focus(); return; }
+    go.dataset.busy='1'; go.disabled=true; go.textContent='Checking…';
+    const ok=await staffLogin(u,entered);
+    if(!ok && go.isConnected){ go.dataset.busy=''; go.disabled=false; go.textContent='Log in'; pinEl.value=''; pinEl.focus(); }
+  });
+}
+// The login itself — unchanged: the PIN is checked by Supabase (or, offline,
+// against this device's copy for local demo accounts only).
+async function staffLogin(u,entered){
     let loggedInUser=null;
     if(supa){
-      // Real login: the PIN is checked by Supabase itself, not by comparing
-      // text in this file — this is what makes the brand-isolation security
-      // rules actually take effect for everything this person does next.
-      if(!u.loginSlug){ toast('This account isn\'t connected to a secure login yet — ask the owner to check the Employees tab.'); return; }
-      const {data,error}=await supa.auth.signInWithPassword({email:empEmail(u.loginSlug),password:empPassword(entered)});
-      if(error || !data.user){ toast('Incorrect PIN for that account.'); return; }
+      if(!u.loginSlug){ toast('This account isn\'t connected to a secure login yet — ask the owner to check the Employees tab.'); return false; }
+      let data,error;
+      try{ ({data,error}=await supa.auth.signInWithPassword({email:empEmail(u.loginSlug),password:empPassword(entered)})); }
+      catch(e){ toast('No connection — check the internet and try again.'); return false; }
+      if(error || !data.user){ toast(/fetch|network/i.test(String(error&&error.message))?'No connection — check the internet and try again.':'Incorrect PIN for that account.'); return false; }
       const {data:profile,error:profErr}=await supa.from('profiles').select('*').eq('id',data.user.id).maybeSingle();
-      if(profErr || !profile){ toast('Logged in, but this account has no profile set up yet — ask the owner to check the Employees tab.'); await supa.auth.signOut(); return; }
+      if(profErr || !profile){ toast('Logged in, but this account has no profile set up yet — ask the owner to check the Employees tab.'); await supa.auth.signOut(); return false; }
       loggedInUser={id:profile.id,name:profile.name,brands:profile.brands||[],tabs:profile.tabs||[],isOwner:!!profile.is_owner,pin:u.pin};
     } else {
-      // Offline fallback (no internet, or the Supabase library failed to
-      // load). This checks the PIN against the copy held on this device.
-      //
-      // Critically, it must REFUSE accounts that have no usable local PIN.
-      // Staff names pulled from the cloud are stored with pin:'' because the
-      // real PIN lives with Supabase and never comes down here. Without this
-      // guard, `entered !== u.pin` compares '' against '' — so anyone could
-      // knock the device offline, pick a name from the list, and sign in by
-      // pressing Log In with the PIN box left empty.
+      // Offline: refuse accounts with no usable local PIN (cloud accounts are
+      // stored with pin:'' — an empty PIN must never let anyone in).
       if(!u.pin || !/^\d{4,6}$/.test(u.pin)){
         toast('This account can only sign in while online — check the connection and try again.');
-        return;
+        return false;
       }
-      if(entered!==u.pin){ toast('Incorrect PIN for that account.'); return; }
+      if(entered!==u.pin){ toast('Incorrect PIN for that account.'); return false; }
       loggedInUser=u;
     }
     currentUser=loggedInUser;
+    loginSelected=null;
     handleStaffLoginLost.shown=false;
     try{ localStorage.setItem(CUR_USER_KEY,currentUser.id); }catch(e){}
     showAdminForRole();
     startAdminLiveRefresh();
-    toast(`Logged in as ${currentUser.name} (${accessLabel(currentUser.tabs)}).`);
-    // Now we know who this is, the database will hand over everything they
-    // are allowed to see — bookings, purchases, sales, register history —
-    // scoped to their own departments. Anything this device saved while
-    // logged out gets sent up at the same time.
+    toast(`Welcome, ${currentUser.name}.`);
     flushOutbox();
-    refreshFromCloud({force:true}).then(ok=>{ if(ok) rerenderEverything(); });
-  }));
+    refreshFromCloud({force:true}).then(ok=>{ if(ok) rerenderEverything(); else renderOverviewStats(); });
+    return true;
 }
 
 /* Redraws whatever the person is currently looking at. Used after fresh data
@@ -8163,29 +8449,50 @@ function rerenderEverything(){
 function showAdminForRole(){
   document.getElementById('adminLogin').style.display='none';
   document.getElementById('adminAuthed').style.display='';
+  const myBrands=userBrandsAll(currentUser);
+  if(adminBrandView && !myBrands.includes(adminBrandView)) adminBrandView='';
   document.getElementById('userBadge').innerHTML=`
-    <span class="av" style="width:24px;height:24px;font-size:13px;background:linear-gradient(140deg,#3a3630,#171512);color:#fff;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;">${esc(currentUser.name[0])}</span>
-    <b>${currentUser.name}</b> <span class="role-pill">${accessLabel(currentUser.tabs)}</span> <span class="role-pill">${brandsLabel(currentUser.brands)}</span>
-    <button id="logoutBtn">Log out</button>`;
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span class="adm-av" aria-hidden="true">${esc((currentUser.name||'?')[0])}</span>
+      <span class="adm-name"><b>${esc(currentUser.name)}</b><span>${esc(shortRole(currentUser))}</span></span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      ${myBrands.length>1
+        ? `<select class="adm-brand" id="admBrandSel" aria-label="Brand">
+            <option value="">${myBrands.length>=Object.keys(BRANDS).length?'All brands':'All my brands'}</option>
+            ${myBrands.map(b=>`<option value="${b}" ${b===adminBrandView?'selected':''}>${BRANDS[b].name}</option>`).join('')}
+          </select>`
+        : `<span class="adm-brand-fixed">${esc(BRANDS[myBrands[0]]?BRANDS[myBrands[0]].name:'')}</span>`}
+      <button class="btn btn-ghost btn-sm adm-logout" id="logoutBtn">Log out</button>
+    </div>`;
+  const bsel=document.getElementById('admBrandSel');
+  if(bsel) bsel.addEventListener('change',()=>{
+    adminBrandView=bsel.value;
+    try{ localStorage.setItem('odc_admin_brand',adminBrandView); }catch(e){}
+    showAdminForRole();
+    toast(adminBrandView?`Showing ${BRANDS[adminBrandView].name} only.`:'Showing all your brands.');
+  });
   document.getElementById('logoutBtn').addEventListener('click',async()=>{
     if(supa){ try{ await supa.auth.signOut(); }catch(e){} }
     currentUser=null;
     try{ localStorage.removeItem(CUR_USER_KEY); }catch(e){}
     document.getElementById('adminAuthed').style.display='none';
     document.getElementById('adminLogin').style.display='';
+    loginSelected=null;
     renderLogin();
   });
-  // Loyalty comes with the Bookings section (points are added when a visit
-  // is completed), so accounts made before it existed get it too.
   const allowed=[...(currentUser.tabs||[])];
   if(!allowed.includes('loyalty') && (currentUser.isOwner || allowed.includes('bookings'))) allowed.push('loyalty');
+  // Settings holds what used to sit at the top of Overview, for the same people.
+  if(!allowed.includes('settings') && (currentUser.isOwner || allowed.includes('overview'))) allowed.push('settings');
+  currentAllowedTabs=allowed;
   document.querySelectorAll('#adminTabsRow [data-admin-tab]').forEach(btn=>{
     const ok=allowed.includes(btn.dataset.adminTab);
     btn.style.display=ok?'':'none';
   });
   if(!allowed.includes(adminTab)) adminTab=allowed[0]||'bookings';
   document.querySelectorAll('#adminTabsRow [data-admin-tab]').forEach(x=>x.classList.toggle('active',x.dataset.adminTab===adminTab));
-  ['overview','bookings','loyalty','products','services','offers','gallery','employees','reports','purchases'].forEach(p=>{
+  ['overview','bookings','loyalty','products','services','offers','gallery','employees','reports','purchases','settings'].forEach(p=>{
     document.getElementById('admin'+p[0].toUpperCase()+p.slice(1)).classList.toggle('active',adminTab===p);
   });
   // Services has its own brand sub-tabs — hide any brand this account isn't
@@ -8195,7 +8502,7 @@ function showAdminForRole(){
   });
   if(!canSeeBrand(currentUser,svcBrandTab)) svcBrandTab=userBrands(currentUser)[0];
   document.querySelectorAll('#svcBrandTabs [data-svc-brand-tab]').forEach(x=>x.classList.toggle('active',x.dataset.svcBrandTab===svcBrandTab));
-  renderAdminProducts(); renderAdminServices(); renderAdminOffers(); renderAdminGallery(); renderAdminBookings(); renderBrandPhotos(); renderCurrencySettings(); renderClientLoginSetting(); renderWaTemplates(); renderHoursAdmin(); renderAdminEmployees(); renderAdminPurchases(); renderAdminReports(); renderAdminLoyalty(); renderOverviewStats(); pullLoyaltyIssued();
+  renderAdminProducts(); renderAdminServices(); renderAdminOffers(); renderAdminGallery(); renderAdminBookings(); renderBrandPhotos(); renderCurrencySettings(); renderClientLoginSetting(); renderWaTemplates(); renderHoursAdmin(); renderAdminEmployees(); renderAdminPurchases(); renderAdminReports(); renderAdminLoyalty(); renderOverviewStats(); pullLoyaltyIssued(); updateSettingsEmpty(); updateAdmMenuLabel();
 }
 
 /* ---------------- Full-screen client app ---------------- */
@@ -8222,6 +8529,7 @@ document.querySelectorAll('[data-mode-btn]').forEach(b=>{
     document.querySelectorAll('[data-mode-btn]').forEach(x=>x.classList.toggle('active',x===b));
     document.getElementById('clientView').style.display=appMode==='client'?'':'none';
     document.getElementById('adminView').style.display=appMode==='admin'?'':'none';
+    document.body.classList.toggle('admin-mode',appMode==='admin');
     document.getElementById('langSwitch').style.display=appMode==='client'?'':'none';
     if(appMode==='admin'){
       if(currentUser){
@@ -8263,6 +8571,9 @@ document.querySelectorAll('[data-admin-tab]').forEach(b=>{
     document.getElementById('adminReports').classList.toggle('active',adminTab==='reports');
     document.getElementById('adminPurchases').classList.toggle('active',adminTab==='purchases');
     document.getElementById('adminLoyalty').classList.toggle('active',adminTab==='loyalty');
+    document.getElementById('adminSettings').classList.toggle('active',adminTab==='settings');
+    closeAdmMenu(); updateAdmMenuLabel();
+    try{ window.scrollTo({top:Math.min(window.scrollY,(document.querySelector('.admin-app')||{offsetTop:0}).offsetTop),behavior:'smooth'}); }catch(e){}
     if(adminTab==='loyalty'){ renderAdminLoyalty(); pullEarnedBookings().then(()=>{ if(loSel) selectLoyaltyClient(loSel); else renderAdminLoyalty(); }); }
     // Photos and video are much larger than everything else, so they are
     // fetched only when this tab is actually opened rather than on every
@@ -8286,7 +8597,7 @@ function renderAdminProducts(){
   const scoped=STORE.products.filter(p=>canSeeBrand(currentUser,p.brand));
   document.getElementById('prodCount').textContent=scoped.length;
   const scopeLabel=document.getElementById('prodScopeLabel');
-  if(scopeLabel) scopeLabel.textContent = userBrands(currentUser).length>=Object.keys(BRANDS).length ? 'across all brands' : `for ${brandsLabel(currentUser&&currentUser.brands)}`;
+  if(scopeLabel) scopeLabel.textContent = userBrands(currentUser).length>=Object.keys(BRANDS).length ? 'across all brands' : `for ${brandsLabel(userBrands(currentUser))}`;
   const rows=document.getElementById('productRows');
   if(!scoped.length){
     rows.innerHTML=`<tr><td colspan="5"><div class="admin-empty">No products yet — click "Add Product" to create the first one.</div></td></tr>`;
@@ -8995,7 +9306,7 @@ function renderAdminBookings(){
   const scoped=STORE.bookings.filter(bk=>canSeeBrand(currentUser,bk.brand));
   document.getElementById('bookingCount').textContent=scoped.length;
   const scopeLabel=document.getElementById('bookingScopeLabel');
-  if(scopeLabel) scopeLabel.textContent = userBrands(currentUser).length>=Object.keys(BRANDS).length ? 'across all brands' : `for ${brandsLabel(currentUser&&currentUser.brands)}`;
+  if(scopeLabel) scopeLabel.textContent = userBrands(currentUser).length>=Object.keys(BRANDS).length ? 'across all brands' : `for ${brandsLabel(userBrands(currentUser))}`;
   const rows=document.getElementById('bookingRows');
   if(!scoped.length){
     renderReminders();
@@ -9938,7 +10249,7 @@ function renderAdminEmployees(){
   const rows=document.getElementById('employeeRows');
   rows.innerHTML=STORE.users.map((u,i)=>`
     <tr>
-      <td><span class="swdot" style="background:linear-gradient(140deg,#3a3630,#171512);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-family:var(--display);font-size:13.5px;">${esc(u.name[0])}</span>${esc(u.name)}${currentUser&&currentUser.id===u.id?' <span style="color:var(--muted);font-size:12.5px;">(you)</span>':''}</td>
+      <td><span class="swdot" style="background:#f1e3c4;border:1px solid #e4cf9f;display:inline-flex;align-items:center;justify-content:center;color:#3b2e24;font-family:var(--display);font-size:13.5px;">${esc(u.name[0])}</span>${esc(u.name)}${currentUser&&currentUser.id===u.id?' <span style="color:var(--muted);font-size:12.5px;">(you)</span>':''}</td>
       <td><span class="role-pill">${accessLabel(u.tabs)}</span></td>
       <td>${brandsLabel(u.brands)}</td>
       <td>${u.pin}</td>
@@ -10284,7 +10595,7 @@ function printReport(title,bodyHtml){
 window.addEventListener('afterprint',()=>{ const a=document.getElementById('printArea'); if(a) a.innerHTML=''; });
 
 function currentReportScopeText(){
-  return userBrands(currentUser).length>=Object.keys(BRANDS).length ? 'All brands' : brandsLabel(currentUser&&currentUser.brands);
+  return userBrands(currentUser).length>=Object.keys(BRANDS).length ? 'All brands' : brandsLabel(userBrands(currentUser));
 }
 
 function renderAdminReports(){
@@ -10514,7 +10825,7 @@ function renderAdminPurchases(){
   const scoped=STORE.purchases.filter(pu=>canSeeBrand(currentUser,pu.brand));
   document.getElementById('purchaseCount').textContent=scoped.length;
   const scopeLabel=document.getElementById('purchaseScopeLabel');
-  if(scopeLabel) scopeLabel.textContent = userBrands(currentUser).length>=Object.keys(BRANDS).length ? '— across all brands' : `— for ${brandsLabel(currentUser&&currentUser.brands)}`;
+  if(scopeLabel) scopeLabel.textContent = userBrands(currentUser).length>=Object.keys(BRANDS).length ? '— across all brands' : `— for ${brandsLabel(userBrands(currentUser))}`;
   const rows=document.getElementById('purchaseRows');
   rows.innerHTML = scoped.length ? scoped.slice().reverse().map(pu=>`
     <tr>
