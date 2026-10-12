@@ -2582,6 +2582,18 @@ async function flushOutbox(){
             if(!miss || !(miss in payload)) break;
             noteMissingColumn(spec.table,miss); delete payload[miss];
           }
+          /* A logged-in client's booking refused by the database: almost always a
+             login that has gone stale on this phone (expired, or an account that
+             was deleted and made again). The booking must still reach reception,
+             so send it as a guest booking — same name, phone and time, just not
+             attached to the account. Staff can still find it by phone number. */
+          if(job.clientAuth && job.kind==='bookings' && res && res.error &&
+             (res.error.code==='42501' || /row-level security|permission denied|JWT|jwt/i.test(String(res.error.message||'')))){
+            console.warn('Client booking refused (',res.error.message,') — sending as a guest booking instead.');
+            const guestPayload={...payload, client_id:null};
+            const g=anonSupa()||supa;
+            res=await g.from(spec.table).insert(guestPayload);
+          }
         }
       }catch(netErr){ lastSyncError='offline'; break; }
       // A record that is already there is not a failure. It happens when the
