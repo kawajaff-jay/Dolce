@@ -8366,10 +8366,35 @@ function brandOptionsHtml(selectedBrand){
 }
 const CUR_USER_KEY='odc_current_user';
 let currentUser=null;
+/* Who is logged in, with their access (sections, brands, owner). The staff
+   list on the login screen only has names, so the access saved at login is
+   kept separately and re-read from the server on start-up. */
+const CUR_PROFILE_KEY='odc_current_profile';
+function rememberProfile(u){
+  try{ localStorage.setItem(CUR_PROFILE_KEY,JSON.stringify({id:u.id,name:u.name,brands:u.brands||[],tabs:u.tabs||[],isOwner:!!u.isOwner})); }catch(e){}
+}
 try{
   const savedId=localStorage.getItem(CUR_USER_KEY);
-  if(savedId) currentUser=STORE.users.find(u=>u.id===savedId)||null;
+  if(savedId){
+    let prof=null; try{ prof=JSON.parse(localStorage.getItem(CUR_PROFILE_KEY)||'null'); }catch(e){}
+    const listed=STORE.users.find(u=>u.id===savedId)||null;
+    currentUser=(prof&&prof.id===savedId)?{...(listed||{}),...prof}:listed;
+  }
 }catch(e){}
+// Refresh the logged-in person's access from the server (owner, sections, brands).
+async function refreshMyProfile(){
+  if(!supa||!currentUser) return false;
+  try{
+    const {data:sess}=await supa.auth.getSession(); const uid=sess&&sess.session&&sess.session.user&&sess.session.user.id;
+    if(!uid) return false;
+    const {data:profile,error}=await supa.from('profiles').select('*').eq('id',uid).maybeSingle();
+    if(error||!profile) return false;
+    currentUser={...currentUser,id:profile.id,name:profile.name,brands:profile.brands||[],tabs:profile.tabs||[],isOwner:!!profile.is_owner};
+    rememberProfile(currentUser);
+    try{ localStorage.setItem(CUR_USER_KEY,currentUser.id); }catch(e){}
+    return true;
+  }catch(e){ return false; }
+}
 // Someone returning to a page they were already signed into should also get
 // the diary kept current, not only someone who has just typed their PIN.
 if(typeof window!=='undefined'){
@@ -8377,7 +8402,10 @@ if(typeof window!=='undefined'){
     if(currentUser && typeof startAdminLiveRefresh==='function') startAdminLiveRefresh();
     // Remembered as logged in, but is the database login still there?
     if(currentUser && supa){
-      isStaffSignedIn().then(ok=>{ if(!ok && currentUser) handleStaffLoginLost(); });
+      isStaffSignedIn().then(ok=>{
+        if(!ok && currentUser){ handleStaffLoginLost(); return; }
+        refreshMyProfile().then(ch=>{ const a=document.getElementById('adminAuthed'); if(ch && a && a.style.display!=='none') showAdminForRole(); });
+      });
     }
   });
 }
@@ -8508,6 +8536,7 @@ async function staffAuthenticate(u,entered){
 }
 function enterAdmin(user){
   currentUser=user;
+  rememberProfile(user);
   loginSelected=null;
   handleStaffLoginLost.shown=false;
   try{ localStorage.setItem(CUR_USER_KEY,currentUser.id); }catch(e){}
@@ -8626,7 +8655,7 @@ function showAdminForRole(){
   document.getElementById('logoutBtn').addEventListener('click',async()=>{
     if(supa){ try{ await supa.auth.signOut(); }catch(e){} }
     currentUser=null;
-    try{ localStorage.removeItem(CUR_USER_KEY); }catch(e){}
+    try{ localStorage.removeItem(CUR_USER_KEY); localStorage.removeItem(CUR_PROFILE_KEY); }catch(e){}
     document.getElementById('adminAuthed').style.display='none';
     document.getElementById('adminLogin').style.display='';
     loginSelected=null;
@@ -9470,7 +9499,16 @@ function renderAdminBookings(){
   }
   renderReminders();
   const nextStatus={Requested:'Confirmed',Confirmed:'Completed'};
-  rows.innerHTML=scoped.slice().reverse().map((bk)=>{
+  const nowT=Date.now()-60*60*1000;
+  const tOf=(b)=>{ const t=bookingTime(b); return isNaN(t)?null:t; };
+  const ordered=scoped.slice().sort((a,b)=>{
+    const ta=tOf(a), tb=tOf(b);
+    if(ta===null||tb===null) return (ta===null)-(tb===null);
+    const fa=ta>=nowT, fb=tb>=nowT;
+    if(fa!==fb) return fa?-1:1;               // upcoming before past
+    return fa ? ta-tb : tb-ta;                // upcoming: soonest first; past: newest first
+  });
+  rows.innerHTML=ordered.map((bk)=>{
     const i=STORE.bookings.indexOf(bk);
     const advance=nextStatus[bk.status];
     const locked=isDateBrandClosed(bk.date,bk.brand);
