@@ -1907,7 +1907,7 @@
 
     <div class="admin-panel" id="adminBookings">
       <div class="admin-toolbar">
-        <div style="font-size:14px;color:var(--ink-soft);"><span id="bookingCount">0</span> bookings this day <span id="bookingScopeLabel">across all brands</span> <span id="bookingFresh" style="color:var(--muted);"></span></div>
+        <div style="font-size:14px;color:var(--ink-soft);"><span id="bookingCount">0</span> <span id="bookingWord">bookings</span> this day <span id="bookingScopeLabel">across all brands</span> <span id="bookingFresh" style="color:var(--muted);"></span></div>
         <div style="display:flex;gap:8px;">
           <button class="btn btn-ghost" id="refreshBookingsBtn">↻ Refresh</button>
           <button class="btn btn-primary" id="addBookingBtn">+ Add Booking</button>
@@ -9919,6 +9919,7 @@ function renderAdminBookings(){
   renderBookingDayBar(allScoped);
   const scoped=allScoped.filter(bk=>bookingDayKey(bk)===bookingDay);
   document.getElementById('bookingCount').textContent=scoped.length;
+  { const w=document.getElementById('bookingWord'); if(w) w.textContent=scoped.length===1?'booking':'bookings'; }
   const scopeLabel=document.getElementById('bookingScopeLabel');
   if(scopeLabel) scopeLabel.textContent = userBrands(currentUser).length>=Object.keys(BRANDS).length ? 'across all brands' : `for ${brandsLabel(userBrands(currentUser))}`;
   const rows=document.getElementById('bookingRows');
