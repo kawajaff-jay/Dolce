@@ -143,6 +143,14 @@
   #adminView .status-badge.Confirmed{background:#e2ebf4;color:#2c4f72;}
   #adminView .status-badge.Completed{background:#e2eedd;color:#3c5e33;}
   #adminView .status-badge.Cancelled{background:#f5e0db;color:#8a3226;}
+  #adminView .status-badge.No-show{background:#ece6df;color:#5b4a3c;}
+  #adminView .status-badge.Pending{background:#f4e6c9;color:#6b4c18;}
+  #adminView .status-badge.Refunded{background:#efe3f0;color:#6a3f6e;}
+  #adminView .bk-form{background:#fffdf8;border:1px solid #e9dfcf;border-radius:14px;padding:14px 16px;margin:0 0 14px;display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));align-items:end;}
+  #adminView .bk-form .full{grid-column:1/-1;}
+  #adminView .bk-form .note{font-size:13px;color:var(--muted);}
+  #adminView .bk-form .warn{font-size:13px;color:#8a3226;}
+  #adminView .bk-form label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;}
   #adminView .section-label{color:var(--muted);letter-spacing:.08em;}
   /* header */
   .adm-top{display:flex;align-items:center;gap:14px;margin-bottom:22px;padding:12px 16px;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--adm-shadow);}
@@ -540,6 +548,7 @@
   .status-badge.Confirmed{background:var(--series-1);}
   .status-badge.Completed{background:var(--series-3);}
   .status-badge.Cancelled{background:#b23b3b;}
+  .status-badge.No-show{background:#7a6553;}
   @media (max-width:760px){ .login-cards{grid-template-columns:1fr;} }
 
   /* ---------- Admin: Brand photos ---------- */
@@ -1612,6 +1621,16 @@
   .cl-method{display:flex;gap:4px;padding:4px;margin:4px 0 18px;border-radius:999px;background:rgba(28,26,22,.06);}
   .cl-method button{flex:1;padding:10px 12px;border:0;border-radius:999px;background:transparent;color:var(--ink-soft,#6b6257);font:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:background .2s ease,color .2s ease,box-shadow .2s ease;}
   .cl-method button.on{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(28,26,22,.12);}
+  .bs-guest input{margin-top:8px;}
+  .bs-placed .bs-ok{font-weight:700;color:#3c5e33;margin:6px 0;}
+  .bs-order.wa{display:block;text-align:center;}
+  #adminView .ord-list{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));}
+  #adminView .ord-card{background:#fffdf8;border:1px solid #e9dfcf;border-radius:14px;padding:14px 16px;display:grid;gap:6px;}
+  #adminView .ord-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  #adminView .ord-items div,#adminView .ord-total{display:flex;justify-content:space-between;gap:10px;font-size:14px;}
+  #adminView .ord-total{border-top:1px solid #efe6d8;padding-top:6px;}
+  .cl-change{display:flex;gap:18px;justify-content:flex-end;margin:-4px 4px 12px;}
+  .cl-move{display:grid;gap:8px;margin:0 0 14px;}
   .cl-guest{display:block;width:100%;padding:15px 18px;border-radius:999px;border:1px solid rgba(28,26,22,.22);background:transparent;color:var(--ink);font:inherit;font-size:15px;font-weight:600;cursor:pointer;}
   .cl-guest:active{background:rgba(28,26,22,.05);}
 
@@ -1776,6 +1795,7 @@
       <button data-admin-tab="employees"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19.5c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="16.8" cy="9.2" r="2.5"/><path d="M15.8 14.6c2.4.1 4.1 1.8 4.7 4.4"/></svg><span>Employees</span></button>
       <button data-admin-tab="reports"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20.5h16"/><path d="M7 17V11M12 17V6.5M17 17v-8"/></svg><span>Reports</span></button>
       <button data-admin-tab="purchases"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.8 7.5L12 3.5l8.2 4v9L12 20.5l-8.2-4z"/><path d="M3.8 7.5L12 11.5l8.2-4M12 11.5v9"/></svg><span>Restocking</span></button>
+      <button data-admin-tab="orders"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4.5h12l1 15.5H5z"/><path d="M9 8.5h6M9 12h6M9 15.5h4"/></svg><span>Shop orders</span></button>
       <div class="adm-nav-sep" aria-hidden="true"></div>
       <button data-admin-tab="settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span>Settings</span></button>
     </nav>
@@ -1907,7 +1927,7 @@
       <div id="employeeFormWrap"></div>
       <div class="admin-table-wrap">
         <table class="admin-table">
-          <thead><tr><th>Name</th><th>Role</th><th>Department</th><th>PIN</th><th></th></tr></thead>
+          <thead><tr><th>Name</th><th>Role</th><th>Department</th><th>Sign-in</th><th></th></tr></thead>
           <tbody id="employeeRows"></tbody>
         </table>
       </div>
@@ -1958,6 +1978,10 @@
 
     <div class="admin-panel" id="adminLoyalty">
       <div id="loyaltyWrap"></div>
+    </div>
+
+    <div class="admin-panel" id="adminOrders">
+      <div id="ordersWrap"></div>
     </div>
 
     <div class="admin-panel" id="adminPurchases">
@@ -2173,7 +2197,9 @@ function loadStore(){
         if(!parsed.clients) parsed.clients=defaultStore().clients;
         if(!parsed.brandImages) parsed.brandImages=defaultStore().brandImages;
         if(!parsed.destinations || typeof parsed.destinations!=='object') parsed.destinations={};
-        if(!parsed.users) parsed.users=defaultStore().users;
+        if(!parsed.users) parsed.users=[];
+        parsed.users=parsed.users.map(u=>{ const {pin,...rest}=u||{}; return rest; });   // drop PINs saved by older versions
+        if(!parsed.orders) parsed.orders=[];
         if(!parsed.purchases) parsed.purchases=[];
         if(!parsed.productSales) parsed.productSales=[];
         if(!parsed.registerCloses) parsed.registerCloses=[];
@@ -2205,8 +2231,14 @@ function loadStore(){
   }catch(e){}
   return defaultStore();
 }
+// PINs are never written to this device: they are checked by the server
+// (Edge Function "staff-auth"), and a PIN kept in the browser's storage could
+// be read by anyone with the device.
 function saveStore(){
-  try{ localStorage.setItem(STORE_KEY, JSON.stringify(STORE)); return true; }catch(e){ return false; }
+  try{
+    const copy={...STORE, users:(STORE.users||[]).map(u=>{ const {pin,...rest}=u||{}; return rest; })};
+    localStorage.setItem(STORE_KEY, JSON.stringify(copy)); return true;
+  }catch(e){ return false; }
 }
 let STORE = loadStore();
 
@@ -2354,11 +2386,14 @@ const CLOUD_TABLES={
     row:(b)=>({id:b.id,brand:b.brand,service_id:b.serviceId||'',service_name:b.serviceName||'',
       date_label:b.date||'',time_label:b.time||'',date_iso:toIsoDate(b.date),
       status:b.status||'Requested',client_name:b.clientName||'',client_id:b.clientId||null,
-      client_phone:b.phone||'',aftercare_ok:!!b.aftercareOk,lang:b.lang||'',reminders:b.reminders||{},source:b.source||''}),
+      client_phone:b.phone||'',aftercare_ok:!!b.aftercareOk,lang:b.lang||'',reminders:b.reminders||{},source:b.source||'',
+      reschedule_log:Array.isArray(b.rescheduleLog)?b.rescheduleLog:[]}),
     app:(r)=>({id:r.id,brand:r.brand,serviceId:r.service_id||'',serviceName:r.service_name||'',
       date:r.date_label||'',time:r.time_label||'',status:r.status,clientName:r.client_name||'',
       clientId:r.client_id||undefined,phone:r.client_phone||'',aftercareOk:!!r.aftercare_ok,
-      lang:r.lang||'',reminders:(r.reminders&&typeof r.reminders==='object')?r.reminders:{},source:r.source||''}),
+      lang:r.lang||'',reminders:(r.reminders&&typeof r.reminders==='object')?r.reminders:{},source:r.source||'',
+      rescheduleLog:Array.isArray(r.reschedule_log)?r.reschedule_log:[],refundedUsd:Number(r.refunded_usd)||0,
+      dateIso:r.date_iso||'',startAt:r.start_at||''}),
   },
   media:{
     table:'media',
@@ -2874,7 +2909,7 @@ async function pullCatalog(){
       supa.from('products').select('*'),
       supa.from('offers').select('*'),
       supa.from('brand_images').select('*'),
-      supa.from('settings').select('*').in('key',['usd_to_iqd','image_focus','destinations','client_login','wa_templates','hours','loyalty','categories:dolce','categories:polished','categories:core']),
+      supa.from('settings').select('*').in('key',['usd_to_iqd','image_focus','destinations','client_login','wa_templates','hours','loyalty','client_booking_changes','categories:dolce','categories:polished','categories:core']),
     ]);
     if(svc.error||prod.error||off.error) return false;
 
@@ -2913,6 +2948,11 @@ async function pullCatalog(){
       const hrRow=row('hours');
       if(hrRow && hrRow.value){
         try{ const v=typeof hrRow.value==='string'?JSON.parse(hrRow.value):hrRow.value; if(v&&typeof v==='object') STORE.hours=v; }catch(e){}
+      }
+      const cbcRow=row('client_booking_changes');
+      if(cbcRow && cbcRow.value){
+        try{ const v=typeof cbcRow.value==='string'?JSON.parse(cbcRow.value):cbcRow.value;
+             if(v&&typeof v==='object') STORE.settings.clientChanges={enabled:v.enabled===true,cutoffHours:(v.cutoff_hours==null?null:Number(v.cutoff_hours))}; }catch(e){}
       }
       const loyRow=row('loyalty');
       if(loyRow && loyRow.value){
@@ -3036,6 +3076,7 @@ async function pullOperational(){
     if(!cl.error) STORE.clients       =mergeFromCloud(STORE.clients,       cl.data||[],CLOUD_TABLES.clients,()=>true);
     saveStore();
     await pullEarnedBookings();
+    if(currentUser && (currentUser.isOwner || (currentAllowedTabs||[]).some(t=>['orders','products','clients','reports','loyalty','overview'].includes(t)))) await pullOrders(true);
     return true;
   }catch(e){ return false; }
 }
@@ -3480,6 +3521,8 @@ Object.assign(I18N.en,{
   deleteNote:'Removes your login, name, number and points. Past appointments stay in our diary as business records.',
   deleted:'Your account has been deleted.',loggedOut:'Logged out.',past:'Past',member:'Member',
   loginPrivacy:'We only use your number to log you in and to contact you about your appointments.',
+  placeOrder:'Place order',orderSaved:'Order {ref} received',orderSavedSub:'Our team will confirm your order with you.',orderWaOptional:'Message us on WhatsApp (optional)',orderRef:'Order',orderOutOfStock:'Sorry — {name} no longer has enough in stock.',tooManyOrders:'Too many orders from this number — please try again later or message us.',orderFailed:'Your order could not be sent. Please try again.',orderNote:'Your order goes straight to our team, who confirm it with you.',
+  cancelBooking:'Cancel booking',changeTime:'Change time',saveNewTime:'Save new time',tooLateChange:'This booking can no longer be changed in the app — please message us.',bookingCancelledMsg:'Booking cancelled.',bookingMovedMsg:'Booking moved — we will confirm the new time.',
   slotTaken:'That time was just taken — please pick another time.',
   linkTitle:'You already have an account',linkLede:'This number already has a Dolce+ account:',linkNote:"To keep your points and bookings in one place, confirm it's you with a code on WhatsApp. After that you can log in with your email or your number.",linkSend:'Send WhatsApp code',linkOther:'Use a different number',loginWith:'Log in with',
   emailLoginTitle:'Log in with your email',
@@ -3516,6 +3559,8 @@ Object.assign(I18N.ar,{
   deleteNote:'يحذف تسجيل دخولك واسمك ورقمك ونقاطك. تبقى مواعيدك السابقة في سجلاتنا كسجلات عمل.',
   deleted:'تم حذف حسابك.',loggedOut:'تم تسجيل الخروج.',past:'السابقة',member:'عضو',
   loginPrivacy:'نستخدم رقمك فقط لتسجيل دخولك وللتواصل معك بخصوص مواعيدك.',
+  placeOrder:'إرسال الطلب',orderSaved:'تم استلام الطلب {ref}',orderSavedSub:'سيتواصل معك فريقنا لتأكيد طلبك.',orderWaOptional:'راسلنا عبر واتساب (اختياري)',orderRef:'الطلب',orderOutOfStock:'عذراً — لم تعد الكمية المتوفرة من {name} كافية.',tooManyOrders:'طلبات كثيرة من هذا الرقم — يرجى المحاولة لاحقاً أو مراسلتنا.',orderFailed:'تعذّر إرسال طلبك. يرجى المحاولة مرة أخرى.',orderNote:'يصل طلبك مباشرة إلى فريقنا، وسيؤكده معك.',
+  cancelBooking:'إلغاء الحجز',changeTime:'تغيير الوقت',saveNewTime:'حفظ الوقت الجديد',tooLateChange:'لم يعد بالإمكان تعديل هذا الحجز من التطبيق — يرجى مراسلتنا.',bookingCancelledMsg:'تم إلغاء الحجز.',bookingMovedMsg:'تم نقل الحجز — سنؤكد الوقت الجديد.',
   slotTaken:'تم حجز هذا الوقت للتو — يرجى اختيار وقت آخر.',
   linkTitle:'لديك حساب بالفعل',linkLede:'هذا الرقم لديه حساب Dolce+ بالفعل:',linkNote:'لإبقاء نقاطك وحجوزاتك في مكان واحد، أكّد أنه أنت برمز يصلك على واتساب. بعدها يمكنك الدخول ببريدك الإلكتروني أو برقمك.',linkSend:'أرسل الرمز عبر واتساب',linkOther:'استخدم رقماً آخر',loginWith:'الدخول عبر',
   emailLoginTitle:'تسجيل الدخول بالبريد الإلكتروني',
@@ -3552,6 +3597,8 @@ Object.assign(I18N.ku,{
   deleteNote:'چوونەژوورەوە، ناو، ژمارە و خاڵەکانت دەسڕێتەوە. کاتە پێشووەکانت وەک تۆماری کار لەلامان دەمێننەوە.',
   deleted:'هەژمارەکەت سڕایەوە.',loggedOut:'چوویتە دەرەوە.',past:'پێشوو',member:'ئەندام',
   loginPrivacy:'ژمارەکەت تەنها بۆ چوونەژوورەوە و پەیوەندیکردن سەبارەت بە کاتەکانت بەکاردەهێنین.',
+  placeOrder:'ناردنی داواکاری',orderSaved:'داواکاری {ref} وەرگیرا',orderSavedSub:'تیمەکەمان پەیوەندیت پێوە دەکات بۆ پشتڕاستکردنەوەی داواکارییەکەت.',orderWaOptional:'لە واتساپ نامەمان بۆ بنێرە (ئارەزوومەندانە)',orderRef:'داواکاری',orderOutOfStock:'ببورە — {name} بەشی پێویست لە کۆگادا نەماوە.',tooManyOrders:'داواکاری زۆر لەم ژمارەیەوە — تکایە دواتر هەوڵ بدەرەوە یان نامەمان بۆ بنێرە.',orderFailed:'داواکارییەکەت نەنێردرا. تکایە دووبارە هەوڵ بدەرەوە.',orderNote:'داواکارییەکەت ڕاستەوخۆ دەگاتە تیمەکەمان و پشتڕاستی دەکەنەوە لەگەڵت.',
+  cancelBooking:'هەڵوەشاندنەوەی حجز',changeTime:'گۆڕینی کات',saveNewTime:'پاشەکەوتکردنی کاتی نوێ',tooLateChange:'ئیتر ناتوانرێت ئەم حجزە لە ئەپەکەدا بگۆڕدرێت — تکایە نامەمان بۆ بنێرە.',bookingCancelledMsg:'حجزەکە هەڵوەشێندرایەوە.',bookingMovedMsg:'حجزەکە گوازرایەوە — کاتە نوێیەکە پشتڕاست دەکەینەوە.',
   slotTaken:'ئەم کاتە ئێستا حجز کرا — تکایە کاتێکی تر هەڵبژێرە.',
   linkTitle:'تۆ پێشتر هەژمارت هەیە',linkLede:'ئەم ژمارەیە پێشتر هەژماری Dolce+ ی هەیە:',linkNote:'بۆ ئەوەی خاڵ و حجزەکانت لە یەک شوێن بمێنن، بە کۆدێک لە واتساپ پشتڕاستی بکەرەوە کە خۆتی. دوای ئەوە دەتوانیت بە ئیمەیڵ یان ژمارەکەت بچیتە ژوورەوە.',linkSend:'ناردنی کۆد بە واتساپ',linkOther:'ژمارەیەکی تر بەکاربهێنە',loginWith:'چوونەژوورەوە بە',
   emailLoginTitle:'چوونەژوورەوە بە ئیمەیڵ',
@@ -3698,7 +3745,7 @@ Object.assign(I18N.en,{
   rewardsShop:'Rewards shop',redeemAtDesk:'To redeem, show this screen at reception — the points come off your balance straight away.',
   canRedeem:'Available',needMore:'{n} pts to go',historyTitle:'Points history',
   noHistory:'No points yet — they are added when a visit is completed.',
-  kEarn:'Visit',kRedeem:'Reward',kAdjust:'Adjustment',kBonus:'Bonus',kExpire:'Expired',kOpening:'Opening balance',brandAll:'All brands'
+  kEarn:'Visit',kReverse:'Refund',kRedeem:'Reward',kAdjust:'Adjustment',kBonus:'Bonus',kExpire:'Expired',kOpening:'Opening balance',brandAll:'All brands'
 });
 Object.assign(I18N.ar,{
   dpMember:'عضو D+',dpGold:'D+ الذهبي',dpBlack:'D+ الأسود',ptsWord:'نقطة',
@@ -3707,7 +3754,7 @@ Object.assign(I18N.ar,{
   rewardsShop:'متجر المكافآت',redeemAtDesk:'للاستبدال، أظهري هذه الشاشة في الاستقبال — تُخصم النقاط من رصيدك فوراً.',
   canRedeem:'متاحة لكِ',needMore:'باقي {n} نقطة',historyTitle:'سجل النقاط',
   noHistory:'لا نقاط بعد — تُضاف عند إتمام زيارتك.',
-  kEarn:'زيارة',kRedeem:'مكافأة',kAdjust:'تعديل',kBonus:'مكافأة إضافية',kExpire:'انتهت صلاحيتها',kOpening:'الرصيد السابق',brandAll:'كل الأقسام'
+  kEarn:'زيارة',kReverse:'استرداد',kRedeem:'مكافأة',kAdjust:'تعديل',kBonus:'مكافأة إضافية',kExpire:'انتهت صلاحيتها',kOpening:'الرصيد السابق',brandAll:'كل الأقسام'
 });
 Object.assign(I18N.ku,{
   dpMember:'ئەندامی D+',dpGold:'D+ ئاڵتوونی',dpBlack:'D+ ڕەش',ptsWord:'خاڵ',
@@ -3716,7 +3763,7 @@ Object.assign(I18N.ku,{
   rewardsShop:'دوکانی خەڵاتەکان',redeemAtDesk:'بۆ وەرگرتنی خەڵات، ئەم شاشەیە لە پێشوازی پیشان بدە — خاڵەکان ڕاستەوخۆ لە باڵانسەکەت کەم دەکرێنەوە.',
   canRedeem:'بەردەستە',needMore:'{n} خاڵی ماوە',historyTitle:'مێژووی خاڵەکان',
   noHistory:'هێشتا خاڵ نییە — کاتێک سەردانەکەت تەواو دەبێت زیاد دەکرێن.',
-  kEarn:'سەردان',kRedeem:'خەڵات',kAdjust:'ڕاستکردنەوە',kBonus:'خاڵی زیادە',kExpire:'بەسەرچوو',kOpening:'باڵانسی پێشوو',brandAll:'هەموو بەشەکان'
+  kEarn:'سەردان',kReverse:'گەڕاندنەوەی پارە',kRedeem:'خەڵات',kAdjust:'ڕاستکردنەوە',kBonus:'خاڵی زیادە',kExpire:'بەسەرچوو',kOpening:'باڵانسی پێشوو',brandAll:'هەموو بەشەکان'
 });
 function t(k){return (I18N[lang] && I18N[lang][k]) || I18N.en[k] || k;}
 
@@ -4098,16 +4145,79 @@ function splitBookings(list){
   const today=new Date(); today.setHours(0,0,0,0);
   const up=[],past=[];
   list.forEach(b=>{
-    const d=new Date(b.date); const isPast=(!isNaN(d)&&d<today)||b.status==='Completed'||b.status==='Cancelled';
+    const d=new Date(b.date); const isPast=(!isNaN(d)&&d<today)||b.status==='Completed'||b.status==='Cancelled'||b.status==='No-show';
     (isPast?past:up).push(b);
   });
   return {up,past:past.reverse()};
 }
+
+/* ---- Clients cancelling / moving their own booking ----
+   Built and tested, but OFF: it appears only once the owner has chosen how
+   many hours before an appointment changes are still allowed (settings key
+   'client_booking_changes'). The server checks the same rule again. */
+let clMoveId=null, clMoveDate=null, clMoveTime=null;
+function clientChangesOn(){ const c=STORE.settings&&STORE.settings.clientChanges; return !!(c&&c.enabled&&c.cutoffHours!=null&&clientIn()); }
+function canClientChange(b){
+  if(!clientChangesOn()||!b||!['Requested','Confirmed'].includes(b.status)) return false;
+  if(!clientBookings.some(x=>String(x.id)===String(b.id))) return false;      // only bookings the server knows
+  const at=bookingTime(b); return !isNaN(at) && at-Date.now() >= STORE.settings.clientChanges.cutoffHours*3600e3;
+}
+function clientChangeHtml(b){
+  if(!canClientChange(b)) return '';
+  const id=esc(String(b.id));
+  let move='';
+  if(clMoveId===String(b.id)){
+    // Only times far enough ahead (the same cutoff the server checks).
+    const earliest=Date.now()+STORE.settings.clientChanges.cutoffHours*3600e3;
+    const okSlots=(d)=>availableTimesForDate(b.brand,fmtDate(d),d).filter(x=>!x.past&&!x.taken&&bookingTime({date:fmtDate(d),time:x.time})>=earliest);
+    const dates=upcomingDates(14).filter(d=>dayHours(b.brand,d)&&okSlots(d).length);
+    if(!clMoveDate || !dates.some(d=>sameDay(d,clMoveDate))) clMoveDate=dates[0]||null;
+    const slots=clMoveDate?okSlots(clMoveDate):[];
+    if(!slots.some(x=>x.time===clMoveTime)) clMoveTime=slots[0]?slots[0].time:null;
+    move=`<div class="cl-move">
+      <select id="clMoveDate" class="cl-input">${dates.map(d=>`<option value="${d.toISOString()}" ${clMoveDate&&sameDay(d,clMoveDate)?'selected':''}>${esc(fmtDow(d))} ${esc(fmtDate(d))}</option>`).join('')}</select>
+      <select id="clMoveTime" class="cl-input">${slots.map(x=>`<option ${x.time===clMoveTime?'selected':''}>${esc(x.time)}</option>`).join('')}</select>
+      <button class="primary-btn" id="clMoveSave" data-cl-id="${id}" ${clMoveTime?'':'disabled'}>${t('saveNewTime')}</button>
+    </div>`;
+  }
+  return `<div class="cl-change"><button class="lux-link" data-cl-move="${id}">${t('changeTime')}</button>
+    <button class="lux-link" data-cl-cancel="${id}">${t('cancelBooking')}</button></div>${move}`;
+}
+function clientChangeError(m){
+  m=String(m||'');
+  if(/TOO_LATE/.test(m)) return t('tooLateChange');
+  if(/SLOT_TAKEN/.test(m)) return t('slotTaken');
+  if(/CLIENT_CHANGES_DISABLED/.test(m)) return t('tooLateChange');
+  if(/fetch|network/i.test(m)) return t('offline');
+  return t('sendFailed');
+}
+function bindClientChanges(root){
+  root.querySelectorAll('[data-cl-cancel]').forEach(b=>b.addEventListener('click',async()=>{
+    if(!confirmTap(b,t('cancelBooking')+'?')) return;
+    b.disabled=true;
+    let res; try{ res=await clientSupa().rpc('client_cancel_booking',{p_id:b.dataset.clCancel}); }catch(e){ res={error:{message:'fetch'}}; }
+    if(res.error){ b.disabled=false; toast(clientChangeError(res.error.message)); return; }
+    toast(t('bookingCancelledMsg')); await loadMyBookings(); navDirection='none'; render();
+  }));
+  root.querySelectorAll('[data-cl-move]').forEach(b=>b.addEventListener('click',()=>{
+    clMoveId=clMoveId===b.dataset.clMove?null:b.dataset.clMove; clMoveDate=null; clMoveTime=null; navDirection='none'; render();
+  }));
+  const ds=root.querySelector('#clMoveDate'); if(ds) ds.addEventListener('change',()=>{ clMoveDate=new Date(ds.value); clMoveTime=null; navDirection='none'; render(); });
+  const ts=root.querySelector('#clMoveTime'); if(ts) ts.addEventListener('change',()=>{ clMoveTime=ts.value; });
+  const sv=root.querySelector('#clMoveSave'); if(sv) sv.addEventListener('click',async()=>{
+    if(!clMoveDate||!clMoveTime) return;
+    sv.disabled=true;
+    let res; try{ res=await clientSupa().rpc('client_reschedule_booking',{p_id:sv.dataset.clId,p_date:isoOf(clMoveDate),p_time:clMoveTime}); }catch(e){ res={error:{message:'fetch'}}; }
+    if(res.error){ sv.disabled=false; toast(clientChangeError(res.error.message)); return; }
+    clMoveId=null; toast(t('bookingMovedMsg')); await loadMyBookings(); navDirection='none'; render();
+  });
+}
+
 function renderBookings(){
   const {up,past}=splitBookings(myBookingList().filter(b=>BRANDS[b.brand]));
   return `
     <section class="lux-sec">${LuxHeader(t('upcoming'))}
-      ${up.length?up.map(b=>PreviewBookingCard(bookingCardData(b))).join(''):`<p class="lux-lede">${t('noBookings')}</p>`}
+      ${up.length?up.map(b=>PreviewBookingCard(bookingCardData(b))+clientChangeHtml(b)).join(''):`<p class="lux-lede">${t('noBookings')}</p>`}
     </section>
     ${past.length?`<section class="lux-sec">${LuxHeader(t('past'))}${past.slice(0,20).map(b=>PreviewBookingCard(bookingCardData(b))).join('')}</section>`:''}`;
 }
@@ -4434,7 +4544,9 @@ function basketOrderText(brand,lines){
 }
 function basketSheetBodyHtml(){
   const lines=basketLines();
+  const placed=Object.keys(basketPlaced).map(placedOrderHtml).join('');
   if(!lines.length){
+    if(placed) return placed+(currentScreen==='shop'?'':`<button class="primary-btn lux-primary" id="bsBrowse" style="margin-top:6px;">${t('browseShop')}</button>`);
     return `<div class="bs-empty"><div class="ic">${ICONS.bag}</div><b>${t('basketEmpty')}</b><p>${t('basketEmptySub')}</p>
       ${currentScreen==='shop'?'':`<button class="primary-btn lux-primary" id="bsBrowse" style="margin-top:0;">${t('browseShop')}</button>`}</div>`;
   }
@@ -4444,19 +4556,21 @@ function basketSheetBodyHtml(){
     const ls=lines.filter(l=>l.p&&l.p.brand===b);
     const okLines=ls.filter(l=>l.ok);
     const sub=roundMoney(basketTotal(ls));
-    const href=okLines.length?`https://wa.me/${BRAND_WHATSAPP[b]||BRAND_WHATSAPP.dolce}?text=${encodeURIComponent(basketOrderText(b,okLines))}`:'#';
     return `<div class="bs-group" data-bs-brand="${b}">
       <div class="bs-brand"><i style="background:${BRANDS[b].c1||'var(--gold)'}"></i>${esc(BRANDS[b].name)}</div>
       ${ls.map(lineHtml).join('')}
       <div class="bs-sub"><span>${t('subtotal')}</span><b>${fmtMoney(sub)}</b></div>
-      <a class="bs-order ${okLines.length?'':'off'}" data-bs-order="${b}" href="${href}" target="_blank" rel="noopener">💬 ${t('orderOnWa')}</a>
-      <button class="bs-sent" data-bs-sent="${b}">✓ ${t('sentClear')}</button>
+      <button class="bs-order ${okLines.length?'':'off'}" data-bs-place="${b}" ${okLines.length?'':'disabled'}>${t('placeOrder')}</button>
     </div>`;
   }).join('');
   const goneHtml=gone.length?`<div class="bs-group">${gone.map(lineHtml).join('')}</div>`:'';
-  return `${groups}${goneHtml}
+  const g=loadGuestDetails();
+  const guest=clientIn()?'':`<div class="bs-group bs-guest"><div class="bs-brand">${t('yourDetails')}</div>
+      <input class="cl-input" id="bsGuestName" type="text" autocomplete="name" placeholder="${attr(t('yourName'))}" value="${attr(g.name||'')}">
+      ${phoneFieldHtml('bsGuestPhone',g.phoneIso?'':g.phone,'cl-input',g.phoneIso,g.phoneNat)}</div>`;
+  return `${placed}${guest}${groups}${goneHtml}
     ${brands.length>1?`<div class="bs-total"><span>${t('total')}</span><b>${fmtMoney(roundMoney(basketTotal(lines)))}</b></div>`:''}
-    <div class="bs-note">${t('waOrderNote')}${brands.length>1?' '+t('basketOneBrand'):''}</div>
+    <div class="bs-note">${t('orderNote')}${brands.length>1?' '+t('basketOneBrand'):''}</div>
     <button class="bs-clear" id="bsClear">${t('clearBasket')}</button>`;
   function lineHtml(l){
     const p=l.p;
@@ -4482,11 +4596,70 @@ function basketSheetHtml(){
   </div>`;
 }
 const basketSent={};  // brands whose WhatsApp order was opened this visit
+/* ---- Placing a shop order from the bag ----
+   The order and its items are saved on the server, which uses its own prices
+   and checks stock. WhatsApp afterwards is only a way to talk to the team —
+   opening it does not confirm or pay anything. Retrying uses the same order
+   id, so a lost reply can never create a second order. */
+const basketOrderIds={};      // brand -> order id being placed (reused on retry)
+const basketPlaced={};        // brand -> {ref,total,text} placed on this visit
+async function placeBrandOrder(brand,btn){
+  const lines=basketLines().filter(l=>l.p&&l.p.brand===brand&&l.ok);
+  if(!lines.length) return;
+  let name='', phone='', cs=null;
+  if(clientIn()){ cs=clientSupa(); }
+  else{
+    const nm=document.getElementById('bsGuestName');
+    name=nm?nm.value.trim():''; phone=readPhoneField('bsGuestPhone')||'';
+    if(!name){ toast(t('needName')); if(nm) nm.focus(); return; }
+    if(!phone){ toast(t('needPhone')); const pe=document.getElementById('bsGuestPhone'); if(pe) pe.focus(); return; }
+    const g=loadGuestDetails(); const cc=document.getElementById('bsGuestPhone_cc');
+    saveGuestDetails({...g,name,phone,phoneIso:cc?cc.value:'',phoneNat:(document.getElementById('bsGuestPhone')||{}).value||''});
+    cs=anonSupa();
+  }
+  if(!cs){ toast(t('offline')); return; }
+  const id=basketOrderIds[brand]||(basketOrderIds[brand]=nextId('o',[]));
+  const items=lines.map(l=>({product_id:String(l.id),qty:Math.min(l.qty,l.stock),option:l.opt||''}));
+  const text=basketOrderText(brand,lines);
+  btn.disabled=true; btn.textContent=t('sending');
+  let res; try{ res=await cs.rpc('place_order',{p_id:id,p_brand:brand,p_items:items,p_name:name||null,p_phone:phone||null,p_lang:lang}); }
+  catch(e){ res={error:{message:'fetch'}}; }
+  if(res.error){
+    btn.disabled=false; btn.textContent=t('placeOrder');
+    const m=String(res.error.message||'');
+    if(/OUT_OF_STOCK:(.*)/.test(m)) toast(t('orderOutOfStock').replace('{name}',m.split(':').slice(1).join(':').trim()));
+    else if(/UNAVAILABLE/.test(m)) toast(t('unavailable'));
+    else if(/PHONE_REQUIRED/.test(m)) toast(t('needPhone'));
+    else if(/NAME_REQUIRED/.test(m)) toast(t('needName'));
+    else if(/TOO_MANY_ORDERS/.test(m)) toast(t('tooManyOrders'));
+    else if(/fetch|network/i.test(m)) toast(t('offline'));
+    else toast(t('orderFailed'));
+    return;
+  }
+  const row=Array.isArray(res.data)?res.data[0]:res.data;
+  basketPlaced[brand]={ref:row&&row.order_ref||'',total:Number(row&&row.total_usd)||0,text};
+  delete basketOrderIds[brand];
+  basket=basket.filter(l=>{ const p=productById(l.id); return !(p&&p.brand===brand); });
+  saveBasket(); updateBasketUI(); paintBasketSheet(); haptic();
+}
+function placedOrderHtml(b){
+  const o=basketPlaced[b]; if(!o) return '';
+  const wa=`https://wa.me/${BRAND_WHATSAPP[b]||BRAND_WHATSAPP.dolce}?text=${encodeURIComponent(o.text+'\n\n'+t('orderRef')+': '+o.ref)}`;
+  return `<div class="bs-group bs-placed">
+    <div class="bs-brand"><i style="background:${BRANDS[b].c1||'var(--gold)'}"></i>${esc(BRANDS[b].name)}</div>
+    <div class="bs-ok">✓ ${esc(t('orderSaved').replace('{ref}',o.ref))}</div>
+    <div class="bs-sub"><span>${t('total')}</span><b>${fmtMoney(o.total)}</b></div>
+    <p class="bs-note" style="margin:6px 0 10px;">${t('orderSavedSub')}</p>
+    <a class="bs-order wa" href="${wa}" target="_blank" rel="noopener">💬 ${t('orderWaOptional')}</a>
+  </div>`;
+}
+
 function paintBasketSheet(){
   const body=document.getElementById('bsBody'); if(!body) return;
   const top=body.scrollTop;
   body.innerHTML=basketSheetBodyHtml();
   body.scrollTop=top;
+  if(typeof bindPhoneFields==='function') bindPhoneFields(body);
   Object.keys(basketSent).forEach(b=>{ const g=body.querySelector(`[data-bs-brand="${b}"]`); if(g) g.classList.add('sent'); });
 }
 function openBasket(){
@@ -4532,12 +4705,13 @@ function bindBasket(){
   sheetDragToClose(sh,back);
   sh.addEventListener('click',e=>{
     const inc=e.target.closest('[data-bs-inc]'), dec=e.target.closest('[data-bs-dec]'), del=e.target.closest('[data-bs-del]');
-    const order=e.target.closest('[data-bs-order]'), sent=e.target.closest('[data-bs-sent]');
+    const order=e.target.closest('[data-bs-order]'), sent=e.target.closest('[data-bs-sent]'), place=e.target.closest('[data-bs-place]');
     const lineOf=(k)=>basket.find(x=>lineKey(x)===k);
     if(inc){ const l=lineOf(inc.dataset.bsInc); const p=l&&productById(l.id);
              if(p&&basketQty(l.id)<numOr0(p.stock)) setBasketQty(inc.dataset.bsInc,l.qty+1); else toast(t('maxStock')); }
     else if(dec){ const l=lineOf(dec.dataset.bsDec); if(l) setBasketQty(dec.dataset.bsDec,l.qty-1); }
     else if(del){ setBasketQty(del.dataset.bsDel,0); }
+    else if(place){ if(!place.disabled) placeBrandOrder(place.dataset.bsPlace,place); }
     else if(order){ basketSent[order.dataset.bsOrder]=1; setTimeout(paintBasketSheet,300); }
     else if(sent){
       const b=sent.dataset.bsSent;
@@ -6981,6 +7155,7 @@ function bindScreen(){
     applyI18n(); render();
   }));
   screenEl.querySelectorAll('[data-nav]').forEach(el=>el.addEventListener('click',()=>navTo(el.dataset.nav)));
+  if(currentScreen==='bookings') bindClientChanges(screenEl);
 
   // ---- Client login (WhatsApp code) ----
   const busyBtn=(btn,label)=>{ if(btn){ btn.disabled=true; btn.dataset.label=btn.innerHTML; btn.innerHTML=label; } };
@@ -8250,9 +8425,12 @@ function renderOverviewStats(){
   const last30=bks.filter(x=>x.d>=from30&&x.d<=to);
   const prev30=bks.filter(x=>x.d>=prevFrom&&x.d<from30);
   const sales=(STORE.productSales||[]).filter(x=>see(x.brand)).map(x=>({x,d:overviewIso(x.date)})).filter(x=>x.d);
-  const bkRev=(list)=>list.filter(x=>x.b.status==='Completed').reduce((s,x)=>s+(bookingPrice(x.b)||0),0);
+  // Refunds come off: visit refunds from the visit, shop refunds on the day they were made.
+  const bkRev=(list)=>list.filter(x=>x.b.status==='Completed').reduce((s,x)=>s+Math.max(0,(bookingPrice(x.b)||0)-(Number(x.b.refundedUsd)||0)),0);
   const saleRev=(from,until)=>sales.filter(y=>y.d>=from&&y.d<=until).reduce((s,y)=>s+(Number(y.x.total)||0),0);
-  const rev30=bkRev(last30)+saleRev(from30,to);
+  const orderRefunds=(from,until)=>(STORE.orders||[]).filter(o=>see(o.brand)).reduce((s,o)=>s+(o.refunds||[])
+    .filter(f=>{ const d=String(f.at||'').slice(0,10); return d>=from&&d<=until; }).reduce((a,f)=>a+(Number(f.amount)||0),0),0);
+  const rev30=bkRev(last30)+saleRev(from30,to)-orderRefunds(from30,to);
   const n=(v)=>Number(v||0).toLocaleString('en-US');
   const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
   set('stBookings',n(last30.length));
@@ -8570,7 +8748,7 @@ function renderLogin(){
             <span class="av">${esc((u.name||'?')[0])}</span>
             <span class="nm">${esc(u.name)}</span>
             <span class="lc-role">${role?`<span class="role-pill">${esc(role)}</span>`:''}</span>
-            ${!supa?`<span class="cap">Demo PIN: ${esc(u.pin)}</span>`:''}
+
           </button>`; }).join('')}
       </div>`:`<div class="adm-empty">No staff accounts found yet — check the connection, then reload.</div>`}
       <div class="login-pin${loginSelected?' show':''}" id="loginPin" ${loginSelected?'':'hidden'}>
@@ -8651,24 +8829,54 @@ function renderLogin(){
 }
 // Checks the PIN — unchanged rules: Supabase verifies it (offline, only local
 // demo accounts with a real PIN on this device can sign in).
+/* Staff sign-in goes through the server (Edge Function "staff-auth"): it
+   checks the PIN, counts wrong tries and locks the login for a while after
+   too many. Until that function is deployed (404) the older direct check is
+   used, so the Admin App keeps working during the switch-over. */
+const STAFF_AUTH_URL=SUPABASE_URL+'/functions/v1/staff-auth';
+async function callStaffAuth(body,token){
+  try{
+    const r=await fetch(STAFF_AUTH_URL,{method:'POST',headers:{'Content-Type':'application/json',apikey:SUPABASE_ANON_KEY,
+      Authorization:'Bearer '+(token||SUPABASE_ANON_KEY)},body:JSON.stringify(body)});
+    let data={}; try{ data=await r.json(); }catch(e){}
+    return {status:r.status,data};
+  }catch(e){ return {status:0,data:{}}; }
+}
+async function staffToken(){ try{ const {data}=await supa.auth.getSession(); return data&&data.session?data.session.access_token:''; }catch(e){ return ''; } }
+function lockedUntilText(until){
+  try{ const d=new Date(until); if(!isNaN(d)) return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }catch(e){}
+  return 'a few minutes';
+}
 async function staffAuthenticate(u,entered){
   if(supa){
     if(!u.loginSlug) return {ok:false,error:'This account isn\'t connected to a secure login yet — ask the owner to check the Employees tab.'};
     let data,error;
-    try{ ({data,error}=await supa.auth.signInWithPassword({email:empEmail(u.loginSlug),password:empPassword(entered)})); }
-    catch(e){ return {ok:false,error:'No connection — check the internet and try again.'}; }
+    const sv=await callStaffAuth({action:'login',slug:u.loginSlug,pin:String(entered)});
+    if(sv.status===200 && sv.data.access_token){
+      try{ ({data,error}=await supa.auth.setSession({access_token:sv.data.access_token,refresh_token:sv.data.refresh_token})); }
+      catch(e){ return {ok:false,error:'No connection — check the internet and try again.'}; }
+    } else if(sv.status===429){
+      return {ok:false,error:`Too many wrong PINs — this login is locked until ${lockedUntilText(sv.data.until)}. Please wait, or ask the owner.`};
+    } else if(sv.status===401){
+      const left=Number(sv.data.left);
+      return {ok:false,error:'That PIN isn\'t right.'+(left>0&&left<=3?` ${left} ${left===1?'try':'tries'} left before this login is locked for 15 minutes.`:' Please try again.')};
+    } else if(sv.status===0){
+      return {ok:false,error:'No connection — check the internet and try again.'};
+    } else if(sv.status===404){
+      try{ ({data,error}=await supa.auth.signInWithPassword({email:empEmail(u.loginSlug),password:empPassword(entered)})); }
+      catch(e){ return {ok:false,error:'No connection — check the internet and try again.'}; }
+    } else {
+      return {ok:false,error:'Sign-in is not available right now (server '+sv.status+'). Please try again shortly.'};
+    }
     if(error || !data || !data.user) return {ok:false,error:/fetch|network/i.test(String(error&&error.message))?'No connection — check the internet and try again.':'That PIN isn\'t right. Please try again.'};
     let profile=null, profErr=null;
     try{ ({data:profile,error:profErr}=await supa.from('profiles').select('*').eq('id',data.user.id).maybeSingle()); }
     catch(e){ profErr=e; }
     if(profErr || !profile){ try{ await supa.auth.signOut(); }catch(e){} return {ok:false,error:'Signed in, but this account has no profile yet — ask the owner to check the Employees tab.'}; }
-    return {ok:true,user:{id:profile.id,name:profile.name,brands:profile.brands||[],tabs:profile.tabs||[],isOwner:!!profile.is_owner,pin:u.pin}};
+    return {ok:true,user:{id:profile.id,name:profile.name,brands:profile.brands||[],tabs:profile.tabs||[],isOwner:!!profile.is_owner,loginSlug:u.loginSlug,securePinAt:profile.secure_pin_at||null}};
   }
-  // Offline: refuse accounts with no usable local PIN (cloud accounts are
-  // stored with pin:'' — an empty PIN must never let anyone in).
-  if(!u.pin || !/^\d{4,6}$/.test(u.pin)) return {ok:false,error:'This account can only sign in while online — check the connection and try again.'};
-  if(entered!==u.pin) return {ok:false,error:'That PIN isn\'t right. Please try again.'};
-  return {ok:true,user:u};
+  // PINs are checked only by the server now — no offline sign-in.
+  return {ok:false,error:'Staff sign-in needs the internet — check the connection and try again.'};
 }
 function enterAdmin(user){
   currentUser=user;
@@ -8803,6 +9011,8 @@ function showAdminForRole(){
   // Clients comes with Bookings or Loyalty (the people who serve clients).
   if(!allowed.includes('clients') && (currentUser.isOwner || allowed.includes('bookings') || allowed.includes('loyalty'))) allowed.push('clients');
   if(!allowed.includes('settings') && (currentUser.isOwner || allowed.includes('overview'))) allowed.push('settings');
+  // Shop orders come with Products (the people who sell in the shop).
+  if(!allowed.includes('orders') && (currentUser.isOwner || allowed.includes('products'))) allowed.push('orders');
   currentAllowedTabs=allowed;
   document.querySelectorAll('#adminTabsRow [data-admin-tab]').forEach(btn=>{
     const ok=allowed.includes(btn.dataset.adminTab);
@@ -8810,7 +9020,7 @@ function showAdminForRole(){
   });
   if(!allowed.includes(adminTab)) adminTab=allowed[0]||'bookings';
   document.querySelectorAll('#adminTabsRow [data-admin-tab]').forEach(x=>x.classList.toggle('active',x.dataset.adminTab===adminTab));
-  ['overview','bookings','loyalty','clients','products','services','offers','gallery','employees','reports','purchases','settings'].forEach(p=>{
+  ['overview','bookings','loyalty','clients','orders','products','services','offers','gallery','employees','reports','purchases','settings'].forEach(p=>{
     document.getElementById('admin'+p[0].toUpperCase()+p.slice(1)).classList.toggle('active',adminTab===p);
   });
   // Services has its own brand sub-tabs — hide any brand this account isn't
@@ -8820,7 +9030,7 @@ function showAdminForRole(){
   });
   if(!canSeeBrand(currentUser,svcBrandTab)) svcBrandTab=userBrands(currentUser)[0];
   document.querySelectorAll('#svcBrandTabs [data-svc-brand-tab]').forEach(x=>x.classList.toggle('active',x.dataset.svcBrandTab===svcBrandTab));
-  renderAdminProducts(); renderAdminServices(); renderAdminOffers(); renderAdminGallery(); renderAdminBookings(); renderBrandPhotos(); renderCurrencySettings(); renderClientLoginSetting(); renderWaTemplates(); renderHoursAdmin(); renderAdminEmployees(); renderAdminPurchases(); renderAdminReports(); renderAdminLoyalty(); renderOverviewStats(); pullLoyaltyIssued(); updateSettingsEmpty(); updateAdmMenuLabel(); if(adminTab==='clients') renderAdminClients();
+  renderAdminProducts(); renderAdminServices(); renderAdminOffers(); renderAdminGallery(); renderAdminBookings(); renderBrandPhotos(); renderCurrencySettings(); renderClientLoginSetting(); renderWaTemplates(); renderHoursAdmin(); renderAdminEmployees(); renderAdminPurchases(); renderAdminReports(); renderAdminLoyalty(); renderOverviewStats(); pullLoyaltyIssued(); updateSettingsEmpty(); updateAdmMenuLabel(); if(adminTab==='clients') renderAdminClients(); if(adminTab==='orders') renderAdminOrders();
 }
 
 /* ---------------- Full-screen client app ---------------- */
@@ -8891,6 +9101,8 @@ document.querySelectorAll('[data-admin-tab]').forEach(b=>{
     document.getElementById('adminLoyalty').classList.toggle('active',adminTab==='loyalty');
     document.getElementById('adminSettings').classList.toggle('active',adminTab==='settings');
     document.getElementById('adminClients').classList.toggle('active',adminTab==='clients');
+    document.getElementById('adminOrders').classList.toggle('active',adminTab==='orders');
+    if(adminTab==='orders'){ renderAdminOrders(); pullOrders(true).then(()=>{ if(adminTab==='orders') renderAdminOrders(); }); }
     if(adminTab==='clients'){ renderAdminClients(); pullClientTiers().then(()=>{ if(adminTab==='clients') renderAdminClients(); }); }
     closeAdmMenu(); updateAdmMenuLabel();
     try{ window.scrollTo({top:Math.min(window.scrollY,(document.querySelector('.admin-app')||{offsetTop:0}).offsetTop),behavior:'smooth'}); }catch(e){}
@@ -9661,7 +9873,10 @@ function renderAdminBookings(){
       ? `<span style="font-size:13px;color:var(--muted);">🔒 Day closed</span>`
       : (canEdit ? `<div class="rowbtns">
         ${advance?`<button class="btn btn-ghost btn-sm" data-advance-booking="${i}">Mark ${advance}</button>`:''}
+        ${(bk.status==='Confirmed' && !(bookingTime(bk)>Date.now()))?`<button class="btn btn-ghost btn-sm" data-noshow-booking="${i}">No-show</button>`:''}
+        ${(bk.status==='Requested'||bk.status==='Confirmed')?`<button class="btn btn-ghost btn-sm" data-move-booking="${i}">Reschedule</button>`:''}
         ${(bk.status==='Requested'||bk.status==='Confirmed')?`<button class="btn btn-danger btn-sm" data-cancel-booking="${i}">Cancel</button>`:''}
+        ${bk.status==='Completed'?`<button class="btn btn-ghost btn-sm" data-refund-booking="${i}">Refund</button>`:''}
       </div>` : '');
     const ptsBtn=(bk.status==='Completed' && loyaltyReady===true && !earnedBookingIds.has(String(bk.id)))
       ? `<button class="btn btn-ghost btn-sm" data-points-booking="${i}" title="Add D+ points for this visit">+ Points</button>` : '';
@@ -9670,7 +9885,7 @@ function renderAdminBookings(){
       <td><span class="brand-tag" style="background:${brandColor[bk.brand]}">${BRANDS[bk.brand].name}</span></td>
       <td>${esc(bk.serviceName)}</td>
       <td>${esc(bk.date)}<br><span style="color:var(--muted);font-size:13px;">${esc(bk.time)}</span></td>
-      <td><span class="status-badge ${esc(bk.status)}">${esc(bk.status)}</span></td>
+      <td><span class="status-badge ${esc(bk.status)}">${esc(bk.status)}</span>${bk.refundedUsd>0?`<div style="font-size:12px;color:var(--muted);margin-top:3px;">Refunded ${fmtMoney(bk.refundedUsd)}</div>`:''}${(bk.rescheduleLog||[]).length?`<div style="font-size:12px;color:var(--muted);margin-top:3px;" title="${esc((bk.rescheduleLog||[]).map(x=>x.from?`${x.from.date} ${x.from.time} → ${x.to?x.to.date+' '+x.to.time:x.action||''} (${x.by||''})`:(x.note||x.action||'')).join(' | '))}">Moved ${(bk.rescheduleLog||[]).length}×</div>`:''}</td>
       <td>${actions}${ptsBtn}</td>
     </tr>`;
   }).join('');
@@ -9688,6 +9903,19 @@ function renderAdminBookings(){
     // First the D+ points for the visit, then the aftercare note.
     if(bk.status==='Completed') offerPoints(bk,()=>offerAftercare(bk));
     if(bk.status==='Confirmed') offerWhatsApp(bk,'confirm');
+  }));
+  rows.querySelectorAll('[data-noshow-booking]').forEach(b=>b.addEventListener('click',()=>{
+    const bk=STORE.bookings[idxById(STORE.bookings,b.dataset.noshowBooking)];
+    if(!bk || bk.status!=='Confirmed'){ renderAdminBookings(); return; }
+    if(!confirmTap(b,'Mark as no-show?')) return;
+    bk.status='No-show'; saveStore(); cloudSave('bookings',bk.id); renderAdminBookings();
+    toast(`${bk.clientName}'s booking marked No-show.`);
+  }));
+  rows.querySelectorAll('[data-move-booking]').forEach(b=>b.addEventListener('click',()=>{
+    const bk=STORE.bookings[idxById(STORE.bookings,b.dataset.moveBooking)]; if(bk) openRescheduleForm(bk);
+  }));
+  rows.querySelectorAll('[data-refund-booking]').forEach(b=>b.addEventListener('click',()=>{
+    const bk=STORE.bookings[idxById(STORE.bookings,b.dataset.refundBooking)]; if(bk) openBookingRefundForm(bk);
   }));
   rows.querySelectorAll('[data-cancel-booking]').forEach(b=>b.addEventListener('click',()=>{
     const bk=STORE.bookings[idxById(STORE.bookings,b.dataset.cancelBooking)];
@@ -9824,7 +10052,7 @@ function rewardBrandLabel(b){ return b&&BRANDS[b]?BRANDS[b].name:t('brandAll'); 
 function loyaltyFromRows(rows){
   const L=loyaltySettings();
   const since=Date.now()-365*24*3600*1000;
-  const spend=(rows||[]).filter(r=>r.kind==='earn'&&new Date(r.created_at).getTime()>=since)
+  const spend=(rows||[]).filter(r=>(r.kind==='earn'||r.kind==='reverse')&&new Date(r.created_at).getTime()>=since)
     .reduce((s,r)=>s+Number(r.spend||0),0);
   const tier= spend>=L.black?'black':spend>=L.gold?'gold':'member';
   const mult= tier==='black'?L.blackMult:tier==='gold'?L.goldMult:1;
@@ -9840,8 +10068,8 @@ function earnMultiplier(tierMult,source){
   return Math.max(Number(tierMult)||1, source==='app'?Number(L.appMult)||1:1);
 }
 function pointsFor(amount,mult){ return Math.max(0,Math.floor((Number(amount)||0)*(Number(mult)||1)+1e-9)); }
-const PT_KIND_KEYS={earn:'kEarn',redeem:'kRedeem',adjust:'kAdjust',bonus:'kBonus',expire:'kExpire',opening:'kOpening'};
-const PT_KIND_EN={earn:'Visit',redeem:'Reward',adjust:'Adjustment',bonus:'Bonus',expire:'Expired',opening:'Opening balance'};
+const PT_KIND_KEYS={earn:'kEarn',redeem:'kRedeem',adjust:'kAdjust',bonus:'kBonus',expire:'kExpire',opening:'kOpening',reverse:'kReverse'};
+const PT_KIND_EN={earn:'Visit / purchase',redeem:'Reward',adjust:'Adjustment',bonus:'Bonus',expire:'Expired',opening:'Opening balance',reverse:'Refund'};
 function last10(p){ const d=normalizedPhone(p); return d.length>=8?d.slice(-10):''; }
 
 /* ---- Client side: balance, level, rewards shop, history ---- */
@@ -9856,7 +10084,7 @@ async function loadMyLoyalty(force){
     const yearAgo=new Date(Date.now()-365*24*3600*1000).toISOString();
     const [hist,year,me]=await Promise.all([
       cs.from('point_transactions').select('*').eq('client_id',id).order('created_at',{ascending:false}).limit(30),
-      cs.from('point_transactions').select('kind,spend,created_at').eq('client_id',id).eq('kind','earn').gte('created_at',yearAgo),
+      cs.from('point_transactions').select('kind,spend,created_at').eq('client_id',id).in('kind',['earn','reverse']).gte('created_at',yearAgo),
       cs.from('clients').select('points').eq('id',id).maybeSingle(),
     ]);
     let changed=false;
@@ -9926,6 +10154,9 @@ async function pullEarnedBookings(){
     if(res.error){ if(/point_transactions|relation|schema cache/i.test(String(res.error.message||''))) loyaltyReady=false; return; }
     loyaltyReady=true;
     earnedBookingIds=new Set((res.data||[]).map(r=>String(r.booking_id)));
+    // Orders that already earned points (column added by the launch-decisions migration).
+    const ro=await supa.from('point_transactions').select('order_id').eq('kind','earn').not('order_id','is',null);
+    if(!ro.error){ earnedOrderIds.clear(); (ro.data||[]).forEach(r=>earnedOrderIds.add(String(r.order_id))); }
   }catch(e){}
 }
 async function fetchClientLedger(clientId){
@@ -9952,7 +10183,7 @@ async function addPointRow(row){
   if(!supa) return 'Not connected to the database — points were not saved.';
   if(!(await isStaffSignedIn())) return 'Your Admin login has expired — log in again, then try once more.';
   const payload={client_id:String(row.client_id),kind:row.kind,points:Math.round(Number(row.points)||0),
-    spend:Math.max(0,Number(row.spend)||0),brand:row.brand||'',booking_id:row.booking_id||null,
+    spend:Math.max(0,Number(row.spend)||0),brand:row.brand||'',booking_id:row.booking_id||null,order_id:row.order_id||null,
     reward_id:row.reward_id||null,reason:String(row.reason||'').slice(0,200),
     staff_name:(currentUser&&currentUser.name)||''};
   let res;
@@ -9960,13 +10191,16 @@ async function addPointRow(row){
   catch(e){ return 'No connection — points were not saved. Try again when you are back online.'; }
   if(res.error){
     const m=String(res.error.message||''), code=res.error.code;
-    if(code==='23505') return 'Points were already added for this booking.';
+    if(code==='23505') return row.order_id?'Points were already added for this order.':'Points were already added for this booking.';
+    if(/NOT_COMPLETED_PAID/.test(m)) return 'Points can be added only after the order is completed and paid.';
+    if(/NOT_COMPLETED/.test(m)) return 'Points can be added only after the visit is marked Completed — try again in a moment.';
     if(/not enough points/i.test(m)) return 'Not enough points for that — '+m.replace(/^.*?\(/,'(');
     if(/point_transactions|relation|schema cache/i.test(m)) return 'The loyalty program is not switched on in the database yet (run supabase_migration_loyalty.sql).';
     if(/fetch|network/i.test(m)) return 'No connection — points were not saved.';
     return 'Could not save the points: '+m;
   }
   if(row.booking_id && row.kind==='earn') earnedBookingIds.add(String(row.booking_id));
+  if(row.order_id && row.kind==='earn') earnedOrderIds.add(String(row.order_id));
   const c=STORE.clients.find(x=>String(x.id)===String(row.client_id));
   if(c){ c.points=(Number(c.points)||0)+payload.points; saveStore(); }
   fetchClientPoints(row.client_id);
@@ -9991,13 +10225,14 @@ function clientForBooking(bk){
 function clientLine(c){ return `${esc(c.name||'(no name)')} · <span dir="ltr">${esc(clientPhoneText(c.phone||c.contactPhone||'')||c.email||'')}</span>`; }
 
 // Shown the moment a booking is marked Completed (and from "+ Points").
+const earnedOrderIds=new Set();
 function offerPoints(bk,after){
   const wrap=document.getElementById('pointsPanel');
   const done=()=>{ wrap.classList.remove('open'); wrap.innerHTML=''; if(after) after(); };
   if(!wrap||loyaltyReady===false){ if(after) after(); return; }
-  if(earnedBookingIds.has(String(bk.id))){ if(after) after(); return; }
-  const svc=svcList(bk.brand).find(s=>s.id===bk.serviceId);
-  let amount=svc?effectivePrice(svc):0;
+  if(bk._orderId ? earnedOrderIds.has(String(bk._orderId)) : earnedBookingIds.has(String(bk.id))){ if(after) after(); return; }
+  const svc=bk._orderId?null:svcList(bk.brand).find(s=>s.id===bk.serviceId);
+  let amount=bk._orderId?Math.max(0,Number(bk._amount)||0):(svc?effectivePrice(svc):0);
   let client=clientForBooking(bk), level=null, busy=false;
   const draw=()=>{
     const mult=earnMultiplier(level?level.mult:1,bk.source);
@@ -10046,12 +10281,16 @@ function offerPoints(bk,after){
       const mult=earnMultiplier(level?level.mult:1,bk.source);
       const p=pointsFor(amount,mult); if(p<=0) return;
       busy=true; draw();
+      // The visit must already be saved as Completed on the server (points are
+      // only for completed visits) — send anything still waiting first.
+      if(!bk._orderId) await flushOutbox();
       const err=await addPointRow({client_id:client.id,kind:'earn',points:p,spend:amount,brand:bk.brand,
-        booking_id:String(bk.id),reason:`${bk.serviceName||'Visit'} (${mult}×)`});
+        booking_id:bk._orderId?null:String(bk.id),order_id:bk._orderId?String(bk._orderId):null,
+        reason:`${bk.serviceName||'Visit'} (${mult}×)`});
       busy=false;
       if(err){ draw(); toast(err); return; }
       toast(`${p.toLocaleString('en-US')} points added for ${client.name||bk.clientName}.`);
-      renderAdminBookings(); if(adminTab==='loyalty') renderAdminLoyalty();
+      renderAdminBookings(); if(adminTab==='loyalty') renderAdminLoyalty(); if(adminTab==='orders') renderAdminOrders();
       done();
     });
   };
@@ -10159,7 +10398,7 @@ async function pullClientTiers(force){
   clTiersAt=Date.now();
   try{
     const since=new Date(Date.now()-365*24*3600*1000).toISOString();
-    const res=await supa.from('point_transactions').select('client_id,kind,spend,created_at').eq('kind','earn').gte('created_at',since);
+    const res=await supa.from('point_transactions').select('client_id,kind,spend,created_at').in('kind',['earn','reverse']).gte('created_at',since);
     if(res.error){ clTiersErr=true; return; }
     const by={}; (res.data||[]).forEach(r=>{ (by[r.client_id]=by[r.client_id]||[]).push(r); });
     clTiers={}; Object.keys(by).forEach(id=>{ clTiers[id]=loyaltyFromRows(by[id]); });
@@ -10290,7 +10529,7 @@ function renderClientProfile(wrap,c){
         ${clLedgerErr?`<div class="adm-note err" style="margin-top:12px;">${esc(clLedgerErr)}</div>`:''}
         ${clLedger===null&&!clLedgerErr?`<div class="adm-empty">Loading points history…</div>`:''}
         ${clLedger&&clLedger.length?`<div class="adm-list" style="margin-top:10px;">${clLedger.slice(0,6).map(r=>`<div class="adm-li" style="grid-template-columns:minmax(0,1fr) auto;">
-            <span class="w"><b>${esc(PT_KIND_EN[r.kind]||r.kind)}${r.reason?' · '+esc(r.reason):''}</b><span>${esc(new Date(r.created_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}))}${r.staff_name?' · '+esc(r.staff_name):''}</span></span>
+            <span class="w"><b>${esc(PT_KIND_EN[r.kind]||r.kind)}${r.reason?' · '+esc(r.reason):''}${Number(r.shortfall)>0?` <span style="color:#8a3226;font-weight:700;" title="These points had already been spent when the refund was made">⚠︎ ${Number(r.shortfall).toLocaleString('en-US')} already spent</span>`:''}</b><span>${esc(new Date(r.created_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}))}${r.staff_name?' · '+esc(r.staff_name):''}</span></span>
             <b style="color:${r.points<0?'#8a3226':'#3c5e33'};">${r.points>0?'+':''}${Number(r.points).toLocaleString('en-US')}</b></div>`).join('')}</div>`
           :(clLedger?`<div class="adm-empty">No points yet.</div>`:'')}
         ${canLoyalty?`<button class="btn btn-ghost btn-sm" id="cl_toLoyalty" style="margin-top:12px;">Redeem or adjust points</button>`:''}
@@ -10304,6 +10543,14 @@ function renderClientProfile(wrap,c){
         <div class="adm-list">${past.length?past.slice(0,12).map(row).join(''):`<div class="adm-empty">No past bookings.</div>`}</div>
         ${past.length>12?`<div class="cl-muted" style="margin-top:8px;">+ ${past.length-12} older</div>`:''}
       </section>
+      ${(()=>{ const grp=clientGroupOf(c.id); const ids=new Set((grp?grp.members:[c]).map(x=>String(x.id)));
+        const ords=(STORE.orders||[]).filter(o=>o.clientId&&ids.has(String(o.clientId))&&canSeeBrand(currentUser,o.brand));
+        return `<section class="adm-card">
+        <h3>Shop orders</h3><p class="adm-cap">${ords.length?`${ords.length} order${ords.length===1?'':'s'}, newest first`:'No shop orders'}</p>
+        <div class="adm-list">${ords.length?ords.slice(0,12).map(o=>`<div class="adm-li"><span class="t" style="white-space:normal;">${esc(orderWhen(o))}</span>
+          <span class="w"><b>${esc(o.ref)} · ${fmtMoney(o.total)}${o.refunded>0?` (refunded ${fmtMoney(o.refunded)})`:''}</b><span>${esc(o.items.map(i=>i.qty+' × '+i.name).join(', '))}</span></span>
+          <span class="status-badge ${esc(o.status)}">${esc(o.status)}</span></div>`).join(''):`<div class="adm-empty">No orders yet.</div>`}</div>
+      </section>`; })()}
     </div>
     ${linkedRecordsHtml(c)}
     ${userBrandsAll(currentUser).length<Object.keys(BRANDS).length||adminBrandView?`<p class="cl-muted" style="margin-top:12px;">Bookings shown are from ${esc(brandsLabel(userBrands(currentUser)))} only.</p>`:''}`;
@@ -10370,9 +10617,9 @@ function renderAdminLoyalty(){
           <td>${esc(new Date(r.created_at).toLocaleString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}))}</td>
           <td>${esc(PT_KIND_EN[r.kind]||r.kind)}</td>
           <td style="font-weight:700;color:${r.points<0?'#a0473a':'#4f6a45'};">${r.points>0?'+':''}${Number(r.points).toLocaleString('en-US')}</td>
-          <td>${Number(r.spend)>0?'$'+Number(r.spend).toLocaleString('en-US'):''}</td>
+          <td>${Number(r.spend)>0?'$'+Number(r.spend).toLocaleString('en-US'):Number(r.spend)<0?'−$'+Math.abs(Number(r.spend)).toLocaleString('en-US'):''}</td>
           <td>${BRANDS[r.brand]?esc(BRANDS[r.brand].name):''}</td>
-          <td>${esc(r.reason||'')}</td><td>${esc(r.staff_name||'')}</td></tr>`).join('')
+          <td>${esc(r.reason||'')}${Number(r.shortfall)>0?` <span style="color:#8a3226;font-weight:700;" title="These points had already been spent when the refund was made">⚠︎ ${Number(r.shortfall).toLocaleString('en-US')} already spent</span>`:''}</td><td>${esc(r.staff_name||'')}</td></tr>`).join('')
           :`<tr><td colspan="7"><div class="admin-empty">No points yet.</div></td></tr>`}</tbody>
       </table></div>
     </div>`:''}
@@ -10759,6 +11006,253 @@ function openBookingForm(){
   });
 }
 document.getElementById('addBookingBtn').addEventListener('click',openBookingForm);
+
+
+/* ======================= Shop orders (Admin) =======================
+   Orders come from the client app's bag and are saved on the server with
+   their items and server prices. WhatsApp is only for talking to the client:
+   an order is accepted, completed (paid and handed over) or refunded here.
+   Stock is taken only when an order is completed. */
+let ordersFilter='open', ordersLoading=false, ordersErr='', ordersPulledAt=0;
+const orderRefundIds={};    // one refund id per open refund form
+function orderFromRow(r){
+  return {id:r.id,ref:r.ref,brand:r.brand,clientId:r.client_id||'',clientName:r.client_name||'',phone:r.client_phone||'',
+    status:r.status,paid:!!r.paid,total:Number(r.total_usd)||0,refunded:Number(r.refunded_usd)||0,restocked:!!r.restocked,
+    createdAt:r.created_at,completedAt:r.completed_at||'',lang:r.lang||'',
+    items:(r.order_items||[]).map(i=>({productId:i.product_id,name:i.name,option:i.option||'',qty:i.qty,unit:Number(i.unit_price_usd)||0,line:Number(i.line_total_usd)||0})),
+    refunds:(r.order_refunds||[]).map(f=>({id:f.id,amount:Number(f.amount_usd)||0,reason:f.reason||'',restock:!!f.restock,
+      reversed:f.points_reversed||0,shortfall:f.points_shortfall||0,at:f.created_at}))};
+}
+async function pullOrders(force){
+  if(!supa) return false;
+  if(!force && Date.now()-ordersPulledAt<15000) return false;
+  ordersPulledAt=Date.now(); ordersLoading=true;
+  try{
+    const res=await supa.from('orders').select('*,order_items(*),order_refunds(*)').order('created_at',{ascending:false}).limit(500);
+    ordersLoading=false;
+    if(res.error){
+      ordersErr=/orders|relation|schema cache/i.test(String(res.error.message||''))
+        ?'Shop orders are not switched on in the database yet (run supabase_migration_launch_decisions.sql).'
+        :'Could not load orders — '+res.error.message;
+      return true;
+    }
+    ordersErr='';
+    STORE.orders=(res.data||[]).map(orderFromRow);
+    saveStore();
+    return true;
+  }catch(e){ ordersLoading=false; ordersErr='No connection — showing what this device last saw.'; return true; }
+}
+function orderWhen(o){ try{ return new Date(o.createdAt).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } }
+function renderAdminOrders(){
+  const wrap=document.getElementById('ordersWrap'); if(!wrap||!currentUser) return;
+  const canEdit=currentUser.isOwner || (currentAllowedTabs||[]).includes('products');
+  const all=(STORE.orders||[]).filter(o=>canSeeBrand(currentUser,o.brand));
+  const open=all.filter(o=>o.status==='Pending'||o.status==='Confirmed');
+  const list=ordersFilter==='open'?open:ordersFilter==='done'?all.filter(o=>!['Pending','Confirmed'].includes(o.status)):all;
+  const chip=(k,l,n)=>`<button class="btn btn-sm ${ordersFilter===k?'btn-primary':'btn-ghost'}" data-ord-filter="${k}">${l}${n!=null?` (${n})`:''}</button>`;
+  wrap.innerHTML=`
+    <div class="admin-toolbar" style="flex-wrap:wrap;gap:8px;">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">${chip('open','To do',open.length)}${chip('done','Done')}${chip('all','All')}</div>
+    </div>
+    <div id="orderFormWrap"></div>
+    ${ordersErr?`<div class="adm-note err">${esc(ordersErr)}</div>`:''}
+    ${ordersLoading&&!all.length?`<div class="admin-empty">Loading orders…</div>`:''}
+    ${!ordersLoading&&!list.length&&!ordersErr?`<div class="admin-empty">${ordersFilter==='open'?'No orders waiting.':'No orders here yet.'}</div>`:''}
+    <div class="ord-list">${list.map(o=>{
+      const left=Math.round((o.total-o.refunded)*100)/100;
+      const wa=o.phone?`https://wa.me/${String(o.phone).replace(/\D/g,'')}`:'';
+      const shortfall=o.refunds.reduce((a,f)=>a+(f.shortfall||0),0);
+      return `<div class="ord-card">
+        <div class="ord-head"><b>${esc(o.ref)}</b><span class="brand-tag" style="background:${brandColor[o.brand]||'#999'}">${esc(BRANDS[o.brand]?BRANDS[o.brand].name:o.brand)}</span>
+          <span class="status-badge ${esc(o.status)}">${esc(o.status==='Completed'&&o.refunded>0?'Completed · part refunded':o.status)}</span>
+          <span class="cl-muted">${esc(orderWhen(o))}</span></div>
+        <div class="ord-who">${esc(o.clientName||'—')} ${o.phone?`· <span dir="ltr">${esc(o.phone)}</span>`:''} ${o.clientId?'· <span class="cl-muted">Dolce+ account</span>':''}</div>
+        <div class="ord-items">${o.items.map(i=>`<div>${i.qty} × ${esc(i.name)}${i.option?` <span class="cl-muted">(${esc(i.option)})</span>`:''}<span>${fmtMoney(i.line)}</span></div>`).join('')}</div>
+        <div class="ord-total"><span>Total</span><b>${fmtMoney(o.total)}</b></div>
+        ${o.refunded>0?`<div class="ord-total"><span>Refunded</span><b>−${fmtMoney(o.refunded)}</b></div>`:''}
+        ${shortfall?`<div class="adm-note err">⚠︎ ${shortfall.toLocaleString('en-US')} points from this order had already been spent when it was refunded.</div>`:''}
+        ${o.refunds.length?`<div class="cl-muted" style="font-size:12.5px;">${o.refunds.map(f=>`Refund ${fmtMoney(f.amount)} — ${esc(f.reason)}${f.restock?' · items back in stock':''}`).join('<br>')}</div>`:''}
+        ${canEdit?`<div class="rowbtns" style="margin-top:8px;flex-wrap:wrap;">
+          ${o.status==='Pending'?`<button class="btn btn-ghost btn-sm" data-ord-accept="${esc(o.id)}">Accept</button>`:''}
+          ${['Pending','Confirmed'].includes(o.status)?`<button class="btn btn-primary btn-sm" data-ord-complete="${esc(o.id)}">Paid &amp; handed over</button>`:''}
+          ${['Pending','Confirmed'].includes(o.status)?`<button class="btn btn-danger btn-sm" data-ord-cancel="${esc(o.id)}">Cancel</button>`:''}
+          ${o.status==='Completed'&&left>0?`<button class="btn btn-ghost btn-sm" data-ord-refund="${esc(o.id)}">Refund</button>`:''}
+          ${o.status==='Completed'&&o.clientId&&loyaltyReady!==false&&!earnedOrderIds.has(String(o.id))?`<button class="btn btn-ghost btn-sm" data-ord-points="${esc(o.id)}">+ Points</button>`:''}
+          ${wa?`<a class="btn btn-ghost btn-sm" href="${wa}" target="_blank" rel="noopener">WhatsApp</a>`:''}
+        </div>`:''}
+      </div>`;}).join('')}</div>`;
+  wrap.querySelectorAll('[data-ord-filter]').forEach(b=>b.addEventListener('click',()=>{ ordersFilter=b.dataset.ordFilter; renderAdminOrders(); }));
+  const act=async(btn,fn,args,okMsg)=>{
+    if(btn.disabled) return;
+    btn.disabled=true;
+    let res; try{ res=await supa.rpc(fn,args); }catch(err){ res={error:err}; }
+    if(res.error){ btn.disabled=false; toast(orderErrorText(res.error)); return null; }
+    await pullOrders(true); renderAdminOrders(); toast(okMsg); return res;
+  };
+  wrap.querySelectorAll('[data-ord-accept]').forEach(b=>b.addEventListener('click',()=>act(b,'set_order_status',{p_id:b.dataset.ordAccept,p_status:'Confirmed'},'Order accepted.')));
+  wrap.querySelectorAll('[data-ord-cancel]').forEach(b=>b.addEventListener('click',()=>{
+    if(!confirmTap(b,'Cancel this order?')) return;
+    act(b,'set_order_status',{p_id:b.dataset.ordCancel,p_status:'Cancelled'},'Order cancelled.');
+  }));
+  wrap.querySelectorAll('[data-ord-complete]').forEach(b=>b.addEventListener('click',async()=>{
+    if(!confirmTap(b,'Paid in full and handed over?')) return;
+    const id=b.dataset.ordComplete;
+    const r=await act(b,'complete_order',{p_id:id,p_paid:true},'Order completed — stock updated.');
+    if(r){ const o=(STORE.orders||[]).find(x=>x.id===id); if(o&&o.clientId) offerOrderPoints(o); }
+  }));
+  wrap.querySelectorAll('[data-ord-points]').forEach(b=>b.addEventListener('click',()=>{
+    const o=(STORE.orders||[]).find(x=>x.id===b.dataset.ordPoints); if(o) offerOrderPoints(o);
+  }));
+  wrap.querySelectorAll('[data-ord-refund]').forEach(b=>b.addEventListener('click',()=>{
+    const o=(STORE.orders||[]).find(x=>x.id===b.dataset.ordRefund); if(o) openOrderRefundForm(o);
+  }));
+}
+function orderErrorText(err){
+  const m=String((err&&err.message)||err||'');
+  if(/OUT_OF_STOCK/.test(m)) return 'Not enough in stock to complete this order — check the stock first.';
+  if(/PAYMENT_REQUIRED/.test(m)) return 'An order can be completed only once it is paid.';
+  if(/BAD_STATUS_CHANGE/.test(m)) return 'This order has already moved on — refresh to see its status.';
+  return refundErrorText(err);
+}
+function offerOrderPoints(o){
+  const c=STORE.clients.find(x=>String(x.id)===String(o.clientId));
+  offerPoints({id:o.id,_orderId:o.id,_amount:Math.max(0,o.total-o.refunded),brand:o.brand,clientName:o.clientName,clientId:o.clientId,
+    phone:o.phone,serviceName:`Shop order ${o.ref}`,date:orderWhen(o),source:'app'},null);
+  if(!c) pullOperational().then(()=>{});
+}
+function openOrderRefundForm(o){
+  const wrap=document.getElementById('orderFormWrap'); if(!wrap) return;
+  const refundId=orderRefundIds[o.id]||(orderRefundIds[o.id]=nextId('orf',[]));
+  const left=Math.round((o.total-o.refunded)*100)/100;
+  wrap.innerHTML=`<div class="bk-form">
+      <div class="full"><b>Refund order ${esc(o.ref)}</b> — ${esc(o.clientName||'')}<div class="note">Paid ${fmtMoney(o.total)}${o.refunded>0?` · already refunded ${fmtMoney(o.refunded)}`:''}</div></div>
+      <label>Amount (USD, up to ${fmtMoney(left)})<input id="or_amt" type="number" min="0.01" max="${left}" step="0.01" inputmode="decimal" value="${left}"></label>
+      <label class="full">Reason<input id="or_reason" type="text" maxlength="200" placeholder="e.g. returned unopened"></label>
+      ${o.restocked?'<div class="full note">Items were already put back in stock.</div>':`<label class="full" style="flex-direction:row;align-items:center;gap:8px;font-weight:500;"><input id="or_restock" type="checkbox"> Items came back — put them back in stock</label>`}
+      <div class="full note">Points earned for this order come back in proportion to the amount. If the client already spent them, that is flagged.</div>
+      <div class="full rowbtns"><button class="btn btn-ghost btn-sm" id="or_cancel">Back</button><button class="btn btn-danger btn-sm" id="or_save">Refund</button></div>
+    </div>`;
+  document.getElementById('or_cancel').addEventListener('click',()=>{ wrap.innerHTML=''; });
+  document.getElementById('or_save').addEventListener('click',async(e)=>{
+    const btn=e.currentTarget; if(btn.disabled) return;
+    const amount=Math.round((Number(document.getElementById('or_amt').value)||0)*100)/100;
+    const reason=document.getElementById('or_reason').value.trim();
+    const restock=!!(document.getElementById('or_restock')&&document.getElementById('or_restock').checked);
+    if(amount<=0||amount>left){ toast(`Type an amount between $0.01 and ${fmtMoney(left)}.`); return; }
+    if(!reason){ toast('Please give a reason.'); return; }
+    if(!confirmTap(btn,`Refund ${fmtMoney(amount)}?`)) return;
+    btn.disabled=true; btn.textContent='Refunding…';
+    let res; try{ res=await supa.rpc('refund_order',{p_id:o.id,p_refund_id:refundId,p_amount:amount,p_restock:restock,p_reason:reason}); }
+    catch(err){ res={error:err}; }
+    if(res.error){ btn.disabled=false; btn.textContent='Refund'; toast(refundErrorText(res.error)); return; }
+    delete orderRefundIds[o.id];
+    wrap.innerHTML='';
+    await pullOrders(true); renderAdminOrders(); renderAdminProducts();
+    toast(refundResultText(res.data,amount));
+  });
+}
+
+/* ---- Admin: move a booking to another date / time ----
+   The old date and time are kept in the booking's change log. Reminders start
+   again for the new time. A clash with another booking at that brand is
+   shown, and needs a second tap to go ahead (reception decides). */
+function openRescheduleForm(bk){
+  const wrap=document.getElementById('bookingFormWrap');
+  const iso=toIsoDate(bk.date)||isoOf(new Date());
+  const m=/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec(String(bk.time||'').trim());
+  const hh=m?((+m[1])%12+(/pm/i.test(m[3])?12:0)):10, mm=m?m[2]:'00';
+  wrap.innerHTML=`<div class="bk-form">
+      <div class="full"><b>Reschedule ${esc(bk.clientName||'')}</b> — ${esc(bk.serviceName||'')} · ${esc(BRANDS[bk.brand]?BRANDS[bk.brand].name:'')}<div class="note">Now: ${esc(bk.date)} at ${esc(bk.time)}</div></div>
+      <label>New date<input id="rs_date" type="date" value="${iso}"></label>
+      <label>New time<input id="rs_time" type="time" step="300" value="${String(hh).padStart(2,'0')}:${mm}"></label>
+      <div class="full warn" id="rs_warn"></div>
+      <div class="full rowbtns"><button class="btn btn-ghost btn-sm" id="rs_cancel">Back</button><button class="btn btn-primary btn-sm" id="rs_save">Save new time</button></div>
+    </div>`;
+  const read=()=>{
+    const dv=document.getElementById('rs_date').value, tv=document.getElementById('rs_time').value;
+    const dm=/^(\d{4})-(\d{2})-(\d{2})$/.exec(dv||''), tm=/^(\d{1,2}):(\d{2})/.exec(tv||'');
+    if(!dm||!tm) return null;
+    const d=new Date(+dm[1],+dm[2]-1,+dm[3]);
+    return {date:fmtDate(d),time:minToLabel((+tm[1])*60+(+tm[2])),dObj:d};
+  };
+  const check=()=>{
+    const v=read(), w=document.getElementById('rs_warn'); if(!v){ w.textContent=''; return null; }
+    const clash=STORE.bookings.find(x=>x.id!==bk.id&&x.brand===bk.brand&&x.date===v.date&&x.time===v.time&&!['Cancelled','No-show'].includes(x.status));
+    const off=!dayHours(bk.brand,v.dObj);
+    w.textContent=clash?`${clash.clientName||'Another client'} is already booked at ${v.time} on ${v.date}.`:(off?`${BRANDS[bk.brand].name} is closed that day.`:'');
+    return {...v,clash,off};
+  };
+  ['rs_date','rs_time'].forEach(id=>document.getElementById(id).addEventListener('input',check));
+  check();
+  document.getElementById('rs_cancel').addEventListener('click',()=>{ wrap.innerHTML=''; });
+  document.getElementById('rs_save').addEventListener('click',(e)=>{
+    const v=check(); if(!v){ toast('Pick a date and a time.'); return; }
+    const live=STORE.bookings[idxById(STORE.bookings,bk.id)];
+    if(!live || !['Requested','Confirmed'].includes(live.status)){ wrap.innerHTML=''; renderAdminBookings(); return; }
+    if(v.date===live.date && v.time===live.time){ toast('That is the same date and time.'); return; }
+    if((v.clash||v.off) && !confirmTap(e.currentTarget,'Book it anyway?')) return;
+    live.rescheduleLog=[...(live.rescheduleLog||[]),{at:new Date().toISOString(),by:(currentUser&&currentUser.name)||'staff',
+      from:{date:live.date,time:live.time},to:{date:v.date,time:v.time}}];
+    live.date=v.date; live.time=v.time; live.reminders={};
+    saveStore(); cloudSave('bookings',live.id);
+    wrap.innerHTML=''; renderAdminBookings();
+    toast(`${live.clientName}'s booking moved to ${v.date} at ${v.time}.`);
+    if(live.status==='Confirmed') offerWhatsApp(live,'confirm');
+  });
+}
+
+/* ---- Refunds (visits and shop orders) ----
+   The money and the reason are recorded on the server; points earned come
+   back in proportion to the amount refunded. If the client already spent
+   them, the shortfall is shown and kept in their points history. */
+function refundResultText(r,amount){
+  const back=Number(r&&r.reversed)||0, short=Number(r&&r.shortfall)||0;
+  return `Refunded ${fmtMoney(amount)}.`+(back?` ${back.toLocaleString('en-US')} points taken back.`:'')+
+    (short?` ⚠︎ ${short.toLocaleString('en-US')} points had already been spent — flagged in the client's points history.`:'')+
+    (r&&r.no_points?' No points were earned for this, so none were taken back.':'')+(r&&r.repeat?' (Already recorded — nothing changed.)':'');
+}
+function refundErrorText(err){
+  const m=String((err&&err.message)||err||'');
+  if(/BAD_AMOUNT/.test(m)) return 'That amount is more than what is left to refund.';
+  if(/REASON_REQUIRED/.test(m)) return 'Please give a reason.';
+  if(/NOT_COMPLETED/.test(m)) return 'Only completed (paid) items can be refunded.';
+  if(/NOT_ALLOWED|42501|permission/i.test(m)) return 'Your account is not allowed to do this.';
+  if(/function|schema cache|does not exist/i.test(m)) return 'This is not switched on in the database yet (run supabase_migration_launch_decisions.sql).';
+  if(/fetch|network/i.test(m)) return 'No connection — nothing was changed. Try again.';
+  return 'Could not save: '+m;
+}
+function openBookingRefundForm(bk){
+  const wrap=document.getElementById('bookingFormWrap');
+  const refundId=nextId('rf',[]);       // one id per refund: a second tap can never refund twice
+  const price=bookingPrice(bk);
+  wrap.innerHTML=`<div class="bk-form">
+      <div class="full"><b>Refund ${esc(bk.clientName||'')}</b> — ${esc(bk.serviceName||'')} · ${esc(bk.date)}${bk.refundedUsd>0?`<div class="note">Already refunded: ${fmtMoney(bk.refundedUsd)}</div>`:''}</div>
+      <label>Amount (USD)<input id="rb_amt" type="number" min="0.01" step="0.01" inputmode="decimal" value="${price!=null?Math.max(0,price-(bk.refundedUsd||0)):''}"></label>
+      <label class="full">Reason<input id="rb_reason" type="text" maxlength="200" placeholder="e.g. treatment not finished"></label>
+      <div class="full note">Points earned for this visit come back in proportion to the amount. If the client already spent them, that is flagged.</div>
+      <div class="full rowbtns"><button class="btn btn-ghost btn-sm" id="rb_cancel">Back</button><button class="btn btn-danger btn-sm" id="rb_save">Refund</button></div>
+    </div>`;
+  document.getElementById('rb_cancel').addEventListener('click',()=>{ wrap.innerHTML=''; });
+  document.getElementById('rb_save').addEventListener('click',async(e)=>{
+    const btn=e.currentTarget; if(btn.disabled) return;
+    const amount=Math.round((Number(document.getElementById('rb_amt').value)||0)*100)/100;
+    const reason=document.getElementById('rb_reason').value.trim();
+    if(amount<=0){ toast('Type the amount to refund.'); return; }
+    if(!reason){ toast('Please give a reason.'); return; }
+    if(!confirmTap(btn,`Refund ${fmtMoney(amount)}?`)) return;
+    if(!supa){ toast('Refunds need the internet.'); return; }
+    btn.disabled=true; btn.textContent='Refunding…';
+    await flushOutbox();
+    let res; try{ res=await supa.rpc('refund_booking',{p_booking_id:String(bk.id),p_refund_id:refundId,p_amount:amount,p_reason:reason}); }
+    catch(err){ res={error:err}; }
+    if(res.error){ btn.disabled=false; btn.textContent='Refund'; toast(refundErrorText(res.error)); return; }
+    const live=STORE.bookings[idxById(STORE.bookings,bk.id)]; if(live && !(res.data&&res.data.repeat)) live.refundedUsd=(live.refundedUsd||0)+amount;
+    saveStore(); wrap.innerHTML=''; renderAdminBookings();
+    toast(refundResultText(res.data,amount));
+    if(adminTab==='loyalty') renderAdminLoyalty();
+  });
+}
+
 /* ---- A Refresh button on every Admin tab ----
    Pulls the latest from the shared database right now, instead of waiting
    for the automatic check every 30 seconds. Anything this device still has
@@ -10844,7 +11338,21 @@ async function refreshAdminNow(btn){
    it's checked and stored securely by Supabase, not compared against text
    in this file. If Supabase is unreachable, this falls back to saving
    locally only, same as the rest of the app. */
+// Which staff already use the secure server sign-in (owner can read profiles).
+let empSecureAt=0;
+async function pullEmployeeSecurity(){
+  if(!supa || Date.now()-empSecureAt<60000) return false;
+  empSecureAt=Date.now();
+  try{
+    const {data,error}=await supa.from('profiles').select('id,secure_pin_at');
+    if(error||!data) return false;
+    let changed=false;
+    data.forEach(r=>{ const u=STORE.users.find(x=>x.id===r.id); if(u && u.securePinAt!==(r.secure_pin_at||null)){ u.securePinAt=r.secure_pin_at||null; changed=true; } });
+    return changed;
+  }catch(e){ return false; }
+}
 function renderAdminEmployees(){
+  if(currentUser && currentUser.isOwner) pullEmployeeSecurity().then(ch=>{ if(ch) renderAdminEmployees(); });
   document.getElementById('employeeCount').textContent=STORE.users.length;
   const rows=document.getElementById('employeeRows');
   rows.innerHTML=STORE.users.map((u,i)=>`
@@ -10852,7 +11360,7 @@ function renderAdminEmployees(){
       <td><span class="swdot" style="background:#f1e3c4;border:1px solid #e4cf9f;display:inline-flex;align-items:center;justify-content:center;color:#3b2e24;font-family:var(--display);font-size:13.5px;">${esc(u.name[0])}</span>${esc(u.name)}${currentUser&&currentUser.id===u.id?' <span style="color:var(--muted);font-size:12.5px;">(you)</span>':''}</td>
       <td><span class="role-pill">${accessLabel(u.tabs)}</span></td>
       <td>${brandsLabel(u.brands)}</td>
-      <td>${u.pin}</td>
+      <td>${u.securePinAt?'<span style="color:#3b6e4a;">Secure ✓</span>':(supa?'<span style="color:var(--muted);">Waiting for first sign-in on the new screen</span>':'—')}</td>
       <td><div class="rowbtns">
         <button class="btn btn-ghost btn-sm" data-edit-emp="${i}">Edit</button>
         <button class="btn btn-danger btn-sm" data-del-emp="${i}">Delete</button>
@@ -10893,7 +11401,7 @@ function openEmployeeForm(editIndex){
   document.getElementById('employeeFormWrap').innerHTML=`
     <div class="admin-form">
       <div class="field"><label>Name</label><input id="ef_name" type="text" value="${esc(u.name)}" placeholder="e.g. Lana H."></div>
-      <div class="field"><label>PIN (6 digits)</label><input id="ef_pin" type="text" maxlength="6" inputmode="numeric" value="${esc(u.pin)}" placeholder="e.g. 432198"></div>
+      <div class="field"><label>${editing?'New PIN (6 digits) — leave empty to keep the current one':'PIN (6 digits)'}</label><input id="ef_pin" type="password" maxlength="6" inputmode="numeric" autocomplete="new-password" value="" placeholder="${editing?'unchanged':'e.g. 432198'}"></div>
       <div class="field full" style="grid-column:1/-1;">
         <label>Quick presets</label>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
@@ -10936,7 +11444,7 @@ function openEmployeeForm(editIndex){
     const tabs=Array.from(document.querySelectorAll('.ef-tab-cb:checked')).map(cb=>cb.value);
     const brands=Array.from(document.querySelectorAll('.ef-brand-cb:checked')).map(cb=>cb.value);
     if(!name){ document.getElementById('ef_name').focus(); return; }
-    if(!/^\d{6}$/.test(pin)){ toast('PIN must be exactly 6 digits.'); document.getElementById('ef_pin').focus(); return; }
+    if((!editing || pin) && !/^\d{6}$/.test(pin)){ toast('PIN must be exactly 6 digits.'); document.getElementById('ef_pin').focus(); return; }
     if(!tabs.length){ toast('Share at least one section with this employee.'); return; }
     if(!brands.length){ toast('Select at least one department — Dolce, Polished, or Core.'); return; }
     if(editing && u.tabs.includes('employees') && !tabs.includes('employees')){
@@ -10961,20 +11469,24 @@ function openEmployeeForm(editIndex){
     try{
 
     if(editing){
-      const pinChangedForSelf = currentUser && currentUser.id===u.id && pin!==u.pin;
-      const pinChangedForOther = currentUser && currentUser.id!==u.id && pin!==u.pin;
+      const pinChangedForSelf = !!pin && currentUser && currentUser.id===u.id;
+      const pinChangedForOther = !!pin && currentUser && currentUser.id!==u.id;
       if(supa && u.id && u.id.indexOf('u')!==0){
         // Real Supabase-backed account: update the profile row directly.
         const{error}=await supa.from('profiles').update({name,tabs,brands,is_owner:isOwnerRole}).eq('id',u.id);
         if(error){ toast('Could not save — '+error.message); saveBtn.disabled=false; return; }
-        if(pinChangedForSelf){
-          const{error:pwErr}=await supa.auth.updateUser({password:empPassword(pin)});
-          if(pwErr) toast('Saved, but the PIN change failed: '+pwErr.message);
-        } else if(pinChangedForOther){
-          toast(`${name} was updated, but changing another person's PIN isn't supported yet — ${name} can change their own PIN by logging in and editing their own account.`);
+        if(pinChangedForSelf || pinChangedForOther){
+          const sv=await callStaffAuth({action:'set_pin',pin,target_id:u.id},await staffToken());
+          if(sv.status===200){ /* PIN saved on the server only */ }
+          else if(sv.status===404 && pinChangedForSelf){
+            const{error:pwErr}=await supa.auth.updateUser({password:empPassword(pin)});
+            if(pwErr) toast('Saved, but the PIN change failed: '+pwErr.message);
+          }
+          else if(sv.status===403) toast(`${name} was updated, but only an owner can change someone else's PIN.`);
+          else toast(`${name} was updated, but the PIN change failed (${sv.data.error||sv.status}). Try again.`);
         }
       }
-      STORE.users[editIndex]={...STORE.users[editIndex],name,tabs,brands,isOwner:isOwnerRole,pin:(pinChangedForOther?u.pin:pin)};
+      STORE.users[editIndex]={...STORE.users[editIndex],name,tabs,brands,isOwner:isOwnerRole};
       if(currentUser && currentUser.id===STORE.users[editIndex].id){
         currentUser=STORE.users[editIndex];
         showAdminForRole();
@@ -10983,10 +11495,17 @@ function openEmployeeForm(editIndex){
       // Brand-new employee with a real, secure login: create the account
       // through an isolated client so it doesn't disturb the owner's own
       // logged-in session.
-      const slug=randomSlug();
-      const tempClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:false}});
-      const{data:signUpData,error:signUpErr}=await tempClient.auth.signUp({email:empEmail(slug),password:empPassword(pin)});
-      if(signUpErr || !signUpData.user){
+      // The server creates the login with the secure password (owner only).
+      let slug=randomSlug(), signUpData=null, signUpErr=null;
+      const sv=await callStaffAuth({action:'create_staff',pin},await staffToken());
+      if(sv.status===200 && sv.data.id){ slug=sv.data.slug; signUpData={user:{id:sv.data.id}}; }
+      else if(sv.status===404){
+        const tempClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:false}});
+        ({data:signUpData,error:signUpErr}=await tempClient.auth.signUp({email:empEmail(slug),password:empPassword(pin)}));
+      } else {
+        signUpErr={message:sv.status===403?'only an owner can add staff logins':(sv.data.error||('server '+sv.status))};
+      }
+      if(signUpErr || !signUpData || !signUpData.user){
         const rateLimited=signUpErr && /rate limit/i.test(signUpErr.message||'');
         toast(rateLimited
           ? 'Too many accounts created recently — Supabase limits how many confirmation emails it can send per hour. Ask your Supabase admin to turn off "Confirm email" under Authentication → Providers → Email (these staff accounts don\'t use real email anyway), or wait a bit and try again.'
@@ -10996,9 +11515,9 @@ function openEmployeeForm(editIndex){
       const newId=signUpData.user.id;
       const{error:profErr}=await supa.from('profiles').insert({id:newId,name,brands,tabs,is_owner:isOwnerRole,login_slug:slug});
       if(profErr){ toast('Account created, but saving their profile failed — '+profErr.message); saveBtn.disabled=false; return; }
-      STORE.users.push({id:newId,name,tabs,pin,brands,loginSlug:slug,isOwner:isOwnerRole});
+      STORE.users.push({id:newId,name,tabs,brands,loginSlug:slug,isOwner:isOwnerRole});
     } else {
-      STORE.users.push({id:nextId('u',STORE.users),name,tabs,pin,brands,isOwner:isOwnerRole});
+      toast('Adding staff needs the internet — check the connection and try again.'); saveBtn.disabled=false; return;
     }
     saveStore();
     document.getElementById('employeeFormWrap').innerHTML='';
@@ -11393,8 +11912,8 @@ function exportSectionsForCurrentUser(){
     sections.push({title:'Offers',head:['Title','Brand','Description'],rows:rows.map(o=>[o.t,BRANDS[o.brand].name,o.s])});
   }
   if(allowed.includes('employees')){
-    sections.push({title:'Employees',head:['Name','Access','Department','PIN'],
-      rows:STORE.users.map(u=>[u.name,accessLabel(u.tabs),brandsLabel(u.brands),u.pin])});
+    sections.push({title:'Employees',head:['Name','Access','Department'],
+      rows:STORE.users.map(u=>[u.name,accessLabel(u.tabs),brandsLabel(u.brands)])});
   }
   if(allowed.includes('reports')){
     const rows=STORE.registerCloses.filter(rc=>rc.brands.some(b=>canSeeBrand(currentUser,b)));
