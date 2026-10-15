@@ -3985,7 +3985,7 @@ function renderBooking(){
     <div class="section-label">${t('preferredTime')}</div>
     <div class="time-chip-grid">${timeChips}</div>
     ${!canBook?`<div style="font-size:13px;color:#b23b3b;margin-top:8px;">${t(dayOpen?'noTimesLeft':'closedThatDay')}</div>`:''}
-    ${clientIn()?clientConsentHtml():guestDetailsHtml()}
+    ${clientIn()?'':guestDetailsHtml()}
     <div style="font-size:13px;color:var(--muted);margin-top:10px;">${t('confirmNote')}</div>
     <button class="primary-btn" id="confirmBooking" ${canBook?'':'disabled style="opacity:.5;"'}>${t('confirmBookingBtn')}</button>
     <a class="wa-btn" id="sendWA" href="${waHref}" target="_blank" rel="noopener">💬 ${t('requestViaWhatsapp')}</a>
@@ -4012,25 +4012,6 @@ function loadGuestDetails(){
 function saveGuestDetails(d){
   try{ localStorage.setItem(GUEST_KEY,JSON.stringify(d)); }catch(e){}
 }
-/* A signed-in client is not asked for a name or number, but they still have to
-   say yes to aftercare messages — without this tick the booking was saved as
-   "no consent" and reception was never offered the aftercare note. */
-const CLIENT_CONSENT_KEY='odc_client_aftercare_v1';
-function clientConsentHtml(){
-  let on=false; try{ on=localStorage.getItem(CLIENT_CONSENT_KEY)==='1'; }catch(e){}
-  return `
-    <div class="book-card" style="margin-top:14px;">
-      <label style="display:flex;align-items:flex-start;gap:9px;font-size:13.5px;color:var(--ink-soft);cursor:pointer;">
-        <input id="clientConsent" type="checkbox" ${on?'checked':''} style="width:16px;height:16px;flex:none;margin-top:2px;accent-color:var(--gold-dark);">
-        <span>${t('aftercareConsent')}</span>
-      </label>
-    </div>`;
-}
-function clientConsentChecked(){
-  const el=document.getElementById('clientConsent'); const on=!!(el&&el.checked);
-  try{ localStorage.setItem(CLIENT_CONSENT_KEY,on?'1':'0'); }catch(e){}
-  return on;
-}
 function guestDetailsHtml(){
   const g=loadGuestDetails();
   const inputStyle="width:100%;border:1px solid var(--line);border-radius:9px;padding:10px 12px;font-size:16px;box-sizing:border-box;font-family:inherit;background:#fff;";
@@ -4042,10 +4023,6 @@ function guestDetailsHtml(){
       <input id="guestName" type="text" value="${esc(g.name||'')}" placeholder="${t('yourName')}" style="${inputStyle}">
       <label style="font-size:13px;font-weight:700;color:var(--ink-soft);display:block;margin:12px 0 6px;">${t('yourPhone')}</label>
       ${phoneFieldHtml('guestPhone',g.phoneIso?'':g.phone,'gp-input',g.phoneIso,g.phoneNat)}
-      <label style="display:flex;align-items:flex-start;gap:9px;margin-top:14px;font-size:13.5px;color:var(--ink-soft);cursor:pointer;">
-        <input id="guestConsent" type="checkbox" ${g.consent?'checked':''} style="width:16px;height:16px;flex:none;margin-top:2px;accent-color:var(--gold-dark);">
-        <span>${t('aftercareConsent')}</span>
-      </label>
     </div>`;
 }
 /* Reads the three fields, complains plainly if something is missing, and
@@ -4055,7 +4032,7 @@ function readGuestDetails(){
   if(!nameEl) return null;
   const name=nameEl.value.trim();
   const phone=readPhoneField('guestPhone');
-  const consent=!!document.getElementById('guestConsent').checked;
+  const consent=true;   // owner's decision: every client gets aftercare
   if(!name){ toast(t('needName')); nameEl.focus(); return null; }
   // Long enough to be a real number, whatever way it has been written.
   if(!phone){
@@ -7059,9 +7036,7 @@ function bindScreen(){
   // Choosing a different date or time redraws this screen, which would throw
   // away anything already typed. Keeping it on the device as it is typed means
   // the fields come back filled in.
-  const ccEl=document.getElementById('clientConsent');
-  if(ccEl) ccEl.addEventListener('change',()=>{ try{ localStorage.setItem(CLIENT_CONSENT_KEY,ccEl.checked?'1':'0'); }catch(e){} });
-  ['guestName','guestPhone','guestConsent'].forEach(id=>{
+  ['guestName','guestPhone'].forEach(id=>{
     const el=document.getElementById(id);
     if(!el) return;
     const keep=()=>saveGuestDetails({
@@ -7069,7 +7044,7 @@ function bindScreen(){
       phone:readPhoneField('guestPhone'),
       phoneIso:(document.getElementById('guestPhone_cc')||{}).value||'',
       phoneNat:(document.getElementById('guestPhone')||{}).value||'',
-      consent:!!(document.getElementById('guestConsent')||{}).checked
+      consent:true
     });
     el.addEventListener('input',keep);
     el.addEventListener('change',keep);
@@ -7101,10 +7076,10 @@ function bindScreen(){
     const req=guest
       ? {id:nextId('b',STORE.bookings),brand:currentBrand,serviceId:currentService,serviceName:s.n,
          date:dateStr,time:selectedTime,status:'Requested',clientName:guest.name,
-         phone:guest.phone,aftercareOk:guest.consent,lang,source:'app'}
+         phone:guest.phone,aftercareOk:true,lang,source:'app'}
       : {id:nextId('b',STORE.bookings),brand:currentBrand,serviceId:currentService,serviceName:s.n,
          date:dateStr,time:selectedTime,status:'Requested',clientName:loggedInClient.name,clientId:loggedInClient.id,
-         phone:loggedInClient.phone,aftercareOk:clientConsentChecked(),lang,source:'app'};
+         phone:loggedInClient.phone,aftercareOk:true,lang,source:'app'};
     STORE.bookings.push(req);
     const ok=saveStore();
     if(!ok){ STORE.bookings.pop(); toast("This browser's demo storage is full."); return; }
@@ -7136,10 +7111,10 @@ function bindScreen(){
       const waReq=waGuest
         ? {id:nextId('b',STORE.bookings),brand:currentBrand,serviceId:currentService,serviceName:s.n,
            date:dateStr,time:selectedTime,status:'Requested',clientName:waGuest.name,
-           phone:waGuest.phone,aftercareOk:waGuest.consent,lang,source:'app'}
+           phone:waGuest.phone,aftercareOk:true,lang,source:'app'}
         : {id:nextId('b',STORE.bookings),brand:currentBrand,serviceId:currentService,serviceName:s.n,
            date:dateStr,time:selectedTime,status:'Requested',clientName:loggedInClient.name,clientId:loggedInClient.id,
-           phone:loggedInClient.phone,aftercareOk:clientConsentChecked(),lang,source:'app'};
+           phone:loggedInClient.phone,aftercareOk:true,lang,source:'app'};
       STORE.bookings.push(waReq);
       saveStore(); cloudSave('bookings',waReq.id,null,waGuest?{guest:true}:{clientAuth:true});
     }
@@ -10034,7 +10009,7 @@ function revealPanel(el){
   try{ requestAnimationFrame(()=>el.scrollIntoView({behavior:'smooth',block:'start'})); }catch(e){}
 }
 function aftercareReady(booking){
-  return !!(aftercareNoteFor(booking) && booking.aftercareOk && bookingPhone(booking));
+  return !!(aftercareNoteFor(booking) && bookingPhone(booking));
 }
 function aftercareNoteFor(booking){
   const list=(STORE.services[booking.brand]||[]);
@@ -10054,7 +10029,6 @@ function offerAftercare(booking){
   const note=aftercareNoteFor(booking);
   // Say why nothing appears, so reception is not left wondering.
   if(!note){ toast(`No aftercare note is written for ${booking.serviceName||'this treatment'} — add one in Services.`); return; }
-  if(!booking.aftercareOk){ toast(`Aftercare not offered: ${booking.clientName||'the client'} did not agree to aftercare messages for this booking.`); return; }
   const phone=bookingPhone(booking);
   if(!phone){ toast(`Aftercare not offered: no phone number for ${booking.clientName||'this client'}.`); return; }
 
@@ -11045,13 +11019,6 @@ function openBookingForm(){
       <div class="field"><label>Service</label><select id="bf_service"></select></div>
       <div class="field"><label>Date</label><input id="bf_date" type="date"></div>
       <div class="field"><label>Time</label><input id="bf_time" type="time" step="300"></div>
-      <div class="field full" style="grid-column:1/-1;">
-        <label style="display:flex;align-items:flex-start;gap:9px;font-weight:600;cursor:pointer;">
-          <input id="bf_consent" type="checkbox" style="margin-top:3px;flex:none;">
-          <span>Client agreed to receive aftercare messages about their treatment</span>
-        </label>
-        <div style="font-size:13px;color:var(--muted);margin-top:6px;">Ask them at the desk. Without this tick no message is offered when the treatment is completed.</div>
-      </div>
       <div class="actions">
         <button class="btn btn-ghost" id="bf_cancel">Cancel</button>
         <button class="btn btn-primary" id="bf_save">Add booking</button>
@@ -11067,7 +11034,7 @@ function openBookingForm(){
   document.getElementById('bf_save').addEventListener('click',()=>{
     const clientName=document.getElementById('bf_client').value.trim()||'Walk-in';
     const phone=document.getElementById('bf_phone').value.trim();
-    const aftercareOk=!!document.getElementById('bf_consent').checked;
+    const aftercareOk=true;
     const brand=document.getElementById('bf_brand').value;
     const serviceId=document.getElementById('bf_service').value;
     const svc=(svcList(brand)||[]).find(s=>s.id===serviceId);
