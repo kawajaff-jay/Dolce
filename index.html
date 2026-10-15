@@ -10710,8 +10710,8 @@ function openBookingForm(){
       <div class="field"><label>Phone number</label><input id="bf_phone" type="tel" inputmode="tel" placeholder="+964 750 123 4567"></div>
       <div class="field"><label>Brand</label><select id="bf_brand">${brands.map(b=>`<option value="${b}">${BRANDS[b].name}</option>`).join('')}</select></div>
       <div class="field"><label>Service</label><select id="bf_service"></select></div>
-      <div class="field"><label>Date</label><input id="bf_date" type="text" placeholder="e.g. Sep 2, 2026"></div>
-      <div class="field"><label>Time</label><input id="bf_time" type="text" placeholder="e.g. 5:00 PM"></div>
+      <div class="field"><label>Date</label><input id="bf_date" type="date"></div>
+      <div class="field"><label>Time</label><input id="bf_time" type="time" step="300"></div>
       <div class="field full" style="grid-column:1/-1;">
         <label style="display:flex;align-items:flex-start;gap:9px;font-weight:600;cursor:pointer;">
           <input id="bf_consent" type="checkbox" style="margin-top:3px;flex:none;">
@@ -10737,9 +10737,18 @@ function openBookingForm(){
     const aftercareOk=!!document.getElementById('bf_consent').checked;
     const brand=document.getElementById('bf_brand').value;
     const serviceId=document.getElementById('bf_service').value;
-    const serviceName=svcList(brand).find(s=>s.id===serviceId).n;
-    const date=document.getElementById('bf_date').value.trim()||'TBD';
-    const time=document.getElementById('bf_time').value.trim()||'TBD';
+    const svc=(svcList(brand)||[]).find(s=>s.id===serviceId);
+    if(!svc){ toast('Choose a service first.'); return; }
+    const serviceName=svc.n;
+    // Picked from a calendar and a clock, then written the same way the client
+    // app writes them ("Sep 2, 2026" / "5:00 PM"), so every booking can be
+    // read as a real date and compared for clashes. Typed dates like
+    // "26/9/2026" could not be.
+    const dv=document.getElementById('bf_date').value, tv=document.getElementById('bf_time').value;
+    const dm=/^(\d{4})-(\d{2})-(\d{2})$/.exec(dv||''), tm=/^(\d{1,2}):(\d{2})/.exec(tv||'');
+    const date=dm?fmtDate(new Date(+dm[1],+dm[2]-1,+dm[3])):'TBD';
+    const time=tm?minToLabel((+tm[1])*60+(+tm[2])):'TBD';
+    const sb=document.getElementById('bf_save'); if(sb.disabled) return; sb.disabled=true;   // one tap = one booking
     const newBooking={id:nextId('b',STORE.bookings),brand,serviceId,serviceName,date,time,status:'Confirmed',clientName,phone,aftercareOk};
     STORE.bookings.push(newBooking);
     saveStore(); cloudSave('bookings',newBooking.id);
