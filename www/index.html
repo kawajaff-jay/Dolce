@@ -635,6 +635,8 @@
   body.native-app .demo-section{padding:0;}
   body.native-app .phone-stage{display:block;}
   body.native-app .phone.fullscreen{top:0;height:100vh;transition:height .05s linear,top .05s linear;}
+  body.native-app footer.proto-footer{display:none!important;}
+  button.armed{outline:2px solid #a3413a;outline-offset:1px;}
   body.native-app .phone.fullscreen .screen{height:100%;max-width:none;padding-top:env(safe-area-inset-top,0px);}
   body.native-app.kb-open .ai-overlay{border-radius:0;}
   /* Every Face ID iPhone (11 and newer) reserves a strip at the very bottom
@@ -1993,7 +1995,7 @@
 
   <div id="printArea"></div>
 
-  <footer>
+  <footer class="proto-footer">
     <span data-i18n="footerNote">Prototype for demonstration — content, prices and translations are placeholders to be replaced with real data.</span>
   </footer>
 </div>
@@ -2316,11 +2318,17 @@ const CLOUD_TABLES={
   products:{
     table:'products',
     list:()=>STORE.products,
-    row:(p)=>({id:p.id,brand:p.brand,name:p.n,price_usd:numOr0(p.price),
-      discount_percent:numOr0(p.discount),stock:Math.max(0,numOr0(p.stock)),image:p.image||'',
+    // Stock is only sent when it was typed in the product form (a new product,
+    // or a correction). Sales and deliveries change it in the database itself
+    // (see supabase_migration_audit_fixes.sql), so a product edit made on one
+    // device can no longer overwrite stock sold on another.
+    row:(p,job)=>{ const r={id:p.id,brand:p.brand,name:p.n,price_usd:numOr0(p.price),
+      discount_percent:numOr0(p.discount),image:p.image||'',
       description:p.desc||'',images:Array.isArray(p.images)?p.images:[],
       category:p.category||'',options:normOptions(p.options),active:p.active!==false,
-      sort_order:numOr0(p.sort)}),
+      sort_order:numOr0(p.sort)};
+      if(job && job.withStock) r.stock=Math.max(0,numOr0(p.stock));
+      return r; },
     app:(r)=>({id:r.id,n:r.name,price:Number(r.price_usd),discount:r.discount_percent||0,
       brand:r.brand,stock:r.stock||0,image:r.image||'',description:r.description,
       desc:r.description||'',images:Array.isArray(r.images)?r.images:[],
@@ -2455,8 +2463,10 @@ function queueSync(op,kind,id,brand,opts){
   // "not saved" warning about something that isn't theirs and doesn't
   // matter to them. It stays saved on this device either way.
   if(kind==='settings' && !currentUser) return;
+  const prev=outbox.find(j=>j.kind===kind && String(j.id)===String(id));
   outbox=outbox.filter(j=>!(j.kind===kind && String(j.id)===String(id)));
   const job={op,kind,id:String(id),brand:brand||null,at:Date.now()};
+  if((opts&&opts.withStock) || (prev&&prev.withStock)) job.withStock=true;
   if(opts&&opts.guest) job.guest=true;
   if(opts&&opts.clientAuth) job.clientAuth=true;
   outbox.push(job);
@@ -2605,6 +2615,16 @@ async function flushOutbox(){
       if(res && res.error && res.error.code==='23505'){
         outbox=outbox.filter(j=>j!==job);
         lastSyncError='';
+        continue;
+      }
+      // A client's booking that lost the race for its time slot (the database
+      // checks this). Tell the client and take it off this phone; nothing to retry.
+      if(res && res.error && job.kind==='bookings' && (job.guest||job.clientAuth) && /SLOT_TAKEN/.test(String(res.error.message||''))){
+        outbox=outbox.filter(j=>j!==job);
+        const bi=idxById(STORE.bookings,job.id); if(bi>=0){ STORE.bookings.splice(bi,1); saveStore(); }
+        Object.keys(BUSY_SLOTS).forEach(k=>delete BUSY_SLOTS[k]);
+        lastSyncError='';
+        try{ toast(t('slotTaken')); if(['booking','bookings','profile'].includes(currentScreen)) render(); }catch(e){}
         continue;
       }
       if(res && res.error){
@@ -2762,7 +2782,7 @@ function showSyncFailures(){
   document.body.appendChild(p);
   pushNavState();
   document.getElementById('sfRetry').addEventListener('click',retrySyncFailures);
-  document.getElementById('sfClear').addEventListener('click',clearSyncFailures);
+  document.getElementById('sfClear').addEventListener('click',(e)=>{ if(!confirmTap(e.currentTarget,'Discard these changes for good?')) return; clearSyncFailures(); });
   document.getElementById('sfClose').addEventListener('click',closeSyncFailurePanel);
   p.addEventListener('click',(e)=>{ if(e.target===p) closeSyncFailurePanel(); });
 }
@@ -3460,6 +3480,7 @@ Object.assign(I18N.en,{
   deleteNote:'Removes your login, name, number and points. Past appointments stay in our diary as business records.',
   deleted:'Your account has been deleted.',loggedOut:'Logged out.',past:'Past',member:'Member',
   loginPrivacy:'We only use your number to log you in and to contact you about your appointments.',
+  slotTaken:'That time was just taken — please pick another time.',
   linkTitle:'You already have an account',linkLede:'This number already has a Dolce+ account:',linkNote:"To keep your points and bookings in one place, confirm it's you with a code on WhatsApp. After that you can log in with your email or your number.",linkSend:'Send WhatsApp code',linkOther:'Use a different number',loginWith:'Log in with',
   emailLoginTitle:'Log in with your email',
   emailLoginLede:"We'll email you a 6-digit code — no password needed. One account for Dolce, Polished and Core.",
@@ -3495,6 +3516,7 @@ Object.assign(I18N.ar,{
   deleteNote:'يحذف تسجيل دخولك واسمك ورقمك ونقاطك. تبقى مواعيدك السابقة في سجلاتنا كسجلات عمل.',
   deleted:'تم حذف حسابك.',loggedOut:'تم تسجيل الخروج.',past:'السابقة',member:'عضو',
   loginPrivacy:'نستخدم رقمك فقط لتسجيل دخولك وللتواصل معك بخصوص مواعيدك.',
+  slotTaken:'تم حجز هذا الوقت للتو — يرجى اختيار وقت آخر.',
   linkTitle:'لديك حساب بالفعل',linkLede:'هذا الرقم لديه حساب Dolce+ بالفعل:',linkNote:'لإبقاء نقاطك وحجوزاتك في مكان واحد، أكّد أنه أنت برمز يصلك على واتساب. بعدها يمكنك الدخول ببريدك الإلكتروني أو برقمك.',linkSend:'أرسل الرمز عبر واتساب',linkOther:'استخدم رقماً آخر',loginWith:'الدخول عبر',
   emailLoginTitle:'تسجيل الدخول بالبريد الإلكتروني',
   emailLoginLede:'سنرسل إلى بريدك رمزاً من 6 أرقام — بدون كلمة سر. حساب واحد لـ Dolce و Polished و Core.',
@@ -3530,6 +3552,7 @@ Object.assign(I18N.ku,{
   deleteNote:'چوونەژوورەوە، ناو، ژمارە و خاڵەکانت دەسڕێتەوە. کاتە پێشووەکانت وەک تۆماری کار لەلامان دەمێننەوە.',
   deleted:'هەژمارەکەت سڕایەوە.',loggedOut:'چوویتە دەرەوە.',past:'پێشوو',member:'ئەندام',
   loginPrivacy:'ژمارەکەت تەنها بۆ چوونەژوورەوە و پەیوەندیکردن سەبارەت بە کاتەکانت بەکاردەهێنین.',
+  slotTaken:'ئەم کاتە ئێستا حجز کرا — تکایە کاتێکی تر هەڵبژێرە.',
   linkTitle:'تۆ پێشتر هەژمارت هەیە',linkLede:'ئەم ژمارەیە پێشتر هەژماری Dolce+ ی هەیە:',linkNote:'بۆ ئەوەی خاڵ و حجزەکانت لە یەک شوێن بمێنن، بە کۆدێک لە واتساپ پشتڕاستی بکەرەوە کە خۆتی. دوای ئەوە دەتوانیت بە ئیمەیڵ یان ژمارەکەت بچیتە ژوورەوە.',linkSend:'ناردنی کۆد بە واتساپ',linkOther:'ژمارەیەکی تر بەکاربهێنە',loginWith:'چوونەژوورەوە بە',
   emailLoginTitle:'چوونەژوورەوە بە ئیمەیڵ',
   emailLoginLede:'کۆدێکی ٦ ژمارەیی بۆ ئیمەیڵەکەت دەنێرین — بێ وشەی نهێنی. یەک هەژمار بۆ Dolce و Polished و Core.',
@@ -3594,17 +3617,51 @@ function slotsForDay(brand,d){
   if(!out.length) out.push(dh.o);
   return out;
 }
+/* Destructive actions ask for a second tap on the same button (no browser
+   pop-ups — those misbehave inside the installed app). Returns true on the
+   confirming tap; the first tap only arms the button for 4 seconds. */
+function confirmTap(btn,label){
+  if(!btn) return true;
+  if(btn.dataset.armed==='1'){ btn.dataset.armed=''; return true; }
+  const old=btn.innerHTML; btn.dataset.armed='1'; btn.innerHTML=label||'Tap again to confirm';
+  btn.classList.add('armed');
+  setTimeout(()=>{ if(btn.isConnected && btn.dataset.armed==='1'){ btn.dataset.armed=''; btn.innerHTML=old; btn.classList.remove('armed'); } },4000);
+  return false;
+}
 function upcomingDates(n){
   const out=[]; const base=new Date(); base.setHours(0,0,0,0);
   for(let i=0;i<n;i++){ const d=new Date(base); d.setDate(base.getDate()+i); out.push(d); }
   return out;
 }
 function sameDay(a,b){ return a && b && a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
-function fmtDate(d){ return d.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}); }
+// Stored as well as shown (bookings, sales), so it must not depend on the
+// phone's language: an Arabic-language phone wrote Arabic digits the database
+// could not read as a date (date_iso empty, reminders and sorting broken).
+function fmtDate(d){ return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
 function fmtDow(d){ return d.toLocaleDateString(undefined,{weekday:'short'}); }
+/* Times already booked by OTHER clients. A client's phone cannot read the
+   diary (that is private), so the database answers with times only — no
+   names or numbers — via busy_slots(). Refreshed when the booking screen
+   opens and again just before a booking is sent. */
+const BUSY_SLOTS={};
+async function loadBusySlots(brand,force){
+  const pub=(typeof anonSupa==='function'&&anonSupa())||supa; if(!pub||!brand) return false;
+  const c=BUSY_SLOTS[brand]; if(!force && c && Date.now()-c.at<60000) return false;
+  const from=isoOf(new Date()), to=isoOf(new Date(Date.now()+16*864e5));
+  try{
+    const {data,error}=await pub.rpc('busy_slots',{p_brand:brand,p_from:from,p_to:to});
+    if(error) return false;
+    const before=c?[...c.set].sort().join(','):'';
+    const set=new Set((data||[]).map(r=>String(r.date_iso)+'|'+r.time_label));
+    BUSY_SLOTS[brand]={at:Date.now(),set};
+    return before!==[...set].sort().join(',');
+  }catch(e){ return false; }
+}
+function slotBusy(brand,d,time){ const c=BUSY_SLOTS[brand]; return !!(c && d && c.set.has(isoOf(d)+'|'+time)); }
 function availableTimesForDate(brand,dateStr,dObj){
   const d=dObj||selectedDateObj||new Date();
   const taken=new Set(STORE.bookings.filter(bk=>bk.brand===brand&&bk.date===dateStr&&bk.status!=='Cancelled').map(bk=>bk.time));
+  const busy=BUSY_SLOTS[brand]; if(busy){ const iso=isoOf(d); busy.set.forEach(k=>{ const [di,tl]=k.split('|'); if(di===iso) taken.add(tl); }); }
   const earliest=Date.now()+BOOK_LEAD_MIN*60000;
   return slotsForDay(brand,d).map(m=>{
     const time=minToLabel(m);
@@ -4487,7 +4544,7 @@ function bindBasket(){
       basket=basket.filter(l=>{ const p=productById(l.id); return !(p&&p.brand===b); });
       delete basketSent[b]; saveBasket(); updateBasketUI(); paintBasketSheet();
     }
-    else if(e.target.closest('#bsClear')){ basket=[]; saveBasket(); updateBasketUI(); paintBasketSheet(); }
+    else if(e.target.closest('#bsClear')){ if(!confirmTap(e.target.closest('#bsClear'),t('clearBasket')+'?')) return; basket=[]; saveBasket(); updateBasketUI(); paintBasketSheet(); }
     else if(e.target.closest('#bsBrowse')){ closeBasket(); navTo('shop'); }
   });
 }
@@ -6784,6 +6841,9 @@ function bindScreen(){
     const body2=screenEl.querySelector('.screen-body'); if(body2) body2.scrollTop=top;
     const row2=screenEl.querySelector('.date-chip'); if(row2&&row2.parentElement) row2.parentElement.scrollLeft=left;
   };
+  if(currentScreen==='booking' && currentBrand){
+    loadBusySlots(currentBrand).then(changed=>{ if(changed && currentScreen==='booking') redrawInPlace(); });
+  }
   screenEl.querySelectorAll('[data-date]:not([disabled])').forEach(el=>el.addEventListener('click',()=>{
     selectedDateObj=new Date(el.dataset.date); selectedTime=null; redrawInPlace();
   }));
@@ -6814,8 +6874,8 @@ function bindScreen(){
   });
 
   const confirmBtn=document.getElementById('confirmBooking');
-  if(confirmBtn) confirmBtn.addEventListener('click',()=>{
-    if(!selectedTime) return;
+  if(confirmBtn) confirmBtn.addEventListener('click',async()=>{
+    if(!selectedTime || confirmBtn.dataset.busy==='1') return;
     // No account needed: a name and a number are enough for reception to
     // confirm, which is exactly what they would ask for over the phone.
     let guest=null;
@@ -6825,8 +6885,15 @@ function bindScreen(){
     }
     const b=BRANDS[currentBrand]; const s=svcList(currentBrand).find(x=>x.id===currentService);
     const dateStr=fmtDate(selectedDateObj);
-    const taken=STORE.bookings.some(bk=>bk.brand===currentBrand&&bk.date===dateStr&&bk.time===selectedTime&&bk.status!=='Cancelled');
-    if(taken){ toast('That time was just taken — pick another slot.'); render(); return; }
+    // Ask the database once more which times are booked (others' bookings
+    // included) — the slot may have gone while this screen was open.
+    confirmBtn.dataset.busy='1'; confirmBtn.disabled=true;
+    await Promise.race([loadBusySlots(currentBrand,true),new Promise(r=>setTimeout(r,4000))]);
+    if(confirmBtn.isConnected){ confirmBtn.dataset.busy=''; confirmBtn.disabled=false; }
+    if(currentScreen!=='booking') return;
+    const taken=STORE.bookings.some(bk=>bk.brand===currentBrand&&bk.date===dateStr&&bk.time===selectedTime&&bk.status!=='Cancelled')
+      || slotBusy(currentBrand,selectedDateObj,selectedTime);
+    if(taken){ toast(t('slotTaken')); selectedTime=null; redrawInPlace(); return; }
     const slNow=availableTimesForDate(currentBrand,dateStr,selectedDateObj).find(x=>x.time===selectedTime);
     if(!slNow||slNow.past){ toast(t('timePassed')); selectedTime=null; render(); return; }
     const req=guest
@@ -8880,6 +8947,7 @@ function renderAdminProducts(){
   rows.querySelectorAll('[data-sell-prod]').forEach(b=>b.addEventListener('click',()=>openProductSaleForm(b.dataset.sellProd)));
   rows.querySelectorAll('[data-del-prod]').forEach(b=>b.addEventListener('click',()=>{
     const k=idxById(STORE.products,b.dataset.delProd); if(k<0){ renderAdminProducts(); return; }
+    if(!confirmTap(b,'Really delete?')) return;
     const p=STORE.products[k];
     STORE.products.splice(k,1);
     saveStore(); cloudDelete('products',p.id); renderAdminProducts(); renderAdminOffers();
@@ -8902,20 +8970,22 @@ function openProductSaleForm(productId){
       </div>
     </div>`;
   document.getElementById('ps_cancel').addEventListener('click',()=>{document.getElementById('productSaleFormWrap').innerHTML='';});
-  document.getElementById('ps_save').addEventListener('click',()=>{
+  document.getElementById('ps_save').addEventListener('click',(ev)=>{
+    if(ev.currentTarget.disabled) return;
     const qty=Math.max(1,parseInt(document.getElementById('ps_qty').value)||1);
     const clientName=document.getElementById('ps_client').value.trim()||'Walk-in';
     // Work on the product as it is in the list now, not as it was when the form opened.
     const live=STORE.products[idxById(STORE.products,p.id)];
     if(!live){ toast('That product was removed on another device.'); document.getElementById('productSaleFormWrap').innerHTML=''; renderAdminProducts(); return; }
     if(qty>(live.stock||0)){ toast(`Only ${live.stock||0} in stock.`); return; }
-    live.stock=(live.stock||0)-qty;
+    ev.currentTarget.disabled=true;     // one tap = one sale
+    live.stock=(live.stock||0)-qty;     // shown straight away; the database makes the real change
     const sale={id:nextId('ps',STORE.productSales),productId:p.id,n:p.n,brand:p.brand,qty,unitPrice,total:unitPrice*qty,date:fmtDate(new Date()),clientName};
     STORE.productSales.push(sale);
     saveStore();
-    // Two things changed: the sale itself, and the product's stock level.
+    // The sale is the only thing sent: the database takes the stock down in the
+    // same step, and refuses the sale if there is not enough left.
     cloudSave('productSales',sale.id);
-    cloudSave('products',p.id);
     document.getElementById('productSaleFormWrap').innerHTML='';
     renderAdminProducts();
     toast(`Sold ${qty} × ${p.n} to ${clientName} — ${fmtMoney(unitPrice*qty)}.`);
@@ -8993,7 +9063,7 @@ function openProductForm(editId){
       }
       if(pfPos) pfPos.commit();
       pruneFocus(); saveStore(); cloudSave('settings','image_focus');
-      cloudSave('products',updated.id);
+      cloudSave('products',updated.id,null,{withStock:!editing || Number(base.stock||0)!==stock});
       document.getElementById('productFormWrap').innerHTML='';
       renderAdminProducts();
       renderAdminOffers();
@@ -9030,6 +9100,7 @@ function renderAdminOffers(){
   rows.querySelectorAll('[data-edit-offer]').forEach(b=>b.addEventListener('click',()=>openOfferForm(b.dataset.editOffer)));
   rows.querySelectorAll('[data-del-offer]').forEach(b=>b.addEventListener('click',()=>{
     const k=idxById(STORE.offers,b.dataset.delOffer); if(k<0){ renderAdminOffers(); return; }
+    if(!confirmTap(b,'Really delete?')) return;
     const o=STORE.offers[k];
     STORE.offers.splice(k,1);
     saveStore(); cloudDelete('offers',o.id); renderAdminOffers();
@@ -9184,6 +9255,7 @@ function renderAdminServices(){
   rows.querySelectorAll('[data-edit-svc]').forEach(b=>b.addEventListener('click',()=>openServiceForm(b.dataset.editSvc)));
   rows.querySelectorAll('[data-del-svc]').forEach(b=>b.addEventListener('click',()=>{
     const cur=svcList(svcBrandTab); const k=idxById(cur,b.dataset.delSvc); if(k<0){ renderAdminServices(); return; }
+    if(!confirmTap(b,'Really delete?')) return;
     const s=cur[k];
     cur.splice(k,1);
     saveStore(); cloudDelete('services',s.id,svcBrandTab); resequenceBrandServices(svcBrandTab);
@@ -9331,6 +9403,7 @@ function renderCategoryManager(){
   wrap.querySelectorAll('[data-cm-del]').forEach(btn=>btn.addEventListener('click',()=>{
     const c=cats[+btn.dataset.cmDel];
     if(count(c)||cats.length<=1) return;
+    if(!confirmTap(btn,'Remove?')) return;
     saveCategories(brand,cats.filter(x=>x!==c)); renderCategoryManager(); refreshClientCats();
     toast(`"${c}" removed from ${BRANDS[brand].name}.`);
   }));
@@ -9456,7 +9529,10 @@ function renderAdminGallery(){
   }).join('');
   grid.querySelectorAll('[data-del-media]').forEach(b=>b.addEventListener('click',()=>{
     const i=parseInt(b.dataset.delMedia); const m=STORE.media[i];
-    STORE.media.splice(i,1); saveStore(); cloudDelete('media',m.id); renderAdminGallery();
+    if(!m){ renderAdminGallery(); return; }
+    if(!confirmTap(b,'Really delete?')) return;
+    const k=idxById(STORE.media,m.id); if(k<0){ renderAdminGallery(); return; }
+    STORE.media.splice(k,1); saveStore(); cloudDelete('media',m.id); renderAdminGallery();
     toast(`Removed "${m.note||'item'}" from the gallery.`);
     if(currentScreen==='detail'||currentScreen==='profile') render();
   }));
@@ -9578,7 +9654,7 @@ function renderAdminBookings(){
     return fa ? ta-tb : tb-ta;                // upcoming: soonest first; past: newest first
   });
   rows.innerHTML=ordered.map((bk)=>{
-    const i=STORE.bookings.indexOf(bk);
+    const i=esc(String(bk.id));   // the booking's id — the list is refreshed and re-ordered behind the screen
     const advance=nextStatus[bk.status];
     const locked=isDateBrandClosed(bk.date,bk.brand);
     const actions = locked
@@ -9599,10 +9675,11 @@ function renderAdminBookings(){
     </tr>`;
   }).join('');
   rows.querySelectorAll('[data-points-booking]').forEach(b=>b.addEventListener('click',()=>{
-    const bk=STORE.bookings[parseInt(b.dataset.pointsBooking)]; if(bk) offerPoints(bk);
+    const bk=STORE.bookings[idxById(STORE.bookings,b.dataset.pointsBooking)]; if(bk) offerPoints(bk);
   }));
   rows.querySelectorAll('[data-advance-booking]').forEach(b=>b.addEventListener('click',()=>{
-    const i=parseInt(b.dataset.advanceBooking); const bk=STORE.bookings[i];
+    const bk=STORE.bookings[idxById(STORE.bookings,b.dataset.advanceBooking)];
+    if(!bk || !nextStatus[bk.status]){ renderAdminBookings(); return; }
     bk.status=nextStatus[bk.status]; saveStore(); cloudSave('bookings',bk.id); renderAdminBookings();
     toast(`${bk.clientName}'s booking marked ${bk.status}.`);
     if(currentScreen==='bookings') render();
@@ -9613,7 +9690,9 @@ function renderAdminBookings(){
     if(bk.status==='Confirmed') offerWhatsApp(bk,'confirm');
   }));
   rows.querySelectorAll('[data-cancel-booking]').forEach(b=>b.addEventListener('click',()=>{
-    const i=parseInt(b.dataset.cancelBooking); const bk=STORE.bookings[i];
+    const bk=STORE.bookings[idxById(STORE.bookings,b.dataset.cancelBooking)];
+    if(!bk){ renderAdminBookings(); return; }
+    if(!confirmTap(b,'Cancel this booking?')) return;
     bk.status='Cancelled'; saveStore(); cloudSave('bookings',bk.id); renderAdminBookings();
     toast(`${bk.clientName}'s booking cancelled.`);
     if(currentScreen==='bookings') render();
@@ -10773,7 +10852,9 @@ function renderAdminEmployees(){
   rows.querySelectorAll('[data-edit-emp]').forEach(b=>b.addEventListener('click',()=>openEmployeeForm(parseInt(b.dataset.editEmp))));
   rows.querySelectorAll('[data-del-emp]').forEach(b=>b.addEventListener('click',async()=>{
     const i=parseInt(b.dataset.delEmp); const u=STORE.users[i];
+    if(!u){ renderAdminEmployees(); return; }
     if(currentUser && currentUser.id===u.id){ toast("You can't delete the account you're currently logged in as."); return; }
+    if(!confirmTap(b,'Delete this login?')) return;
     const otherEmployeeAdmins=STORE.users.filter((x,xi)=>xi!==i && x.tabs.includes('employees'));
     if(u.tabs.includes('employees') && !otherEmployeeAdmins.length){ toast('At least one account needs Employees access, so someone can always manage accounts.'); return; }
     if(supa && u.id && u.id.indexOf('u')!==0){
@@ -11237,6 +11318,7 @@ function renderRegisterClose(dateIso,targetFmt,visibleBrands,combinedByBrand,gra
   wrap.innerHTML=html;
 
   wrap.querySelectorAll('[data-reopen-close]').forEach(b=>b.addEventListener('click',()=>{
+    if(!confirmTap(b,'Reopen this day?')) return;
     const id=b.dataset.reopenClose;
     const rc=STORE.registerCloses.find(x=>x.id===id);
     STORE.registerCloses=STORE.registerCloses.filter(x=>x.id!==id);
@@ -11247,6 +11329,9 @@ function renderRegisterClose(dateIso,targetFmt,visibleBrands,combinedByBrand,gra
   }));
   const closeBtn=document.getElementById('rc_close');
   if(closeBtn) closeBtn.addEventListener('click',()=>{
+    if(closeBtn.dataset.done==='1') return;
+    if(!confirmTap(closeBtn,'Tap again to close the register')) return;
+    closeBtn.dataset.done='1'; closeBtn.disabled=true;
     const countedCash=Math.max(0,parseFloat(document.getElementById('rc_cash').value)||0);
     const countedCard=Math.max(0,parseFloat(document.getElementById('rc_card').value)||0);
     const notes=document.getElementById('rc_notes').value.trim();
@@ -11368,7 +11453,8 @@ function openPurchaseForm(){
       </div>
     </div>`;
   document.getElementById('pu_cancel').addEventListener('click',()=>{document.getElementById('purchaseFormWrap').innerHTML='';});
-  document.getElementById('pu_save').addEventListener('click',()=>{
+  document.getElementById('pu_save').addEventListener('click',(ev)=>{
+    if(ev.currentTarget.disabled) return;
     const productId=document.getElementById('pu_product').value;
     const qty=Math.max(1,parseInt(document.getElementById('pu_qty').value)||1);
     const unitCost=Math.max(0,parseFloat(document.getElementById('pu_cost').value)||0);
@@ -11376,13 +11462,13 @@ function openPurchaseForm(){
     const dateIso=document.getElementById('pu_date').value||reportDateDefault();
     const product=STORE.products.find(p=>p.id===productId);
     if(!product){ toast('Choose a product.'); return; }
-    product.stock=(product.stock||0)+qty;
+    ev.currentTarget.disabled=true;     // one tap = one delivery
+    product.stock=(product.stock||0)+qty;   // shown straight away; the database makes the real change
     const purchase={id:nextId('pu',STORE.purchases),productId,n:product.n,brand:product.brand,qty,unitCost,total:Math.round(unitCost*qty*100)/100,supplier,date:reportDateToFmt(dateIso)};
     STORE.purchases.push(purchase);
     saveStore();
-    // The delivery itself, and the new stock level it created.
+    // The delivery is the only thing sent: the database adds the stock itself.
     cloudSave('purchases',purchase.id);
-    cloudSave('products',product.id);
     document.getElementById('purchaseFormWrap').innerHTML='';
     renderAdminPurchases();
     renderAdminProducts();
