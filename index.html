@@ -1607,6 +1607,9 @@
   #screen[data-gate="1"] .screen-body{padding-bottom:calc(40px + env(safe-area-inset-bottom,0px));}
   .cl-or{display:flex;align-items:center;gap:12px;margin:22px 0 14px;color:var(--ink-soft);font-size:12px;letter-spacing:.14em;text-transform:uppercase;}
   .cl-or::before,.cl-or::after{content:"";flex:1;height:1px;background:rgba(28,26,22,.14);}
+  .cl-method{display:flex;gap:4px;padding:4px;margin:4px 0 18px;border-radius:999px;background:rgba(28,26,22,.06);}
+  .cl-method button{flex:1;padding:10px 12px;border:0;border-radius:999px;background:transparent;color:var(--ink-soft,#6b6257);font:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:background .2s ease,color .2s ease,box-shadow .2s ease;}
+  .cl-method button.on{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(28,26,22,.12);}
   .cl-guest{display:block;width:100%;padding:15px 18px;border-radius:999px;border:1px solid rgba(28,26,22,.22);background:transparent;color:var(--ink);font:inherit;font-size:15px;font-weight:600;cursor:pointer;}
   .cl-guest:active{background:rgba(28,26,22,.05);}
 
@@ -2427,7 +2430,7 @@ const CLOUD_TABLES={
       : id==='wa_templates'
       ? {key:'wa_templates',value:JSON.stringify(STORE.waTemplates||{})}
       : id==='client_login'
-      ? {key:'client_login',value:['on','email'].includes(STORE.settings.clientLogin)?STORE.settings.clientLogin:'off'}
+      ? {key:'client_login',value:['on','email','both'].includes(STORE.settings.clientLogin)?STORE.settings.clientLogin:'off'}
       : String(id).startsWith('categories:')
       ? {key:id,value:JSON.stringify(catsFor(String(id).slice(11)))}
       : {key:'usd_to_iqd',value:String(STORE.settings.usdToIqd||1450)},
@@ -2901,7 +2904,7 @@ async function pullCatalog(){
       }
       const loginRow=row('client_login');
       const loginVal=loginRow?String(loginRow.value):'off';
-      STORE.settings.clientLogin=(loginVal==='on'||loginVal==='email')?loginVal:'off';
+      STORE.settings.clientLogin=(loginVal==='on'||loginVal==='email'||loginVal==='both')?loginVal:'off';
       const destRow=row('destinations');
       if(destRow && destRow.value){
         try{ const d=JSON.parse(destRow.value); if(d && typeof d==='object') STORE.destinations=d; }catch(e){}
@@ -3176,17 +3179,32 @@ function activeDiscountOffers(){
    never mixes with a staff login on the same device. */
 const CLIENT_KEY='odc_current_client';          // the retired demo login (cleared below)
 const CLIENT_CACHE_KEY='odc_client_cache_v1';   // last known name/points, for offline starts
-function clientLoginOn(){ return !!(supa && STORE.settings && ['on','email'].includes(STORE.settings.clientLogin)); }
+function clientLoginOn(){ return !!(supa && STORE.settings && ['on','email','both'].includes(STORE.settings.clientLogin)); }
 /* How the login code is delivered: 'email' (setting value 'email') or
    'whatsapp' (setting value 'on'). Email is the interim method while Meta
    business verification for the WhatsApp login template is pending. */
-function clientLoginMethod(){ return (STORE.settings && STORE.settings.clientLogin==='email')?'email':'whatsapp'; }
+/* 'both' = the client chooses WhatsApp or email on the login screen (their
+   choice is remembered on this phone). While an email login is being joined
+   to the account of a phone number (authLink), the code goes to WhatsApp. */
+const AUTH_METHOD_KEY='odc_login_method';
+let authMethodPick=(()=>{ try{ return localStorage.getItem(AUTH_METHOD_KEY)==='email'?'email':'whatsapp'; }catch(e){ return 'whatsapp'; } })();
+let authLink=null;   // {ticket, phone} while confirming a number with WhatsApp
+function clientLoginChoice(){ return !!(STORE.settings && STORE.settings.clientLogin==='both'); }
+function setAuthMethod(m){ authMethodPick=m==='email'?'email':'whatsapp'; try{ localStorage.setItem(AUTH_METHOD_KEY,authMethodPick); }catch(e){} }
+function clientLoginMethod(){
+  if(authLink) return 'whatsapp';
+  const v=STORE.settings && STORE.settings.clientLogin;
+  if(v==='email') return 'email';
+  if(v==='both') return authMethodPick;
+  return 'whatsapp';
+}
 // A plausible email address, lower-cased, or '' if it does not look like one.
 function toLoginEmail(raw){
   const e=String(raw||'').trim().toLowerCase();
   return /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/.test(e)?e:'';
 }
 let clientAuthClient=null;
+let authLinkPhone='';   // number that already has an account (email sign-up)
 function clientSupa(){
   if(clientAuthClient) return clientAuthClient;
   try{
@@ -3318,7 +3336,7 @@ function setLoggedInClient(row){
 }
 function clearClientState(){
   loggedInClient=null; clientBookings=[]; deleteArmed=false;
-  myLedger=[]; myLedgerYear=[]; myLoyaltyAt=0;
+  myLedger=[]; myLedgerYear=[]; myLoyaltyAt=0; authLink=null; authLinkPhone='';
   try{ localStorage.removeItem(CLIENT_CACHE_KEY); }catch(e){}
 }
 /* After a successful code check (or on start-up with a saved login): link
@@ -3329,14 +3347,18 @@ async function clientAfterLogin(name,phone,birth){
   const args={p_name:name||null};
   if(phone) args.p_phone=phone;
   if(birth) args.p_birth=birth;
+  const ticket=authLink&&authLink.ticket&&clientLoginMethod()==='whatsapp'?authLink.ticket:null;
+  if(ticket) args.p_ticket=ticket;
   try{ res=await cs.rpc('claim_my_client_account',args); }
   catch(e){ return 'offline'; }
   if(res.error){
     const m=String(res.error.message||'');
     if(/staff login/i.test(m)){ try{ await cs.auth.signOut({scope:'local'}); }catch(e){} return 'staff'; }
+    if(/PHONE_IN_USE/.test(m)) return 'phoneInUse';
     if(/fetch|network|failed to fetch/i.test(m)) return 'offline';
     return 'error';
   }
+  if(ticket) authLink=null;              // used up (the server deletes it too)
   const row=Array.isArray(res.data)?res.data[0]:res.data;
   if(!row||!row.id) return 'needName';
   setLoggedInClient(row);
@@ -3391,7 +3413,7 @@ async function sendClientCode(target){
 function finishClientLogin(isNew){
   toast(`${isNew?t('accountCreated'):t('welcomeBack')} ${loggedInClient.name}`);
   startGate=false;
-  authStep='phone'; authPhone=''; authEmail='';
+  authStep='phone'; authPhone=''; authEmail=''; authLink=null; authLinkPhone='';
   const next=pendingScreen; pendingScreen=null;
   goto(next||'profile');
 }
@@ -3438,6 +3460,7 @@ Object.assign(I18N.en,{
   deleteNote:'Removes your login, name, number and points. Past appointments stay in our diary as business records.',
   deleted:'Your account has been deleted.',loggedOut:'Logged out.',past:'Past',member:'Member',
   loginPrivacy:'We only use your number to log you in and to contact you about your appointments.',
+  linkTitle:'You already have an account',linkLede:'This number already has a Dolce+ account:',linkNote:"To keep your points and bookings in one place, confirm it's you with a code on WhatsApp. After that you can log in with your email or your number.",linkSend:'Send WhatsApp code',linkOther:'Use a different number',loginWith:'Log in with',
   emailLoginTitle:'Log in with your email',
   emailLoginLede:"We'll email you a 6-digit code — no password needed. One account for Dolce, Polished and Core.",
   emailLabel:'Your email address',sendCodeEmail:'Email me a code',emailWord:'Email',
@@ -3472,6 +3495,7 @@ Object.assign(I18N.ar,{
   deleteNote:'يحذف تسجيل دخولك واسمك ورقمك ونقاطك. تبقى مواعيدك السابقة في سجلاتنا كسجلات عمل.',
   deleted:'تم حذف حسابك.',loggedOut:'تم تسجيل الخروج.',past:'السابقة',member:'عضو',
   loginPrivacy:'نستخدم رقمك فقط لتسجيل دخولك وللتواصل معك بخصوص مواعيدك.',
+  linkTitle:'لديك حساب بالفعل',linkLede:'هذا الرقم لديه حساب Dolce+ بالفعل:',linkNote:'لإبقاء نقاطك وحجوزاتك في مكان واحد، أكّد أنه أنت برمز يصلك على واتساب. بعدها يمكنك الدخول ببريدك الإلكتروني أو برقمك.',linkSend:'أرسل الرمز عبر واتساب',linkOther:'استخدم رقماً آخر',loginWith:'الدخول عبر',
   emailLoginTitle:'تسجيل الدخول بالبريد الإلكتروني',
   emailLoginLede:'سنرسل إلى بريدك رمزاً من 6 أرقام — بدون كلمة سر. حساب واحد لـ Dolce و Polished و Core.',
   emailLabel:'بريدك الإلكتروني',sendCodeEmail:'أرسل لي الرمز بالبريد',emailWord:'البريد الإلكتروني',
@@ -3506,6 +3530,7 @@ Object.assign(I18N.ku,{
   deleteNote:'چوونەژوورەوە، ناو، ژمارە و خاڵەکانت دەسڕێتەوە. کاتە پێشووەکانت وەک تۆماری کار لەلامان دەمێننەوە.',
   deleted:'هەژمارەکەت سڕایەوە.',loggedOut:'چوویتە دەرەوە.',past:'پێشوو',member:'ئەندام',
   loginPrivacy:'ژمارەکەت تەنها بۆ چوونەژوورەوە و پەیوەندیکردن سەبارەت بە کاتەکانت بەکاردەهێنین.',
+  linkTitle:'تۆ پێشتر هەژمارت هەیە',linkLede:'ئەم ژمارەیە پێشتر هەژماری Dolce+ ی هەیە:',linkNote:'بۆ ئەوەی خاڵ و حجزەکانت لە یەک شوێن بمێنن، بە کۆدێک لە واتساپ پشتڕاستی بکەرەوە کە خۆتی. دوای ئەوە دەتوانیت بە ئیمەیڵ یان ژمارەکەت بچیتە ژوورەوە.',linkSend:'ناردنی کۆد بە واتساپ',linkOther:'ژمارەیەکی تر بەکاربهێنە',loginWith:'چوونەژوورەوە بە',
   emailLoginTitle:'چوونەژوورەوە بە ئیمەیڵ',
   emailLoginLede:'کۆدێکی ٦ ژمارەیی بۆ ئیمەیڵەکەت دەنێرین — بێ وشەی نهێنی. یەک هەژمار بۆ Dolce و Polished و Core.',
   emailLabel:'ئیمەیڵەکەت',sendCodeEmail:'کۆدەکەم بۆ بنێرە بە ئیمەیڵ',emailWord:'ئیمەیڵ',
@@ -3926,6 +3951,20 @@ function renderClientAuth(){
     `;
   }
   const byEmail=clientLoginMethod()==='email';
+  const picker=(clientLoginChoice()&&!authLink)?`<div class="cl-method" role="group" aria-label="${attr(t('loginWith'))}">
+      <button type="button" data-auth-method="whatsapp" class="${byEmail?'':'on'}" aria-pressed="${!byEmail}">WhatsApp</button>
+      <button type="button" data-auth-method="email" class="${byEmail?'on':''}" aria-pressed="${byEmail}">${t('emailWord')}</button>
+    </div>`:'';
+  if(authStep==='link'){
+    return `<section class="cl-auth">
+      <div class="lux-eyebrow">WhatsApp</div>
+      <h2 class="lux-h2">${t('linkTitle')}</h2>
+      <p class="lux-lede">${t('linkLede')} <b dir="ltr" style="white-space:nowrap;">${esc(clientPhoneText(authLinkPhone))}</b></p>
+      <p class="cl-note">${t('linkNote')}</p>
+      <button class="wa-btn" id="authLinkSend">${t('linkSend')}</button>
+      <div class="cl-row" style="justify-content:center;"><button class="lux-link" id="authLinkBack">${t('linkOther')}</button></div>
+    </section>`;
+  }
   if(authStep==='name'){
     return `<section class="cl-auth">
       <div class="lux-eyebrow"><bdi>Dolce+</bdi></div>
@@ -3961,6 +4000,7 @@ function renderClientAuth(){
     <div class="lux-eyebrow"><bdi>Dolce+</bdi></div>
     <h2 class="lux-h2">${t(startGate?'gateTitle':'emailLoginTitle')}</h2>
     <p class="lux-lede">${t(startGate?'gateLedeEmail':'emailLoginLede')}</p>
+    ${picker}
     <label class="cl-label" for="authEmailInput">${t('emailLabel')}</label>
     <input class="cl-input" id="authEmailInput" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" dir="ltr" placeholder="name@example.com" value="${attr(authEmail)}">
     <button class="primary-btn" id="authSendCode">${t('sendCodeEmail')}</button>
@@ -3973,6 +4013,7 @@ function renderClientAuth(){
     <div class="lux-eyebrow"><bdi>Dolce+</bdi></div>
     <h2 class="lux-h2">${t(startGate?'gateTitle':'loginTitle')}</h2>
     <p class="lux-lede">${t('loginLede')}</p>
+    ${picker}
     <label class="cl-label" for="authPhoneInput">${t('phoneLabel')}</label>
     ${phoneFieldHtml('authPhoneInput',authPhone,'cl-input')}
     <button class="wa-btn" id="authSendCode">${t('sendCode')}</button>
@@ -7008,7 +7049,34 @@ function bindScreen(){
     });
   }
   const authBackBtn=document.getElementById('authBack');
-  if(authBackBtn) authBackBtn.addEventListener('click',()=>{ authStep='phone'; render(); });
+  if(authBackBtn) authBackBtn.addEventListener('click',()=>{
+    if(authLink){ authLink=null; authStep='name'; render(); return; }   // still the email login
+    authStep='phone'; render();
+  });
+  screenEl.querySelectorAll('[data-auth-method]').forEach(b=>b.addEventListener('click',()=>{
+    if(authBusy||b.dataset.authMethod===clientLoginMethod()) return;
+    setAuthMethod(b.dataset.authMethod); authStep='phone'; navDirection='none'; render();
+  }));
+  const authLinkBack=document.getElementById('authLinkBack');
+  if(authLinkBack) authLinkBack.addEventListener('click',()=>{ authStep='name'; navDirection='none'; render(); });
+  const authLinkSend=document.getElementById('authLinkSend');
+  if(authLinkSend) authLinkSend.addEventListener('click',async()=>{
+    if(authBusy) return;
+    const cs=clientSupa(); if(!cs){ toast(t('offline')); return; }
+    authBusy=true; busyBtn(authLinkSend,t('sending'));
+    let res;
+    try{ res=await cs.rpc('create_link_ticket'); }catch(e){ res={error:{message:'fetch'}}; }
+    if(res.error||!res.data){
+      authBusy=false; freeBtn(authLinkSend);
+      toast(/fetch|network/i.test(String(res.error&&res.error.message))?t('offline'):t('sendFailed')); return;
+    }
+    authLink={ticket:String(res.data),phone:authLinkPhone};
+    authPhone=authLinkPhone;
+    const ok=await sendClientCode(authPhone);
+    authBusy=false; freeBtn(authLinkSend);
+    if(!ok){ authLink=null; return; }
+    authStep='code'; render();
+  });
   const authSaveName=document.getElementById('authSaveName');
   if(authSaveName) authSaveName.addEventListener('click',async()=>{
     if(authBusy) return;
@@ -7027,6 +7095,7 @@ function bindScreen(){
     const r=await clientAfterLogin(name,phone,birth);
     authBusy=false;
     if(r==='ok') return finishClientLogin(true);
+    if(r==='phoneInUse'){ authLinkPhone=phone; authStep='link'; navDirection='none'; render(); return; }
     freeBtn(authSaveName);
     toast(r==='offline'?t('offline'):t('sendFailed'));
   });
@@ -11330,12 +11399,13 @@ document.getElementById('addPurchaseBtn').addEventListener('click',openPurchaseF
 function renderClientLoginSetting(){
   const wrap=document.getElementById('clientLoginWrap'); if(!wrap) return;
   if(!currentUser || !currentUser.isOwner){ wrap.innerHTML=''; return; }
-  const v=['on','email'].includes(STORE.settings.clientLogin)?STORE.settings.clientLogin:'off';
-  const opts=[['off','Off'],['email','On — code by email'],['on','On — code on WhatsApp']];
+  const v=['on','email','both'].includes(STORE.settings.clientLogin)?STORE.settings.clientLogin:'off';
+  const opts=[['off','Off'],['email','On — code by email'],['on','On — code on WhatsApp'],['both','On — client chooses WhatsApp or email']];
   const note={
     off:'Clients book as guests and are pointed to WhatsApp for their booking history.',
     email:'Clients log in with a 6-digit code sent to their email, then see their own bookings and points. Turn this on only after the email sender is set up in Supabase and you have tested a login.',
-    on:'Clients log in with a code sent to their WhatsApp. Use this only once the WhatsApp login template is approved by Meta and a test login has worked.'
+    on:'Clients log in with a code sent to their WhatsApp. Use this only once the WhatsApp login template is approved by Meta and a test login has worked.',
+    both:'Clients pick WhatsApp or email on the login screen. Both lead to the same account: if someone signs up by email with a number that already has an account, the app first confirms that number with a WhatsApp code, so no duplicate is made. Needs supabase_migration_client_login_choice.sql to have been run.'
   }[v];
   wrap.innerHTML=`
     <div class="section-label" style="margin:0 0 10px;">Client login</div>
@@ -11347,7 +11417,7 @@ function renderClientLoginSetting(){
     const m=b.dataset.clMode; if(m===v) return;
     STORE.settings.clientLogin=m;
     saveStore(); cloudSave('settings','client_login');
-    toast(m==='off'?'Client login turned off.':m==='email'?'Client login turned on (email codes).':'Client login turned on (WhatsApp codes).');
+    toast(m==='off'?'Client login turned off.':m==='email'?'Client login turned on (email codes).':m==='both'?'Client login turned on (client chooses WhatsApp or email).':'Client login turned on (WhatsApp codes).');
     renderClientLoginSetting(); render();
   }));
 }
