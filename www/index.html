@@ -3978,7 +3978,7 @@ function renderBooking(){
     <div class="section-label">${t('preferredTime')}</div>
     <div class="time-chip-grid">${timeChips}</div>
     ${!canBook?`<div style="font-size:13px;color:#b23b3b;margin-top:8px;">${t(dayOpen?'noTimesLeft':'closedThatDay')}</div>`:''}
-    ${clientIn()?'':guestDetailsHtml()}
+    ${clientIn()?clientConsentHtml():guestDetailsHtml()}
     <div style="font-size:13px;color:var(--muted);margin-top:10px;">${t('confirmNote')}</div>
     <button class="primary-btn" id="confirmBooking" ${canBook?'':'disabled style="opacity:.5;"'}>${t('confirmBookingBtn')}</button>
     <a class="wa-btn" id="sendWA" href="${waHref}" target="_blank" rel="noopener">💬 ${t('requestViaWhatsapp')}</a>
@@ -4004,6 +4004,25 @@ function loadGuestDetails(){
 }
 function saveGuestDetails(d){
   try{ localStorage.setItem(GUEST_KEY,JSON.stringify(d)); }catch(e){}
+}
+/* A signed-in client is not asked for a name or number, but they still have to
+   say yes to aftercare messages — without this tick the booking was saved as
+   "no consent" and reception was never offered the aftercare note. */
+const CLIENT_CONSENT_KEY='odc_client_aftercare_v1';
+function clientConsentHtml(){
+  let on=false; try{ on=localStorage.getItem(CLIENT_CONSENT_KEY)==='1'; }catch(e){}
+  return `
+    <div class="book-card" style="margin-top:14px;">
+      <label style="display:flex;align-items:flex-start;gap:9px;font-size:13.5px;color:var(--ink-soft);cursor:pointer;">
+        <input id="clientConsent" type="checkbox" ${on?'checked':''} style="width:16px;height:16px;flex:none;margin-top:2px;accent-color:var(--gold-dark);">
+        <span>${t('aftercareConsent')}</span>
+      </label>
+    </div>`;
+}
+function clientConsentChecked(){
+  const el=document.getElementById('clientConsent'); const on=!!(el&&el.checked);
+  try{ localStorage.setItem(CLIENT_CONSENT_KEY,on?'1':'0'); }catch(e){}
+  return on;
 }
 function guestDetailsHtml(){
   const g=loadGuestDetails();
@@ -7033,6 +7052,8 @@ function bindScreen(){
   // Choosing a different date or time redraws this screen, which would throw
   // away anything already typed. Keeping it on the device as it is typed means
   // the fields come back filled in.
+  const ccEl=document.getElementById('clientConsent');
+  if(ccEl) ccEl.addEventListener('change',()=>{ try{ localStorage.setItem(CLIENT_CONSENT_KEY,ccEl.checked?'1':'0'); }catch(e){} });
   ['guestName','guestPhone','guestConsent'].forEach(id=>{
     const el=document.getElementById(id);
     if(!el) return;
@@ -7076,7 +7097,7 @@ function bindScreen(){
          phone:guest.phone,aftercareOk:guest.consent,lang,source:'app'}
       : {id:nextId('b',STORE.bookings),brand:currentBrand,serviceId:currentService,serviceName:s.n,
          date:dateStr,time:selectedTime,status:'Requested',clientName:loggedInClient.name,clientId:loggedInClient.id,
-         phone:loggedInClient.phone,lang,source:'app'};
+         phone:loggedInClient.phone,aftercareOk:clientConsentChecked(),lang,source:'app'};
     STORE.bookings.push(req);
     const ok=saveStore();
     if(!ok){ STORE.bookings.pop(); toast("This browser's demo storage is full."); return; }
@@ -7111,7 +7132,7 @@ function bindScreen(){
            phone:waGuest.phone,aftercareOk:waGuest.consent,lang,source:'app'}
         : {id:nextId('b',STORE.bookings),brand:currentBrand,serviceId:currentService,serviceName:s.n,
            date:dateStr,time:selectedTime,status:'Requested',clientName:loggedInClient.name,clientId:loggedInClient.id,
-           phone:loggedInClient.phone,lang,source:'app'};
+           phone:loggedInClient.phone,aftercareOk:clientConsentChecked(),lang,source:'app'};
       STORE.bookings.push(waReq);
       saveStore(); cloudSave('bookings',waReq.id,null,waGuest?{guest:true}:{clientAuth:true});
     }
@@ -9968,10 +9989,11 @@ function bookingPhone(booking){
 
 function offerAftercare(booking){
   const note=aftercareNoteFor(booking);
-  if(!note) return;
-  if(!booking.aftercareOk) return;
+  // Say why nothing appears, so reception is not left wondering.
+  if(!note){ toast(`No aftercare note is written for ${booking.serviceName||'this treatment'} — add one in Services.`); return; }
+  if(!booking.aftercareOk){ toast(`Aftercare not offered: ${booking.clientName||'the client'} did not agree to aftercare messages for this booking.`); return; }
   const phone=bookingPhone(booking);
-  if(!phone) return;
+  if(!phone){ toast(`Aftercare not offered: no phone number for ${booking.clientName||'this client'}.`); return; }
 
   const firstName=(booking.clientName||'').split(' ')[0]||'';
   // The notification a phone shows on its lock screen says nothing about
