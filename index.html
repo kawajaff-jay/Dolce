@@ -8888,11 +8888,16 @@ async function staffAuthenticate(u,entered){
     } else if(sv.status===401){
       const left=Number(sv.data.left);
       return {ok:false,error:'That PIN isn\'t right.'+(left>0&&left<=3?` ${left} ${left===1?'try':'tries'} left before this login is locked for 15 minutes.`:' Please try again.')};
-    } else if(sv.status===0){
-      return {ok:false,error:'No connection — check the internet and try again.'};
-    } else if(sv.status===404){
+    } else if(sv.status===404 || sv.status===0){
+      // 404: the secure sign-in server is not set up yet. 0: the browser could
+      // not reach it at all — a server that does not exist answers without the
+      // headers a browser needs, which looks the same as no internet. Either
+      // way fall back to the direct sign-in (works until each account has
+      // switched to the secure password).
       try{ ({data,error}=await supa.auth.signInWithPassword({email:empEmail(u.loginSlug),password:empPassword(entered)})); }
       catch(e){ return {ok:false,error:'No connection — check the internet and try again.'}; }
+      if(sv.status===0 && (error||!data||!data.user) && !/fetch|network/i.test(String(error&&error.message)))
+        return {ok:false,error:'The sign-in server could not be reached, or the PIN is wrong. Please try again in a moment.'};
     } else {
       return {ok:false,error:'Sign-in is not available right now (server '+sv.status+'). Please try again shortly.'};
     }
