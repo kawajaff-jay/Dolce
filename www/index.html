@@ -9898,6 +9898,7 @@ function renderAdminBookings(){
         ${(bk.status==='Requested'||bk.status==='Confirmed')?`<button class="btn btn-ghost btn-sm" data-move-booking="${i}">Reschedule</button>`:''}
         ${(bk.status==='Requested'||bk.status==='Confirmed')?`<button class="btn btn-danger btn-sm" data-cancel-booking="${i}">Cancel</button>`:''}
         ${bk.status==='Completed'?`<button class="btn btn-ghost btn-sm" data-refund-booking="${i}">Refund</button>`:''}
+        ${bk.status==='Completed'&&aftercareReady(bk)?`<button class="btn btn-ghost btn-sm" data-aftercare-booking="${i}" title="Open the aftercare note for this client in WhatsApp">Aftercare</button>`:''}
       </div>` : '');
     const ptsBtn=(bk.status==='Completed' && loyaltyReady===true && !earnedBookingIds.has(String(bk.id)))
       ? `<button class="btn btn-ghost btn-sm" data-points-booking="${i}" title="Add D+ points for this visit">+ Points</button>` : '';
@@ -9931,6 +9932,9 @@ function renderAdminBookings(){
     if(!confirmTap(b,'Mark as no-show?')) return;
     bk.status='No-show'; saveStore(); cloudSave('bookings',bk.id); renderAdminBookings();
     toast(`${bk.clientName}'s booking marked No-show.`);
+  }));
+  rows.querySelectorAll('[data-aftercare-booking]').forEach(b=>b.addEventListener('click',()=>{
+    const bk=STORE.bookings[idxById(STORE.bookings,b.dataset.aftercareBooking)]; if(bk) offerAftercare(bk);
   }));
   rows.querySelectorAll('[data-move-booking]').forEach(b=>b.addEventListener('click',()=>{
     const bk=STORE.bookings[idxById(STORE.bookings,b.dataset.moveBooking)]; if(bk) openRescheduleForm(bk);
@@ -9973,6 +9977,14 @@ function prettyPhone(digits){
   return '+'+d.slice(0,3)+' '+d.slice(3,6)+' '+d.slice(6,9)+' '+d.slice(9);
 }
 
+/* The pop-ups sit at the top of the Bookings list; reception is often scrolled
+   far down when pressing a button, so bring the pop-up into view. */
+function revealPanel(el){
+  try{ requestAnimationFrame(()=>el.scrollIntoView({behavior:'smooth',block:'start'})); }catch(e){}
+}
+function aftercareReady(booking){
+  return !!(aftercareNoteFor(booking) && booking.aftercareOk && bookingPhone(booking));
+}
 function aftercareNoteFor(booking){
   const list=(STORE.services[booking.brand]||[]);
   const svc=list.find(s=>s.id===booking.serviceId);
@@ -10018,6 +10030,7 @@ function offerAftercare(booking){
       </div>      <div class="ac-foot">Opens WhatsApp with the message ready — check it, then press send there.</div>
     </div>`;
   wrap.classList.add('open');
+  revealPanel(wrap);
   const close=()=>{ wrap.classList.remove('open'); wrap.innerHTML=''; };
   document.getElementById('ac_skip').addEventListener('click',close);
   document.getElementById('ac_send').addEventListener('click',()=>{
@@ -10324,7 +10337,7 @@ function offerPoints(bk,after){
     if(r.error && /point_transactions|relation|schema cache/i.test(r.error)){ loyaltyReady=false; done(); return; }
     if(!busy) draw();
   };
-  draw(); loadLevel();
+  draw(); revealPanel(wrap); loadLevel();
 }
 
 /* ---- One client, one row ----
