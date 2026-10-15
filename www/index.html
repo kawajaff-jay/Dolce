@@ -376,6 +376,12 @@
     -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);font-weight:500;font-size:14px;letter-spacing:.01em;max-width:calc(100% - 48px);box-sizing:border-box;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
   /* D+ loyalty — admin */
+  .bk-daybar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 14px;}
+  .bk-daybar .bk-day{font-family:var(--serif,inherit);font-size:20px;font-weight:600;color:var(--ink);min-width:220px;text-align:center;}
+  .bk-daybar .bk-arrow{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:#fff;font-size:20px;line-height:1;cursor:pointer;color:var(--ink);}
+  .bk-daybar input[type=date]{border:1px solid var(--line);border-radius:9px;padding:7px 10px;font:inherit;background:#fff;}
+  .bk-daybar .bk-waiting{flex-basis:100%;font-size:13px;color:var(--ink-soft);}
+  .bk-daybar .bk-waiting button{border:0;background:none;color:var(--gold-dark,#8a6636);font:inherit;font-weight:700;text-decoration:underline;cursor:pointer;padding:0;}
   #pointsPanel{display:none;}
   #pointsPanel.open{display:block;}
   .lo-who{font-size:14px;color:var(--ink-soft);margin:6px 0 10px;}
@@ -1901,12 +1907,13 @@
 
     <div class="admin-panel" id="adminBookings">
       <div class="admin-toolbar">
-        <div style="font-size:14px;color:var(--ink-soft);"><span id="bookingCount">0</span> bookings <span id="bookingScopeLabel">across all brands</span> <span id="bookingFresh" style="color:var(--muted);"></span></div>
+        <div style="font-size:14px;color:var(--ink-soft);"><span id="bookingCount">0</span> bookings this day <span id="bookingScopeLabel">across all brands</span> <span id="bookingFresh" style="color:var(--muted);"></span></div>
         <div style="display:flex;gap:8px;">
           <button class="btn btn-ghost" id="refreshBookingsBtn">↻ Refresh</button>
           <button class="btn btn-primary" id="addBookingBtn">+ Add Booking</button>
         </div>
       </div>
+      <div id="bookingDayBar" class="bk-daybar"></div>
       <div id="bookingFormWrap"></div>
       <div id="pointsPanel"></div>
       <div id="aftercarePanel"></div>
@@ -9859,32 +9866,70 @@ function openMediaForm(){
 document.getElementById('addMediaBtn').addEventListener('click',openMediaForm);
 
 /* ---------------- Admin: Bookings ---------------- */
+/* Bookings are shown one day at a time — today when the tab opens — so the
+   desk sees today's diary, not the whole history. */
+let bookingDay=null;   // 'YYYY-MM-DD' (Erbil local day)
+function dayKeyOf(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function todayKey(){ return dayKeyOf(new Date()); }
+function bookingDayKey(bk){
+  if(bk.dateIso) return String(bk.dateIso).slice(0,10);
+  const d=new Date(bk.date); return isNaN(d)?'':dayKeyOf(d);
+}
+function shiftDayKey(k,n){ const [y,m,d]=k.split('-').map(Number); return dayKeyOf(new Date(y,m-1,d+n)); }
+function dayKeyLabel(k){
+  const [y,m,d]=k.split('-').map(Number); const dt=new Date(y,m-1,d);
+  const t=todayKey(); const rel=k===t?'Today':k===shiftDayKey(t,1)?'Tomorrow':k===shiftDayKey(t,-1)?'Yesterday':'';
+  const txt=dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+  return rel?`${rel} · ${txt}`:txt;
+}
+function renderBookingDayBar(all){
+  const bar=document.getElementById('bookingDayBar'); if(!bar) return;
+  const t=todayKey();
+  // Requests still waiting for an answer on another day (today onwards), so
+  // nothing gets missed while looking at one day.
+  const waiting=all.filter(b=>b.status==='Requested'&&bookingDayKey(b)&&bookingDayKey(b)>=t&&bookingDayKey(b)!==bookingDay)
+                   .map(bookingDayKey).sort();
+  bar.innerHTML=`
+    <button class="bk-arrow" id="bkPrev" title="Previous day" aria-label="Previous day">‹</button>
+    <div class="bk-day">${esc(dayKeyLabel(bookingDay))}</div>
+    <button class="bk-arrow" id="bkNext" title="Next day" aria-label="Next day">›</button>
+    ${bookingDay!==t?'<button class="btn btn-ghost btn-sm" id="bkToday">Today</button>':''}
+    <input type="date" id="bkPick" value="${bookingDay}" aria-label="Choose a day">
+    ${waiting.length?`<div class="bk-waiting">⏳ ${waiting.length} request${waiting.length>1?'s':''} waiting on other days — <button id="bkNextReq">show ${esc(dayKeyLabel(waiting[0]))}</button></div>`:''}`;
+  const go=(k)=>{ if(k){ bookingDay=k; renderAdminBookings(); } };
+  document.getElementById('bkPrev').onclick=()=>go(shiftDayKey(bookingDay,-1));
+  document.getElementById('bkNext').onclick=()=>go(shiftDayKey(bookingDay,1));
+  const tb=document.getElementById('bkToday'); if(tb) tb.onclick=()=>go(t);
+  document.getElementById('bkPick').onchange=(e)=>go(e.target.value);
+  const nr=document.getElementById('bkNextReq'); if(nr) nr.onclick=()=>go(waiting[0]);
+}
 function renderAdminBookings(){
   // Anyone the Bookings section is shared with can manage it fully — access
   // is granted per section (see Employees tab), not split into finer
   // view-vs-edit permissions within a section.
   const canEdit = true;
   document.getElementById('addBookingBtn').style.display = canEdit ? '' : 'none';
-  const scoped=STORE.bookings.filter(bk=>canSeeBrand(currentUser,bk.brand));
+  const allScoped=STORE.bookings.filter(bk=>canSeeBrand(currentUser,bk.brand));
+  if(!bookingDay) bookingDay=todayKey();
+  renderBookingDayBar(allScoped);
+  const scoped=allScoped.filter(bk=>bookingDayKey(bk)===bookingDay);
   document.getElementById('bookingCount').textContent=scoped.length;
   const scopeLabel=document.getElementById('bookingScopeLabel');
   if(scopeLabel) scopeLabel.textContent = userBrands(currentUser).length>=Object.keys(BRANDS).length ? 'across all brands' : `for ${brandsLabel(userBrands(currentUser))}`;
   const rows=document.getElementById('bookingRows');
   if(!scoped.length){
     renderReminders();
-    rows.innerHTML=`<tr><td colspan="6"><div class="admin-empty">No bookings yet.</div></td></tr>`;
+    rows.innerHTML=`<tr><td colspan="6"><div class="admin-empty">No bookings on this day.</div></td></tr>`;
     return;
   }
   renderReminders();
   const nextStatus={Requested:'Confirmed',Confirmed:'Completed'};
-  const nowT=Date.now()-60*60*1000;
   const tOf=(b)=>{ const t=bookingTime(b); return isNaN(t)?null:t; };
+  // One day: in time order, morning first.
   const ordered=scoped.slice().sort((a,b)=>{
     const ta=tOf(a), tb=tOf(b);
     if(ta===null||tb===null) return (ta===null)-(tb===null);
-    const fa=ta>=nowT, fb=tb>=nowT;
-    if(fa!==fb) return fa?-1:1;               // upcoming before past
-    return fa ? ta-tb : tb-ta;                // upcoming: soonest first; past: newest first
+    return ta-tb;
   });
   rows.innerHTML=ordered.map((bk)=>{
     const i=esc(String(bk.id));   // the booking's id — the list is refreshed and re-ordered behind the screen
@@ -11035,6 +11080,7 @@ function openBookingForm(){
     STORE.bookings.push(newBooking);
     saveStore(); cloudSave('bookings',newBooking.id);
     document.getElementById('bookingFormWrap').innerHTML='';
+    if(bookingDayKey(newBooking)) bookingDay=bookingDayKey(newBooking);   // show the day it was added to
     renderAdminBookings();
     toast(`Booking added for ${clientName}.`);
     offerWhatsApp(newBooking,'confirm');
