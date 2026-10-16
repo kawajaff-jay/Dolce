@@ -167,6 +167,26 @@ Overview now opens on today. It shows how many bookings there are today, how man
 
 The header shows just the employee's name, a short role (Owner, Reception, Staff) and a brand selector. The selector lets someone who works across several brands look at one brand at a time. It can only narrow what that person already sees, and the database still enforces access. Logging in is now two steps: pick your name, then type your PIN in a single panel that shows who is logging in and lets you switch account.
 
+## Automatic messages: cancellations, new times and reminders
+
+Until now every WhatsApp message to a client was opened by reception and sent by hand. The database can now prepare these messages itself, and a small server program sends them every two minutes, even when every phone and computer is closed. There are three kinds. A **cancellation confirmation** names the brand, the treatment or class, and the original date and time. A **new time** message goes out when staff move an appointment or a class. **Reminders** go out a chosen time before each appointment or class.
+
+The database writes a message only once the change is saved, and never sends the same message twice. When an appointment is cancelled or moved, its reminders are stopped or moved with it. Every message has a status: scheduled, sent, failed (with the reason), or cancelled. Staff see failures in Bookings and the full log in Settings. They can try again, or open the message in WhatsApp by hand. A message opened by hand is recorded as exactly that, never as "delivered", because WhatsApp does not report back.
+
+It starts switched off. The owner chooses the channel (automatic WhatsApp, notifications in the iPhone app, or both) and the reminder timings. Automatic WhatsApp needs message templates approved by Meta, which also has no Kurdish option, so Kurdish clients receive the default language. Notifications in the iPhone app need Apple's push setup and one native plugin. Until those are in place, the app does not ask clients for permission.
+
+## Changing an appointment's time, checked on the server
+
+When staff move an appointment, the server now checks the new time first. It looks at the treatment's full length, the brand's opening hours and days off, and any other appointment it would overlap. If something clashes, nothing is changed and staff see the reason. They can still choose "Move anyway", and that choice is logged. Every move records who made it and the old and new times. The server does not yet know which staff member or room a treatment needs. Each brand counts as one diary until that list exists.
+
+## Core group classes: a weekly timetable
+
+Core's Reformer, Mat and Yoga group classes now have their own weekly timetable, kept separate from one-to-one appointments. For each class, the owner enters the type, day, start time, length, instructor, number of places and the dates it runs from and to. A day can have any number of classes. From this, the database makes the dated classes for the coming weeks, in Erbil time.
+
+Staff can change or cancel a single class without touching the timetable. They can also apply a timetable change to future classes from a chosen date. A class that already has bookings is never moved, made smaller or removed by a timetable change. It is flagged for staff to sort out with the clients. Cancelling a class with bookings needs a second tap. The clients' places are kept, marked "class cancelled", and the clients are told.
+
+Clients see the week's classes on Core's page with the places left, and book a place in one tap after logging in. The database enforces the capacity, including when several people press "Book" for the last place at the same moment. It also stops the same client booking one class twice. The timetable stays hidden from clients until the owner has entered the real classes and switched it on.
+
 ## A phased build, so you are never blocked waiting for "the whole thing"
 
 The first phase is the smallest version that is still genuinely useful: the destination picker, service browsing and pricing for all three brands, service detail screens, and booking with a real date/time picker (in-app and via WhatsApp, as the prototype now shows), plus English and Arabic (adding Kurdish shortly after). This alone replaces having three separate Instagram-DM-based booking processes with one coherent, professional experience, and it can realistically be live within a few weeks once content (service lists, prices, photos) is ready. The second phase adds the AI assistant with real recommendations, the loyalty program, and the retail shop — this is where the product starts to feel genuinely different from a normal clinic or salon website, because it actively works to cross-sell between your three brands. The third phase adds the admin dashboard with full analytics, Kurdish language support if not already included, a proper native app wrapper for the App Store and Play Store, and true staff-calendar-aware scheduling — availability that accounts for which specific provider is free, not just whether the time slot is taken by anyone.

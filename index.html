@@ -382,6 +382,46 @@
   .bk-daybar input[type=date]{border:1px solid var(--line);border-radius:9px;padding:7px 10px;font:inherit;background:#fff;}
   .bk-daybar .bk-waiting{flex-basis:100%;font-size:13px;color:var(--ink-soft);}
   .bk-daybar .bk-waiting button{border:0;background:none;color:var(--gold-dark,#8a6636);font:inherit;font-weight:700;text-decoration:underline;cursor:pointer;padding:0;}
+  /* ---- Automatic messages + Core classes ---- */
+  .nt-badge{display:inline-block;font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:999px;background:#eee;color:#555;}
+  .nt-badge.ok{background:#e3f1e3;color:#2f6b34;} .nt-badge.bad{background:#f8e1df;color:#a33a2f;} .nt-badge.wait{background:#f3ead8;color:#7a5a1e;}
+  .nt-extra{font-size:12px;color:var(--muted);} .nt-line{font-size:12px;color:var(--ink-soft);margin-top:4px;}
+  .nt-err{font-size:12.5px;color:#a33a2f;margin-top:3px;} .nt-card{border-color:#e5b3ad;background:#fffaf9;}
+  .nt-row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line);font-size:14px;}
+  .nt-row:first-of-type{border-top:0;}
+  .nt-check{display:flex;gap:9px;align-items:flex-start;font-size:14px;margin:8px 0;cursor:pointer;grid-column:1/-1;}
+  .nt-check input{margin-top:3px;flex:none;}
+  .nt-state{font-size:14px;font-weight:700;padding:8px 12px;border-radius:10px;background:#f2efe9;color:var(--ink-soft);grid-column:1/-1;}
+  .nt-state.on{background:#e3f1e3;color:#2f6b34;}
+  .nt-tpl{display:flex;gap:8px;align-items:center;margin-top:6px;} .nt-tpl span{width:92px;flex:none;font-size:13px;color:var(--ink-soft);} .nt-tpl input{flex:1;min-width:0;}
+  .cl-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0 10px;}
+  .cl-vis{max-width:none;margin-bottom:6px;}
+  .cl-list{max-width:none;display:block;}
+  .cl-day{padding:6px 0 8px;border-top:1px solid var(--line);} .cl-day:first-child{border-top:0;}
+  .cl-dayname{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:6px 0 4px;}
+  .cl-row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:6px 0;font-size:14px;}
+  .cl-off{opacity:.55;} .cl-sess{border-bottom:1px dashed var(--line);padding-bottom:4px;} .cl-sess:last-child{border-bottom:0;}
+  .cl-cap{font-size:12.5px;font-weight:700;color:#2f6b34;} .cl-cap.full{color:#a33a2f;}
+  .cl-conflict{font-size:13px;color:#7a5a1e;background:#fbf3e2;border-radius:8px;padding:6px 8px;margin-top:6px;}
+  .cl-people{background:#faf8f4;border-radius:10px;padding:8px 10px;margin:4px 0 8px;}
+  .cl-person{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;font-size:13.5px;padding:5px 0;border-bottom:1px solid var(--line);}
+  .cl-addp{margin-top:8px;} .cl-addp input{border:1px solid var(--line);border-radius:8px;padding:7px 9px;font:inherit;width:100%;box-sizing:border-box;background:#fff;}
+  .tt-sec{margin:14px 0 18px;} .tt-sub{font-size:13px;color:var(--muted);margin:2px 0 10px;}
+  .tt-days .date-chip{position:relative;} .tt-days .date-chip.active .tt-dot{background:#cfe3c8;} .tt-dot{position:absolute;bottom:5px;left:50%;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:#74926a;}
+  .tt-row{display:flex;align-items:center;gap:12px;padding:12px 2px;border-bottom:1px solid var(--line);}
+  .tt-time{font-weight:700;font-size:15px;min-width:68px;color:var(--ink);}
+  .tt-info{flex:1;min-width:0;} .tt-name{font-weight:700;font-size:15px;color:var(--ink);} .tt-meta{font-size:12.5px;color:var(--muted);margin-top:2px;}
+  .tt-left{font-size:12.5px;font-weight:700;color:#3a5433;margin-top:3px;} .tt-left.few{color:#9a6b1e;} .tt-left.full{color:#a33a2f;}
+  .tt-book{border:0;border-radius:999px;padding:9px 16px;font:inherit;font-weight:700;font-size:13.5px;background:#3a5433;color:#fff;cursor:pointer;min-height:40px;}
+  .tt-book[disabled]{background:#d8d4cc;color:#8a857c;cursor:default;}
+  .tt-in{width:36px;height:36px;border-radius:50%;background:#e3f1e3;color:#2f6b34;display:flex;align-items:center;justify-content:center;font-weight:800;}
+  .tt-empty{font-size:14px;color:var(--muted);padding:14px 2px;}
+  .push-ask{position:fixed;inset:0;background:rgba(20,16,10,.35);display:flex;align-items:flex-end;justify-content:center;z-index:9999;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom));}
+  .push-card{background:#fffdf8;border-radius:18px;max-width:420px;width:100%;padding:18px 18px 14px;box-shadow:0 10px 40px rgba(0,0,0,.18);}
+  .push-t{font-weight:800;font-size:17px;margin-bottom:6px;} .push-b{font-size:14px;color:var(--ink-soft);}
+  .push-a{display:flex;gap:10px;justify-content:flex-end;margin-top:14px;} .push-a button{border:0;border-radius:999px;padding:10px 18px;font:inherit;font-weight:700;cursor:pointer;min-height:44px;}
+  .push-later{background:#eee;color:#555;} .push-yes{background:var(--ink,#222);color:#fff;}
+  #adminClasses .admin-form{display:block;}
   #pointsPanel{display:none;}
   #pointsPanel.open{display:block;}
   .lo-who{font-size:14px;color:var(--ink-soft);margin:6px 0 10px;}
@@ -1792,6 +1832,7 @@
     <nav class="admin-tabs adm-side" id="adminTabsRow" aria-label="Admin sections">
       <button data-admin-tab="overview" class="active"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg><span>Overview</span></button>
       <button data-admin-tab="bookings"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg><span>Bookings</span></button>
+      <button data-admin-tab="classes"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3.5v3M16 3.5v3"/><path d="M7.5 13h3M13.5 13h3M7.5 16.5h3"/></svg><span>Classes</span></button>
       <button data-admin-tab="loyalty"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.8l2.5 5.1 5.6.8-4 3.9.9 5.6-5-2.6-5 2.6.9-5.6-4-3.9 5.6-.8z"/></svg><span>Loyalty</span></button>
       <button data-admin-tab="clients"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c.8-3.6 3.6-5.6 7-5.6s6.2 2 7 5.6"/></svg><span>Clients</span></button>
       <button data-admin-tab="products"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 12.5H6.2z"/><path d="M9 8V6.5a3 3 0 016 0V8"/></svg><span>Products</span></button>
@@ -1917,6 +1958,7 @@
       <div id="bookingFormWrap"></div>
       <div id="pointsPanel"></div>
       <div id="aftercarePanel"></div>
+      <div id="msgIssuesPanel"></div>
       <div id="remindersPanel"></div>
       <div class="admin-table-wrap">
         <table class="admin-table">
@@ -2006,6 +2048,8 @@
       </div>
     </div>
 
+    <div class="admin-panel" id="adminClasses"></div>
+
     <div class="admin-panel" id="adminSettings">
       <h2 class="adm-page-title">Settings</h2>
       <div class="adm-grid2">
@@ -2013,6 +2057,7 @@
         <div id="clientLoginWrap"></div>
         <div id="hoursWrap"></div>
         <div id="waTemplatesWrap"></div>
+        <div id="notifSettingsWrap" class="span2"></div>
         <div id="brandPhotosWrap" class="span2"></div>
       </div>
       <div class="adm-empty" id="settingsEmpty" style="display:none;">There are no settings you can change with this account.</div>
@@ -2969,6 +3014,12 @@ async function pullCatalog(){
       if(waRow && waRow.value){
         try{ const v=typeof waRow.value==='string'?JSON.parse(waRow.value):waRow.value; if(v&&typeof v==='object') STORE.waTemplates=v; }catch(e){}
       }
+      // Automatic messages (owner settings) and Core classes on/off.
+      const ntRow=row('notifications');
+      if(ntRow && ntRow.value){ try{ const v=typeof ntRow.value==='string'?JSON.parse(ntRow.value):ntRow.value; if(v&&typeof v==='object') STORE.notifications=v; }catch(e){} }
+      const ccRow=row('core_classes');
+      STORE.coreClasses={enabled:false};
+      if(ccRow && ccRow.value){ try{ const v=typeof ccRow.value==='string'?JSON.parse(ccRow.value):ccRow.value; if(v&&typeof v==='object') STORE.coreClasses={enabled:v.enabled===true}; }catch(e){} }
       const loginRow=row('client_login');
       const loginVal=loginRow?String(loginRow.value):'off';
       STORE.settings.clientLogin=(loginVal==='on'||loginVal==='email'||loginVal==='both')?loginVal:'off';
@@ -3440,6 +3491,7 @@ async function loadMyBookings(){
     const {data,error}=await cs.from('bookings').select('*').order('created_at',{ascending:false});
     if(!error && data) clientBookings=data.map(CLOUD_TABLES.bookings.app);
   }catch(e){}
+  await loadMyClassPlaces();
 }
 // On start-up (and after the catalog/settings refresh): pick up a saved login.
 let clientRestoreDone=false;
@@ -3530,6 +3582,7 @@ Object.assign(I18N.en,{
   loginPrivacy:'We only use your number to log you in and to contact you about your appointments.',
   placeOrder:'Place order',orderSaved:'Order {ref} received',orderSavedSub:'Our team will confirm your order with you.',orderWaOptional:'Message us on WhatsApp (optional)',orderRef:'Order',orderOutOfStock:'Sorry — {name} no longer has enough in stock.',tooManyOrders:'Too many orders from this number — please try again later or message us.',orderFailed:'Your order could not be sent. Please try again.',orderNote:'Your order goes straight to our team, who confirm it with you.',
   cancelBooking:'Cancel booking',changeTime:'Change time',saveNewTime:'Save new time',tooLateChange:'This booking can no longer be changed in the app — please message us.',bookingCancelledMsg:'Booking cancelled.',bookingMovedMsg:'Booking moved — we will confirm the new time.',
+  classTimetable:'Weekly classes',classesSub:'Group classes — book your place',placesLeft:'{n} places left',onePlaceLeft:'1 place left',classFullTag:'Full',bookPlace:'Book',youreIn:"You're booked",signInToBook:'Log in to book a class',classBooked:'Place booked — see you in class!',classFull:'Sorry — this class is now full.',alreadyBooked:'You already have a place in this class.',classUnavailable:'This class is no longer available.',classesOff:'Classes cannot be booked right now.',myClasses:'My classes',cancelPlace:'Cancel my place',placeCancelled:'Place cancelled',classCancelledByStudio:'Cancelled by the studio',noClassesDay:'No classes on this day.',withInstructor:'with {name}',minutesShort:'{n} min',clsReformer:'Reformer',clsMat:'Mat',clsYoga:'Yoga',pushAskTitle:'Get reminders on this phone?',pushAskBody:'We will send a notification before your appointments, and if a time changes.',pushAllow:'Allow',pushLater:'Not now',pushOn:'Notifications are on.',
   slotTaken:'That time was just taken — please pick another time.',
   linkTitle:'You already have an account',linkLede:'This number already has a Dolce+ account:',linkNote:"To keep your points and bookings in one place, confirm it's you with a code on WhatsApp. After that you can log in with your email or your number.",linkSend:'Send WhatsApp code',linkOther:'Use a different number',loginWith:'Log in with',
   emailLoginTitle:'Log in with your email',
@@ -3568,6 +3621,7 @@ Object.assign(I18N.ar,{
   loginPrivacy:'نستخدم رقمك فقط لتسجيل دخولك وللتواصل معك بخصوص مواعيدك.',
   placeOrder:'إرسال الطلب',orderSaved:'تم استلام الطلب {ref}',orderSavedSub:'سيتواصل معك فريقنا لتأكيد طلبك.',orderWaOptional:'راسلنا عبر واتساب (اختياري)',orderRef:'الطلب',orderOutOfStock:'عذراً — لم تعد الكمية المتوفرة من {name} كافية.',tooManyOrders:'طلبات كثيرة من هذا الرقم — يرجى المحاولة لاحقاً أو مراسلتنا.',orderFailed:'تعذّر إرسال طلبك. يرجى المحاولة مرة أخرى.',orderNote:'يصل طلبك مباشرة إلى فريقنا، وسيؤكده معك.',
   cancelBooking:'إلغاء الحجز',changeTime:'تغيير الوقت',saveNewTime:'حفظ الوقت الجديد',tooLateChange:'لم يعد بالإمكان تعديل هذا الحجز من التطبيق — يرجى مراسلتنا.',bookingCancelledMsg:'تم إلغاء الحجز.',bookingMovedMsg:'تم نقل الحجز — سنؤكد الوقت الجديد.',
+  classTimetable:'الحصص الأسبوعية',classesSub:'حصص جماعية — احجز مكانك',placesLeft:'متبقٍ {n} أماكن',onePlaceLeft:'متبقٍ مكان واحد',classFullTag:'مكتملة',bookPlace:'احجز',youreIn:'تم حجز مكانك',signInToBook:'سجّل الدخول لحجز حصة',classBooked:'تم حجز مكانك — نراك في الحصة!',classFull:'عذراً — اكتملت هذه الحصة.',alreadyBooked:'لديك مكان في هذه الحصة بالفعل.',classUnavailable:'هذه الحصة لم تعد متاحة.',classesOff:'لا يمكن حجز الحصص حالياً.',myClasses:'حصصي',cancelPlace:'إلغاء مكاني',placeCancelled:'تم إلغاء المكان',classCancelledByStudio:'ألغاها الاستوديو',noClassesDay:'لا توجد حصص في هذا اليوم.',withInstructor:'مع {name}',minutesShort:'{n} دقيقة',clsReformer:'ريفورمر',clsMat:'مات',clsYoga:'يوغا',pushAskTitle:'هل تريد التذكيرات على هذا الهاتف؟',pushAskBody:'سنرسل إشعاراً قبل مواعيدك وعند تغيير أي موعد.',pushAllow:'السماح',pushLater:'ليس الآن',pushOn:'تم تفعيل الإشعارات.',
   slotTaken:'تم حجز هذا الوقت للتو — يرجى اختيار وقت آخر.',
   linkTitle:'لديك حساب بالفعل',linkLede:'هذا الرقم لديه حساب Dolce+ بالفعل:',linkNote:'لإبقاء نقاطك وحجوزاتك في مكان واحد، أكّد أنه أنت برمز يصلك على واتساب. بعدها يمكنك الدخول ببريدك الإلكتروني أو برقمك.',linkSend:'أرسل الرمز عبر واتساب',linkOther:'استخدم رقماً آخر',loginWith:'الدخول عبر',
   emailLoginTitle:'تسجيل الدخول بالبريد الإلكتروني',
@@ -3606,6 +3660,7 @@ Object.assign(I18N.ku,{
   loginPrivacy:'ژمارەکەت تەنها بۆ چوونەژوورەوە و پەیوەندیکردن سەبارەت بە کاتەکانت بەکاردەهێنین.',
   placeOrder:'ناردنی داواکاری',orderSaved:'داواکاری {ref} وەرگیرا',orderSavedSub:'تیمەکەمان پەیوەندیت پێوە دەکات بۆ پشتڕاستکردنەوەی داواکارییەکەت.',orderWaOptional:'لە واتساپ نامەمان بۆ بنێرە (ئارەزوومەندانە)',orderRef:'داواکاری',orderOutOfStock:'ببورە — {name} بەشی پێویست لە کۆگادا نەماوە.',tooManyOrders:'داواکاری زۆر لەم ژمارەیەوە — تکایە دواتر هەوڵ بدەرەوە یان نامەمان بۆ بنێرە.',orderFailed:'داواکارییەکەت نەنێردرا. تکایە دووبارە هەوڵ بدەرەوە.',orderNote:'داواکارییەکەت ڕاستەوخۆ دەگاتە تیمەکەمان و پشتڕاستی دەکەنەوە لەگەڵت.',
   cancelBooking:'هەڵوەشاندنەوەی حجز',changeTime:'گۆڕینی کات',saveNewTime:'پاشەکەوتکردنی کاتی نوێ',tooLateChange:'ئیتر ناتوانرێت ئەم حجزە لە ئەپەکەدا بگۆڕدرێت — تکایە نامەمان بۆ بنێرە.',bookingCancelledMsg:'حجزەکە هەڵوەشێندرایەوە.',bookingMovedMsg:'حجزەکە گوازرایەوە — کاتە نوێیەکە پشتڕاست دەکەینەوە.',
+  classTimetable:'وانە هەفتانەکان',classesSub:'وانەی بەکۆمەڵ — شوێنی خۆت بگرە',placesLeft:'{n} شوێن ماوە',onePlaceLeft:'یەک شوێن ماوە',classFullTag:'پڕە',bookPlace:'بیگرە',youreIn:'شوێنت گیراوە',signInToBook:'بۆ گرتنی وانە بچۆ ژوورەوە',classBooked:'شوێنەکەت گیرا — لە وانەکەدا دەتبینین!',classFull:'ببورە — ئەم وانەیە پڕ بووە.',alreadyBooked:'پێشتر شوێنت لەم وانەیەدا هەیە.',classUnavailable:'ئەم وانەیە چیتر بەردەست نییە.',classesOff:'لە ئێستادا ناتوانرێت وانە بگیرێت.',myClasses:'وانەکانم',cancelPlace:'هەڵوەشاندنەوەی شوێنەکەم',placeCancelled:'شوێنەکە هەڵوەشێنرایەوە',classCancelledByStudio:'ستۆدیۆکە هەڵیوەشاندەوە',noClassesDay:'لەم ڕۆژەدا وانە نییە.',withInstructor:'لەگەڵ {name}',minutesShort:'{n} خولەک',clsReformer:'ڕیفۆرمەر',clsMat:'مات',clsYoga:'یۆگا',pushAskTitle:'بیرخستنەوە لەسەر ئەم مۆبایلە وەردەگریت؟',pushAskBody:'پێش کاتەکانت، و کاتێک کاتێک دەگۆڕێت، ئاگادارکردنەوەت بۆ دەنێرین.',pushAllow:'ڕێگە بدە',pushLater:'ئێستا نا',pushOn:'ئاگادارکردنەوەکان چالاککران.',
   slotTaken:'ئەم کاتە ئێستا حجز کرا — تکایە کاتێکی تر هەڵبژێرە.',
   linkTitle:'تۆ پێشتر هەژمارت هەیە',linkLede:'ئەم ژمارەیە پێشتر هەژماری Dolce+ ی هەیە:',linkNote:'بۆ ئەوەی خاڵ و حجزەکانت لە یەک شوێن بمێنن، بە کۆدێک لە واتساپ پشتڕاستی بکەرەوە کە خۆتی. دوای ئەوە دەتوانیت بە ئیمەیڵ یان ژمارەکەت بچیتە ژوورەوە.',linkSend:'ناردنی کۆد بە واتساپ',linkOther:'ژمارەیەکی تر بەکاربهێنە',loginWith:'چوونەژوورەوە بە',
   emailLoginTitle:'چوونەژوورەوە بە ئیمەیڵ',
@@ -3884,6 +3939,7 @@ function renderServices(){
   const empty=`<div style="padding:30px 6px;color:var(--muted);font-size:14px;text-align:center;">${t('noServicesYet')}</div>`;
   return `
     ${hoursCardHtml(currentBrand)}
+    ${timetableHtml()}
     <div class="cat-tabs cat-glass" id="catRow"><div class="cat-lens" aria-hidden="true"></div>${tabs}</div>
     <div class="svc-list ${CatGlass.listClass()}">${list||empty}</div>
   `;
@@ -4222,6 +4278,7 @@ function renderBookings(){
     <section class="lux-sec">${LuxHeader(t('upcoming'))}
       ${up.length?up.map(b=>PreviewBookingCard(bookingCardData(b))+clientChangeHtml(b)).join(''):`<p class="lux-lede">${t('noBookings')}</p>`}
     </section>
+    ${myClassesHtml()}
     ${past.length?`<section class="lux-sec">${LuxHeader(t('past'))}${past.slice(0,20).map(b=>PreviewBookingCard(bookingCardData(b))).join('')}</section>`:''}`;
 }
 
@@ -7006,6 +7063,8 @@ function bindScreen(){
 
   const hoursToggle=document.getElementById('hoursToggle');
   if(hoursToggle) hoursToggle.addEventListener('click',()=>{ hoursOpen=!hoursOpen; navDirection='none'; render(); });
+  if(currentScreen==='services' && currentBrand==='core') bindTimetable(screenEl);
+  if(currentScreen==='bookings') bindMyClasses(screenEl);
   /* Picking a date or a time must not redraw the screen as if it had just
      been opened: that replayed the slide-in animation and jumped back to the
      top on every tap, which looked like the page shaking. Redraw in place
@@ -7089,6 +7148,7 @@ function bindScreen(){
     // A guest has no account, so there is no "My Bookings" for them to look in.
     note.innerHTML=`<b>${guest?t('bookedNoteGuest'):t('bookedNote')}</b><br><br>${esc(s.n)} — ${b.name}<br>${dateStr} at ${selectedTime}`;
     toast(`Booked — ${dateStr} at ${selectedTime}.`);
+    if(!guest) setTimeout(maybeAskPush,1200);
   });
 
   // The WhatsApp link opens a real wa.me chat pre-filled with the same
@@ -8528,6 +8588,7 @@ const TAB_DEFS=[
   {key:'employees',label:'Employees'},
   {key:'reports',label:'Reports'},
   {key:'purchases',label:'Restocking'},
+  {key:'classes',label:'Classes (Core)'},
   {key:'settings',label:'Settings'},
 ];
 const PRESETS={
@@ -8585,7 +8646,7 @@ function shortRole(u){
   return 'Staff';
 }
 function updateSettingsEmpty(){
-  const ids=['currencySettingsWrap','clientLoginWrap','hoursWrap','waTemplatesWrap','brandPhotosWrap'];
+  const ids=['currencySettingsWrap','clientLoginWrap','hoursWrap','waTemplatesWrap','notifSettingsWrap','brandPhotosWrap'];
   const any=ids.some(id=>{ const el=document.getElementById(id); return el&&el.innerHTML.trim(); });
   const e=document.getElementById('settingsEmpty'); if(e) e.style.display=any?'none':'';
 }
@@ -9021,6 +9082,9 @@ function showAdminForRole(){
   if(!allowed.includes('settings') && (currentUser.isOwner || allowed.includes('overview'))) allowed.push('settings');
   // Shop orders come with Products (the people who sell in the shop).
   if(!allowed.includes('orders') && (currentUser.isOwner || allowed.includes('products'))) allowed.push('orders');
+  // Core group classes: the owner, or staff given the Classes section who work at Core.
+  if(currentUser.isOwner && !allowed.includes('classes')) allowed.push('classes');
+  if(!currentUser.isOwner && allowed.includes('classes') && !userBrandsAll(currentUser).includes('core')) allowed.splice(allowed.indexOf('classes'),1);
   currentAllowedTabs=allowed;
   document.querySelectorAll('#adminTabsRow [data-admin-tab]').forEach(btn=>{
     const ok=allowed.includes(btn.dataset.adminTab);
@@ -9028,7 +9092,7 @@ function showAdminForRole(){
   });
   if(!allowed.includes(adminTab)) adminTab=allowed[0]||'bookings';
   document.querySelectorAll('#adminTabsRow [data-admin-tab]').forEach(x=>x.classList.toggle('active',x.dataset.adminTab===adminTab));
-  ['overview','bookings','loyalty','clients','orders','products','services','offers','gallery','employees','reports','purchases','settings'].forEach(p=>{
+  ['overview','bookings','loyalty','clients','orders','products','services','offers','gallery','employees','reports','purchases','settings','classes'].forEach(p=>{
     document.getElementById('admin'+p[0].toUpperCase()+p.slice(1)).classList.toggle('active',adminTab===p);
   });
   // Services has its own brand sub-tabs — hide any brand this account isn't
@@ -9038,7 +9102,9 @@ function showAdminForRole(){
   });
   if(!canSeeBrand(currentUser,svcBrandTab)) svcBrandTab=userBrands(currentUser)[0];
   document.querySelectorAll('#svcBrandTabs [data-svc-brand-tab]').forEach(x=>x.classList.toggle('active',x.dataset.svcBrandTab===svcBrandTab));
-  renderAdminProducts(); renderAdminServices(); renderAdminOffers(); renderAdminGallery(); renderAdminBookings(); renderBrandPhotos(); renderCurrencySettings(); renderClientLoginSetting(); renderWaTemplates(); renderHoursAdmin(); renderAdminEmployees(); renderAdminPurchases(); renderAdminReports(); renderAdminLoyalty(); renderOverviewStats(); pullLoyaltyIssued(); updateSettingsEmpty(); updateAdmMenuLabel(); if(adminTab==='clients') renderAdminClients(); if(adminTab==='orders') renderAdminOrders();
+  renderAdminProducts(); renderAdminServices(); renderAdminOffers(); renderAdminGallery(); renderAdminBookings(); renderBrandPhotos(); renderCurrencySettings(); renderClientLoginSetting(); renderWaTemplates(); renderNotifSettings(); renderHoursAdmin(); renderAdminEmployees(); renderAdminPurchases(); renderAdminReports(); renderAdminLoyalty(); renderOverviewStats(); pullLoyaltyIssued(); updateSettingsEmpty(); updateAdmMenuLabel(); if(adminTab==='clients') renderAdminClients(); if(adminTab==='orders') renderAdminOrders();
+  if(adminTab==='classes'){ renderAdminClasses(); pullClasses().then(()=>{ if(adminTab==='classes') renderAdminClasses(); }); }
+  if(currentUser.isOwner) pullNotifications(true).then(ok=>{ if(ok){ renderNotifSettings(); updateSettingsEmpty(); } });
 }
 
 /* ---------------- Full-screen client app ---------------- */
@@ -9110,6 +9176,9 @@ document.querySelectorAll('[data-admin-tab]').forEach(b=>{
     document.getElementById('adminSettings').classList.toggle('active',adminTab==='settings');
     document.getElementById('adminClients').classList.toggle('active',adminTab==='clients');
     document.getElementById('adminOrders').classList.toggle('active',adminTab==='orders');
+    document.getElementById('adminClasses').classList.toggle('active',adminTab==='classes');
+    if(adminTab==='classes'){ renderAdminClasses(); pullClasses().then(()=>{ if(adminTab==='classes') renderAdminClasses(); }); }
+    if(adminTab==='settings'){ renderNotifSettings(); pullNotifications(true).then(ok=>{ if(ok&&adminTab==='settings') renderNotifSettings(); }); }
     if(adminTab==='orders'){ renderAdminOrders(); pullOrders(true).then(()=>{ if(adminTab==='orders') renderAdminOrders(); }); }
     if(adminTab==='clients'){ renderAdminClients(); pullClientTiers().then(()=>{ if(adminTab==='clients') renderAdminClients(); }); }
     closeAdmMenu(); updateAdmMenuLabel();
@@ -9904,6 +9973,8 @@ function renderAdminBookings(){
     return;
   }
   renderReminders();
+  renderMsgIssues();
+  pullNotifications().then(ok=>{ if(ok && adminTab==='bookings') renderAdminBookings(); });
   const nextStatus={Requested:'Confirmed',Confirmed:'Completed'};
   const tOf=(b)=>{ const t=bookingTime(b); return isNaN(t)?null:t; };
   // One day: in time order, morning first.
@@ -9933,7 +10004,7 @@ function renderAdminBookings(){
       <td><span class="brand-tag" style="background:${brandColor[bk.brand]}">${BRANDS[bk.brand].name}</span></td>
       <td>${esc(bk.serviceName)}</td>
       <td>${esc(bk.date)}<br><span style="color:var(--muted);font-size:13px;">${esc(bk.time)}</span></td>
-      <td><span class="status-badge ${esc(bk.status)}">${esc(bk.status)}</span>${bk.refundedUsd>0?`<div style="font-size:12px;color:var(--muted);margin-top:3px;">Refunded ${fmtMoney(bk.refundedUsd)}</div>`:''}${(bk.rescheduleLog||[]).length?`<div style="font-size:12px;color:var(--muted);margin-top:3px;" title="${esc((bk.rescheduleLog||[]).map(x=>x.from?`${x.from.date} ${x.from.time} → ${x.to?x.to.date+' '+x.to.time:x.action||''} (${x.by||''})`:(x.note||x.action||'')).join(' | '))}">Moved ${(bk.rescheduleLog||[]).length}×</div>`:''}</td>
+      <td><span class="status-badge ${esc(bk.status)}">${esc(bk.status)}</span>${bookingMsgHtml(bk)}${bk.refundedUsd>0?`<div style="font-size:12px;color:var(--muted);margin-top:3px;">Refunded ${fmtMoney(bk.refundedUsd)}</div>`:''}${(bk.rescheduleLog||[]).length?`<div style="font-size:12px;color:var(--muted);margin-top:3px;" title="${esc((bk.rescheduleLog||[]).map(x=>x.from?`${x.from.date} ${x.from.time} → ${x.to?x.to.date+' '+x.to.time:x.action||''} (${x.by||''})`:(x.note||x.action||'')).join(' | '))}">Moved ${(bk.rescheduleLog||[]).length}×</div>`:''}</td>
       <td>${actions}${ptsBtn}</td>
     </tr>`;
   }).join('');
@@ -9973,7 +10044,13 @@ function renderAdminBookings(){
     if(!bk){ renderAdminBookings(); return; }
     if(!confirmTap(b,'Cancel this booking?')) return;
     bk.status='Cancelled'; saveStore(); cloudSave('bookings',bk.id); renderAdminBookings();
-    toast(`${bk.clientName}'s booking cancelled.`);
+    if(autoMsgsOn() && notifCfg().cancel!==false){
+      toast(`${bk.clientName}'s booking cancelled — the client gets a confirmation automatically.`);
+      setTimeout(()=>pullNotifications(true).then(ok=>{ if(ok&&adminTab==='bookings') renderAdminBookings(); }),2500);
+    } else {
+      toast(`${bk.clientName}'s booking cancelled.`);
+      offerWhatsApp(bk,'cancel');
+    }
     if(currentScreen==='bookings') render();
   }));
 }
@@ -10821,17 +10898,23 @@ function bindLoyaltyOwner(){
    The owner edits the wording in Admin → Overview → WhatsApp messages, in
    English, Arabic and Kurdish. By default the messages do not name the
    treatment — a phone's lock screen is read over shoulders. */
-const WA_KINDS={confirm:'Booking confirmed',r12:'Reminder · 12 hours before',r1:'Reminder · 1 hour before'};
+const WA_KINDS={confirm:'Booking confirmed',r12:'Reminder · long (3 hours or more before)',r1:'Reminder · short (under 3 hours before)',cancel:'Cancellation confirmed',moved:'New time'};
 const DEFAULT_WA_TEMPLATES={
   en:{confirm:"Hi {name}, your appointment at {brand} is confirmed ✅\n📅 {date} at {time}\n\nIf you need to change it, just reply to this message. See you soon!",
       r12:"Hi {name}, a friendly reminder of your appointment at {brand}:\n📅 {date} at {time}\n\nReply here if you need to change it.",
-      r1:"Hi {name}, see you in about an hour at {brand} — {time}. 🌿"},
+      r1:"Hi {name}, see you in about an hour at {brand} — {time}. 🌿",
+      cancel:"Hi {name}, your appointment at {brand} on {date} at {time} has been cancelled.\n\nReply here if you would like a new time.",
+      moved:"Hi {name}, your appointment at {brand} has a new time ✅\n📅 {date} at {time}\n\nReply here if this does not suit you."},
   ar:{confirm:"مرحباً {name}، تم تأكيد موعدك في {brand} ✅\n📅 {date} الساعة {time}\n\nإذا أردت تغييره، فقط ردّ على هذه الرسالة. نراك قريباً!",
       r12:"مرحباً {name}، تذكير بموعدك في {brand}:\n📅 {date} الساعة {time}\n\nردّ هنا إذا أردت تغييره.",
-      r1:"مرحباً {name}، نراك بعد ساعة تقريباً في {brand} — الساعة {time}. 🌿"},
+      r1:"مرحباً {name}، نراك بعد ساعة تقريباً في {brand} — الساعة {time}. 🌿",
+      cancel:"مرحباً {name}، تم إلغاء موعدك في {brand} يوم {date} الساعة {time}.\n\nردّ هنا إذا أردت موعداً جديداً.",
+      moved:"مرحباً {name}، تم تغيير موعدك في {brand} ✅\n📅 {date} الساعة {time}\n\nردّ هنا إذا لم يناسبك."},
   ku:{confirm:"سڵاو {name}، کاتەکەت لە {brand} پشتڕاستکرایەوە ✅\n📅 {date} کاتژمێر {time}\n\nئەگەر پێویستت بە گۆڕینی هەیە، تەنها وەڵامی ئەم نامەیە بدەرەوە. بەم زووانە دەتبینین!",
       r12:"سڵاو {name}، بیرخستنەوەی کاتەکەت لە {brand}:\n📅 {date} کاتژمێر {time}\n\nئەگەر پێویستت بە گۆڕینی هەیە لێرە وەڵام بدەرەوە.",
-      r1:"سڵاو {name}، نزیکەی یەک کاتژمێری تر لە {brand} دەتبینین — {time}. 🌿"}
+      r1:"سڵاو {name}، نزیکەی یەک کاتژمێری تر لە {brand} دەتبینین — {time}. 🌿",
+      cancel:"سڵاو {name}، کاتەکەت لە {brand} لە {date} کاتژمێر {time} هەڵوەشێنرایەوە.\n\nئەگەر کاتێکی نوێت دەوێت لێرە وەڵام بدەرەوە.",
+      moved:"سڵاو {name}، کاتەکەت لە {brand} گۆڕدرا ✅\n📅 {date} کاتژمێر {time}\n\nئەگەر گونجاو نییە لێرە وەڵام بدەرەوە."}
 };
 function waTemplate(L,kind){
   const own=STORE.waTemplates&&STORE.waTemplates[L]&&STORE.waTemplates[L][kind];
@@ -10851,6 +10934,7 @@ function waFill(text,bk){
     .replace(/\{service\}/g,bk.serviceName||'').replace(/\{date\}/g,bk.date||'').replace(/\{time\}/g,bk.time||'');
 }
 function markWaSent(bk,kind,how){
+  if(!['confirm','r12','r1'].includes(kind)) return;   // cancel / new-time messages are not reminders
   const live=STORE.bookings.find(x=>String(x.id)===String(bk.id))||bk;
   live.reminders={...(live.reminders||{}),[kind]:how||new Date().toISOString()};
   // A confirmation sent less than 12 hours before the appointment already
@@ -10881,7 +10965,7 @@ function offerWhatsApp(bk,kind){
     wrap.classList.add('open');
     wrap.querySelectorAll('[data-wa-lang]').forEach(b=>b.addEventListener('click',()=>{ L=b.dataset.waLang; draw(); }));
     const close=()=>{ wrap.classList.remove('open'); wrap.innerHTML=''; };
-    document.getElementById('wa_skip').addEventListener('click',()=>{ if(kind!=='confirm') markWaSent(bk,kind,'skipped'); close(); renderReminders(); });
+    document.getElementById('wa_skip').addEventListener('click',()=>{ if(kind==='r12'||kind==='r1') markWaSent(bk,kind,'skipped'); close(); renderReminders(); });
     document.getElementById('wa_send').addEventListener('click',()=>{
       const text=document.getElementById('wa_text').value;
       window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`,'_blank','noopener');
@@ -10894,6 +10978,7 @@ function offerWhatsApp(bk,kind){
 }
 function dueReminders(){
   const now=Date.now(), H=3600*1000, out=[];
+  if(autoRemindersOn()) return out;   // the server sends reminders; no hand-sent duplicates
   (STORE.bookings||[]).forEach(bk=>{
     if(bk.status!=='Confirmed' || !canSeeBrand(currentUser,bk.brand)) return;
     const st=bookingStart(bk); if(!st) return;
@@ -11008,6 +11093,547 @@ function renderWaTemplates(){
   document.getElementById('wat_save').addEventListener('click',()=>save(false));
   document.getElementById('wat_reset').addEventListener('click',()=>save(true));
 }
+
+/* ======================= Automatic messages (server-sent) =======================
+   Cancellation confirmations, "new time" messages and reminders are queued by
+   the DATABASE when a booking or class place changes (see
+   supabase_migration_notifications_classes.sql) and delivered by the server
+   ("notify-dispatch") — so they go out with every app closed, never twice,
+   and only after the change is saved. This part of the app only:
+     - lets the owner set it up (Settings → Automatic messages),
+     - shows what was sent / failed (Settings, and a warning on Bookings),
+     - lets staff retry a failed message or open it in WhatsApp by hand
+       (recorded as "opened by hand", never as delivered).
+   Everything starts switched off with no timings or channel filled in. */
+const NOTIF_DEFAULT={enabled:false,channel:'',reminders_min:[],cancel:true,moved:true,
+  wa_templates:{cancel:'',moved:'',reminder:''},wa_langs:''};
+function notifCfg(){
+  const s=STORE.notifications||{};
+  return {...NOTIF_DEFAULT,...s,reminders_min:Array.isArray(s.reminders_min)?s.reminders_min.map(Number).filter(x=>x>0):[],
+    wa_templates:{...NOTIF_DEFAULT.wa_templates,...(s.wa_templates||{})}};
+}
+function autoMsgsOn(){ const c=notifCfg(); return !!(c.enabled && ['whatsapp','push','both'].includes(c.channel)); }
+function autoRemindersOn(){ return autoMsgsOn() && notifCfg().reminders_min.length>0; }
+const CHANNEL_LABEL={whatsapp:'WhatsApp (automatic)',push:'iPhone app notifications',both:'iPhone app + WhatsApp'};
+const NOTIF_KIND={cancel:'Cancellation',moved:'New time',reminder:'Reminder'};
+function offsetLabel(m){ m=Number(m); if(m%1440===0) return `${m/1440} day${m===1440?'':'s'} before`; if(m%60===0) return `${m/60} hour${m===60?'':'s'} before`; return `${m} min before`; }
+
+let NOTIFS=[], notifsErr='', notifsAt=0, notifFilter='problems';
+async function pullNotifications(force){
+  if(!supa||!currentUser) return false;
+  if(!force && Date.now()-notifsAt<20000) return false;
+  notifsAt=Date.now();
+  try{
+    const {data,error}=await supa.from('notifications')
+      .select('id,ref_type,ref_id,brand,kind,offset_min,scheduled_at,status,attempts,last_error,sent_via,sent_at,payload,created_at,to_phone,lang')
+      .order('created_at',{ascending:false}).limit(300);
+    if(error){ notifsErr=/relation|schema cache|does not exist/i.test(error.message)?'missing':error.message; return false; }
+    NOTIFS=data||[]; notifsErr=''; return true;
+  }catch(e){ return false; }
+}
+function notifWhen(iso){ const d=new Date(iso); return isNaN(d)?'':d.toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}); }
+function notifStatusHtml(n){
+  const map={sent:['ok','Sent'],failed:['bad','Failed'],scheduled:['wait','Scheduled'],sending:['wait','Sending…'],cancelled:['off','Cancelled'],skipped:['off',n.sent_via==='manual'?'Opened by hand':'Not sent']};
+  const [cls,txt]=map[n.status]||['off',n.status];
+  const extra=n.status==='sent'?` · ${esc(n.sent_via)} · ${esc(notifWhen(n.sent_at))}`
+    :n.status==='scheduled'?` · ${esc(notifWhen(n.scheduled_at))}`:'';
+  return `<span class="nt-badge ${cls}">${txt}</span><span class="nt-extra">${extra}</span>`;
+}
+// Small line under a booking's status: what the client was told automatically.
+function bookingMsgHtml(bk){
+  const mine=NOTIFS.filter(n=>n.ref_type==='booking'&&String(n.ref_id)===String(bk.id)&&n.kind!=='reminder');
+  if(!mine.length) return '';
+  const latest={}; mine.forEach(n=>{ if(!latest[n.kind]) latest[n.kind]=n; });   // newest first
+  return Object.values(latest).map(n=>`<div class="nt-line" title="${esc(n.last_error||'')}">✉ ${NOTIF_KIND[n.kind]}: ${notifStatusHtml(n)}</div>`).join('');
+}
+function notifRowHtml(n){
+  const p=n.payload||{};
+  return `<div class="nt-row">
+    <div><b>${esc(p.name||'Client')}</b> · <span class="brand-tag" style="background:${brandColor[n.brand]||'#888'}">${esc(BRANDS[n.brand]?BRANDS[n.brand].name:n.brand)}</span>
+      · ${NOTIF_KIND[n.kind]||n.kind}${n.kind==='reminder'&&n.offset_min?` (${offsetLabel(n.offset_min)})`:''}${n.ref_type==='class'?' · class':''}<br>
+      <span class="rem-meta">${esc(p.service||'')} · ${esc(p.date||'')} ${esc(p.time||'')}${n.to_phone?` · <span dir="ltr">${esc(prettyPhone(n.to_phone))}</span>`:''}</span><br>
+      ${notifStatusHtml(n)}${n.last_error?`<div class="nt-err">${esc(n.last_error)}</div>`:''}</div>
+    <div class="rowbtns">${n.status==='failed'?`<button class="btn btn-ghost btn-sm" data-nt-retry="${esc(n.id)}">Try again</button>`:''}
+      ${(n.status==='failed')&&n.to_phone?`<button class="btn btn-ghost btn-sm" data-nt-manual="${esc(n.id)}">Open in WhatsApp</button>`:''}</div>
+  </div>`;
+}
+function bindNotifRows(root,after){
+  root.querySelectorAll('[data-nt-retry]').forEach(b=>b.addEventListener('click',async()=>{
+    b.disabled=true;
+    const {error}=await supa.rpc('staff_notification_action',{p_id:b.dataset.ntRetry,p_action:'retry'});
+    if(error){ b.disabled=false; toast(/TOO_LATE/.test(error.message)?'Too late — the appointment has started.':'Could not retry: '+error.message); return; }
+    toast('It will be sent again within a few minutes.'); await pullNotifications(true); after();
+  }));
+  root.querySelectorAll('[data-nt-manual]').forEach(b=>b.addEventListener('click',async()=>{
+    const n=NOTIFS.find(x=>x.id===b.dataset.ntManual); if(!n) return;
+    const L=['en','ar','ku'].includes(n.lang)?n.lang:'en';
+    const k=n.kind==='reminder'?((n.offset_min||0)>=180?'r12':'r1'):n.kind;
+    const p=n.payload||{};
+    const text=waTemplate(L,k).replace(/\{name\}/g,p.name||'').replace(/\{brand\}/g,BRANDS[n.brand]?BRANDS[n.brand].name:'')
+      .replace(/\{service\}/g,p.service||'').replace(/\{date\}/g,p.date||'').replace(/\{time\}/g,p.time||'');
+    window.open(`https://wa.me/${String(n.to_phone).replace(/\D/g,'')}?text=${encodeURIComponent(text)}`,'_blank','noopener');
+    // Recorded as "opened by hand" — WhatsApp does not tell us it was sent.
+    const {error}=await supa.rpc('staff_notification_action',{p_id:n.id,p_action:'manual'});
+    if(error) toast('Opened, but could not record it: '+error.message);
+    await pullNotifications(true); after();
+  }));
+}
+// Bookings tab: a warning card when automatic messages failed.
+function renderMsgIssues(){
+  const wrap=document.getElementById('msgIssuesPanel'); if(!wrap) return;
+  const bad=NOTIFS.filter(n=>n.status==='failed'&&canSeeBrand(currentUser,n.brand)&&(n.ref_type==='booking'||currentAllowedTabs.includes('classes')));
+  if(!bad.length){ wrap.innerHTML=''; return; }
+  wrap.innerHTML=`<div class="rem-card nt-card"><div class="rem-head">⚠ ${bad.length} automatic message${bad.length>1?'s':''} could not be sent</div>
+    ${bad.slice(0,8).map(notifRowHtml).join('')}${bad.length>8?`<div class="rem-meta">…and ${bad.length-8} more in Settings → Automatic messages.</div>`:''}</div>`;
+  bindNotifRows(wrap,()=>{ renderMsgIssues(); renderAdminBookings(); });
+}
+
+// Settings → Automatic messages (owner only)
+let notifDraft=null;
+function renderNotifSettings(){
+  const wrap=document.getElementById('notifSettingsWrap'); if(!wrap) return;
+  if(!currentUser || !currentUser.isOwner){ wrap.innerHTML=''; return; }
+  const c=notifDraft||notifCfg(); notifDraft=c;
+  const lastSent=NOTIFS.find(n=>n.status==='sent');
+  const shown=NOTIFS.filter(n=>notifFilter==='all'||(notifFilter==='problems'?['failed','skipped'].includes(n.status):n.status==='scheduled')).slice(0,40);
+  wrap.innerHTML=`
+    <div class="section-label" style="margin:0 0 10px;">Automatic messages</div>
+    <div class="admin-form" style="max-width:620px;">
+      <div class="nt-state ${autoMsgsOn()?'on':''}">${autoMsgsOn()?`On — ${esc(CHANNEL_LABEL[notifCfg().channel])}`:'Off — nothing is sent automatically'}${lastSent?` · last sent ${esc(notifWhen(lastSent.sent_at))}`:''}</div>
+      ${notifsErr==='missing'?`<div class="nt-err" style="margin:8px 0;">The database part is not installed yet (supabase_migration_notifications_classes.sql).</div>`:''}
+      <label class="nt-check"><input type="checkbox" id="nf_on" ${c.enabled?'checked':''}> Send messages automatically</label>
+      <div class="field full" style="grid-column:1/-1;"><label>How to reach clients</label>
+        <select id="nf_ch"><option value="">— choose —</option>${Object.entries(CHANNEL_LABEL).map(([k,l])=>`<option value="${k}" ${c.channel===k?'selected':''}>${l}</option>`).join('')}</select></div>
+      <div class="field full" style="grid-column:1/-1;"><label>Reminders</label>
+        <div class="hr-chips">${c.reminders_min.length?c.reminders_min.slice().sort((a,b)=>b-a).map(m=>`<span class="hr-chip">${offsetLabel(m)} <button data-nf-del="${m}" aria-label="Remove">✕</button></span>`).join(''):'<span style="font-size:13px;color:var(--muted);">No reminders set</span>'}</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;">
+          <input id="nf_n" type="number" min="1" max="999" style="width:90px;" placeholder="e.g. 2">
+          <select id="nf_u"><option value="60">hours before</option><option value="1">minutes before</option><option value="1440">days before</option></select>
+          <button class="btn btn-ghost btn-sm" id="nf_add">Add reminder</button></div></div>
+      <label class="nt-check"><input type="checkbox" id="nf_cancel" ${c.cancel!==false?'checked':''}> Confirm cancellations to the client (brand, service or class, original date and time)</label>
+      <label class="nt-check"><input type="checkbox" id="nf_moved" ${c.moved!==false?'checked':''}> Tell the client the new time when an appointment or class is moved</label>
+      <div class="field full" style="grid-column:1/-1;"><label>WhatsApp message templates (names approved in Meta)</label>
+        <div class="nt-tpl"><span>Cancellation</span><input id="nf_t_cancel" type="text" value="${esc(c.wa_templates.cancel)}" placeholder="template name"></div>
+        <div class="nt-tpl"><span>New time</span><input id="nf_t_moved" type="text" value="${esc(c.wa_templates.moved)}" placeholder="template name"></div>
+        <div class="nt-tpl"><span>Reminder</span><input id="nf_t_reminder" type="text" value="${esc(c.wa_templates.reminder)}" placeholder="template name"></div>
+        <div class="nt-tpl"><span>Languages</span><input id="nf_langs" type="text" value="${esc(c.wa_langs)}" placeholder="e.g. en,ar (first = default)"></div>
+        <div style="font-size:12.5px;color:var(--muted);margin-top:6px;">WhatsApp only allows business-started messages through templates Meta has approved. Each template's text uses {{1}} first name, {{2}} brand, {{3}} service or class, {{4}} date, {{5}} time — "New time" adds {{6}} old date, {{7}} old time. WhatsApp has no Kurdish: Kurdish clients get the first language. App notifications use the wording under "WhatsApp messages".</div></div>
+      <div style="display:flex;gap:8px;"><button class="btn btn-primary btn-sm" id="nf_save">Save</button></div>
+    </div>
+    <div class="admin-form" style="max-width:none;margin-top:12px;display:block;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+        <b>Delivery log</b>
+        <div class="wa-langs">${[['problems','Problems'],['scheduled','Scheduled'],['all','All']].map(([k,l])=>`<button class="btn btn-sm ${notifFilter===k?'btn-primary':'btn-ghost'}" data-nf-filter="${k}">${l}</button>`).join('')}
+          <button class="btn btn-ghost btn-sm" id="nf_reload">↻</button></div></div>
+      ${shown.length?shown.map(notifRowHtml).join(''):`<div style="font-size:13px;color:var(--muted);">Nothing here.</div>`}
+    </div>
+    <div style="margin-bottom:22px;"></div>`;
+  const read=()=>{ c.enabled=document.getElementById('nf_on').checked; c.channel=document.getElementById('nf_ch').value;
+    c.cancel=document.getElementById('nf_cancel').checked; c.moved=document.getElementById('nf_moved').checked;
+    c.wa_templates={cancel:document.getElementById('nf_t_cancel').value.trim(),moved:document.getElementById('nf_t_moved').value.trim(),reminder:document.getElementById('nf_t_reminder').value.trim()};
+    c.wa_langs=document.getElementById('nf_langs').value.replace(/\s+/g,'').toLowerCase(); };
+  wrap.querySelectorAll('[data-nf-del]').forEach(b=>b.addEventListener('click',()=>{ read(); c.reminders_min=c.reminders_min.filter(m=>m!==Number(b.dataset.nfDel)); renderNotifSettings(); }));
+  document.getElementById('nf_add').addEventListener('click',()=>{
+    read(); const n=Number(document.getElementById('nf_n').value), u=Number(document.getElementById('nf_u').value);
+    const m=Math.round(n*u); if(!(m>=5&&m<=30*1440)){ toast('Pick between 5 minutes and 30 days.'); return; }
+    if(!c.reminders_min.includes(m)) c.reminders_min.push(m); renderNotifSettings();
+  });
+  wrap.querySelectorAll('[data-nf-filter]').forEach(b=>b.addEventListener('click',()=>{ read(); notifFilter=b.dataset.nfFilter; renderNotifSettings(); }));
+  document.getElementById('nf_reload').addEventListener('click',async()=>{ read(); await pullNotifications(true); renderNotifSettings(); });
+  document.getElementById('nf_save').addEventListener('click',async(e)=>{
+    read();
+    if(c.enabled && !c.channel){ toast('Choose how to reach clients first.'); return; }
+    if(c.enabled && c.channel!=='push' && (!c.wa_templates.cancel&&!c.wa_templates.moved&&!c.wa_templates.reminder)){
+      if(!confirmTap(e.currentTarget,'No WhatsApp templates yet — save anyway?')) return;
+    }
+    if(!supa){ toast('Needs the internet.'); return; }
+    const value={enabled:!!c.enabled,channel:c.channel,reminders_min:c.reminders_min.slice().sort((a,b)=>b-a),cancel:!!c.cancel,moved:!!c.moved,wa_templates:c.wa_templates,wa_langs:c.wa_langs};
+    const {error}=await supa.from('settings').upsert({key:'notifications',value:JSON.stringify(value)});
+    if(error){ toast('Could not save: '+error.message); return; }
+    STORE.notifications=value; notifDraft=null; saveStore();
+    const r=await supa.rpc('notifications_resync');
+    toast(r.error?'Saved. (Reminders could not be re-planned: '+r.error.message+')':(value.enabled?`Saved — reminders planned for ${r.data||0} upcoming bookings/classes.`:'Saved — automatic messages are off.'));
+    await pullNotifications(true); renderNotifSettings(); renderReminders();
+  });
+  bindNotifRows(wrap,renderNotifSettings);
+}
+
+/* ======================= CORE weekly group classes (Admin) =======================
+   class_schedules = the weekly timetable (Reformer / Mat / Yoga …).
+   class_sessions  = the dated classes made from it (Erbil time), which can be
+                     changed or cancelled one by one.
+   class_reservations = places. Capacity and "one place per client" are
+                     checked by the database, also when two people book the
+                     last place at the same moment.
+   Nothing here is pre-filled: the owner enters the real timetable. */
+const CLASS_TYPES={reformer:'Reformer',mat:'Mat',yoga:'Yoga'};
+let CL={schedules:[],sessions:[],res:[],err:'',loaded:false,week:null,open:'',form:null,applyFor:null,edit:'',cancelArm:''};
+function clWeekStart(){ if(!CL.week){ const d=new Date(); d.setHours(0,0,0,0); CL.week=d; } return CL.week; }
+function clDayIso(d){ return isoOf(d); }
+function clTime(iso){ return new Date(iso).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:'Asia/Baghdad'}); }
+function clDateIso(iso){ return new Date(iso).toLocaleDateString('en-CA',{timeZone:'Asia/Baghdad'}); }
+async function pullClasses(){
+  if(!supa) return false;
+  const from=clWeekStart(), to=new Date(from); to.setDate(to.getDate()+6);
+  try{
+    const [s,x]=await Promise.all([
+      supa.from('class_schedules').select('*').order('weekday').order('start_time'),
+      supa.from('class_sessions').select('*').gte('session_date',clDayIso(from)).lte('session_date',clDayIso(to)).order('starts_at')]);
+    if(s.error||x.error){ const m=(s.error||x.error).message; CL.err=/relation|schema cache|does not exist/i.test(m)?'missing':m; return false; }
+    CL.schedules=s.data||[]; CL.sessions=x.data||[];
+    const ids=CL.sessions.map(z=>z.id);
+    if(ids.length){ const r=await supa.from('class_reservations').select('*').in('session_id',ids).order('created_at'); CL.res=r.data||[]; } else CL.res=[];
+    CL.err=''; CL.loaded=true; return true;
+  }catch(e){ CL.err='No connection.'; return false; }
+}
+function clBooked(sid){ return CL.res.filter(r=>r.session_id===sid&&r.status==='booked').length; }
+function clErr(m){
+  m=String(m||'');
+  if(/CLASS_FULL/.test(m)) return 'The class is full.';
+  if(/ALREADY_BOOKED|23505/.test(m)) return 'This person already has a place in this class.';
+  if(/CAPACITY_BELOW_BOOKED:(\d+)/.test(m)) return `Capacity cannot be below the ${m.match(/CAPACITY_BELOW_BOOKED:(\d+)/)[1]} places already booked.`;
+  if(/IN_PAST|CLASS_STARTED/.test(m)) return 'That time has already passed.';
+  if(/NOT_ALLOWED|42501/.test(m)) return 'Your account is not allowed to do this (Classes section, Core).';
+  if(/check constraint|violates/.test(m)) return 'Please check the values (duration 10–300 min, capacity 1–100, end date after start).';
+  if(/fetch|network/i.test(m)) return 'No connection — nothing was changed.';
+  return 'Could not save: '+m;
+}
+function renderAdminClasses(){
+  const el=document.getElementById('adminClasses'); if(!el) return;
+  if(!supa){ el.innerHTML=`<h2 class="adm-page-title">Classes</h2><div class="admin-empty">Classes need the internet connection to the database.</div>`; return; }
+  if(CL.err==='missing'){ el.innerHTML=`<h2 class="adm-page-title">Classes</h2><div class="admin-empty">The database part is not installed yet — run supabase_migration_notifications_classes.sql in Supabase.</div>`; return; }
+  const ws=clWeekStart(), we=new Date(ws); we.setDate(we.getDate()+6);
+  const enabled=!!(STORE.coreClasses&&STORE.coreClasses.enabled);
+  const names=DAY_NAMES.en;
+  const schedRows=WEEK_ORDER.map(d=>{
+    const list=CL.schedules.filter(s=>s.weekday===d);
+    if(!list.length) return '';
+    return `<div class="cl-day"><div class="cl-dayname">${names[d]}</div>${list.map(s=>{
+      const st=hmToMin(String(s.start_time).slice(0,5));
+      const past=s.effective_to && s.effective_to<isoOf(new Date());
+      return `<div class="cl-row ${(!s.active||past)?'cl-off':''}">
+        <div><b>${minToLabel(st)}–${minToLabel(st+s.duration_min)}</b> · ${esc(s.title||CLASS_TYPES[s.class_type])}${s.title&&s.title!==CLASS_TYPES[s.class_type]?` <span class="rem-meta">(${CLASS_TYPES[s.class_type]})</span>`:''}<br>
+          <span class="rem-meta">${s.instructor?esc(s.instructor)+' · ':''}${s.capacity} places · from ${esc(s.effective_from)}${s.effective_to?' to '+esc(s.effective_to):''}${!s.active?' · stopped':''}</span></div>
+        <div class="rowbtns"><button class="btn btn-ghost btn-sm" data-cs-edit="${esc(s.id)}">Edit</button></div></div>`;
+    }).join('')}</div>`;
+  }).join('');
+  const days=[...Array(7)].map((_,i)=>{ const d=new Date(ws); d.setDate(d.getDate()+i); return d; });
+  const sessRows=days.map(d=>{
+    const iso=isoOf(d), list=CL.sessions.filter(s=>s.session_date===iso);
+    return `<div class="cl-day"><div class="cl-dayname">${d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'})}</div>
+      ${list.length?list.map(s=>clSessionHtml(s)).join(''):'<div class="rem-meta" style="padding:4px 0 8px;">No classes</div>'}</div>`;
+  }).join('');
+  el.innerHTML=`<h2 class="adm-page-title">Classes · Core</h2>
+    ${currentUser.isOwner?`<div class="admin-form cl-vis"><label class="nt-check"><input type="checkbox" id="cl_vis" ${enabled?'checked':''} ${CL.schedules.length?'':'disabled'}> Show the weekly timetable in the client app (clients can book places)</label>
+      <div class="rem-meta">${CL.schedules.length?(enabled?'Clients can see and book classes now.':'Hidden from clients — fill in the real timetable first, then switch this on.'):'Add the real weekly classes below first.'}</div></div>`:''}
+    <div class="cl-head"><div class="section-label" style="margin:0;">Weekly timetable</div><button class="btn btn-primary btn-sm" id="cl_add">+ Add weekly class</button></div>
+    <div id="clFormWrap">${CL.form?clFormHtml():''}${CL.applyFor?clApplyHtml():''}</div>
+    <div class="admin-form cl-list">${schedRows||'<div class="rem-meta">No weekly classes yet. Add each class (type, day, time, length, instructor, places) as it really runs.</div>'}</div>
+    <div class="cl-head" style="margin-top:18px;"><div class="section-label" style="margin:0;">Classes by date</div>
+      <div class="bk-daybar" style="margin:0;"><button class="bk-arrow" id="cl_prev" aria-label="Previous week">‹</button>
+        <div class="bk-day" style="min-width:0;font-size:16px;">${ws.toLocaleDateString('en-US',{month:'short',day:'numeric'})} – ${we.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>
+        <button class="bk-arrow" id="cl_next" aria-label="Next week">›</button><button class="btn btn-ghost btn-sm" id="cl_reload">↻</button></div></div>
+    ${CL.err&&CL.err!=='missing'?`<div class="nt-err">${esc(CL.err)}</div>`:''}
+    <div class="admin-form cl-list">${sessRows}</div>`;
+  bindAdminClasses(el);
+}
+function clSessionHtml(s){
+  const booked=clBooked(s.id), cancelled=s.status==='cancelled';
+  const open=CL.open===s.id, edit=CL.edit===s.id;
+  const people=CL.res.filter(r=>r.session_id===s.id);
+  const st=clTime(s.starts_at);
+  return `<div class="cl-sess ${cancelled?'cl-off':''}">
+    <div class="cl-row">
+      <div><b>${esc(st)}</b> · ${esc(s.title||CLASS_TYPES[s.class_type])} <span class="rem-meta">${s.duration_min} min${s.instructor?' · '+esc(s.instructor):''}</span><br>
+        <span class="cl-cap ${booked>=s.capacity?'full':''}">${booked} / ${s.capacity} booked</span>${cancelled?' <span class="nt-badge bad">Cancelled</span>':''}${s.is_exception&&!cancelled?' <span class="rem-meta">· changed on its own</span>':''}
+        ${s.conflict?`<div class="cl-conflict">⚠ ${esc(s.conflict)} <button class="btn btn-ghost btn-sm" data-cl-clear="${esc(s.id)}">Mark as handled</button></div>`:''}</div>
+      <div class="rowbtns">
+        <button class="btn btn-ghost btn-sm" data-cl-open="${esc(s.id)}">${open?'Hide':'Places'}</button>
+        ${!cancelled&&new Date(s.starts_at)>new Date()?`<button class="btn btn-ghost btn-sm" data-cl-edit="${esc(s.id)}">Change</button>
+        <button class="btn btn-danger btn-sm" data-cl-cancel="${esc(s.id)}">${CL.cancelArm===s.id?`Cancel + tell ${booked}`:'Cancel class'}</button>`:''}</div>
+    </div>
+    ${CL.cancelArm===s.id?`<div class="cl-conflict">${booked} ${booked===1?'person has':'people have'} a place. Their places are kept as "class cancelled" and they are told (if messages are on). Tap the red button again to cancel this class.</div>`:''}
+    ${edit?`<div class="bk-form" style="margin-top:8px;">
+      <div class="full"><b>Change this class only</b><div class="note">The weekly timetable stays as it is.</div></div>
+      <label>Date<input id="ce_date" type="date" value="${esc(s.session_date)}"></label>
+      <label>Start<input id="ce_time" type="time" step="300" value="${new Date(s.starts_at).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Baghdad'})}"></label>
+      <label>Length (min)<input id="ce_dur" type="number" min="10" max="300" value="${s.duration_min}"></label>
+      <label>Places<input id="ce_cap" type="number" min="1" max="100" value="${s.capacity}"></label>
+      <label class="full">Instructor<input id="ce_ins" type="text" maxlength="60" value="${esc(s.instructor)}"></label>
+      <div class="full rowbtns"><button class="btn btn-ghost btn-sm" data-ce-back>Back</button><button class="btn btn-primary btn-sm" data-ce-save="${esc(s.id)}">Save this class</button></div></div>`:''}
+    ${open?`<div class="cl-people">
+      ${people.length?people.map(r=>`<div class="cl-person ${r.status!=='booked'?'cl-off':''}">
+        <span><b>${esc(r.client_name||'Client')}</b>${r.client_phone?` · <span dir="ltr">${esc(prettyPhone(r.client_phone))}</span>`:''} · <span class="rem-meta">${esc(r.status.replace('_',' '))}${r.source==='staff'?' · added by staff':''}</span></span>
+        ${['booked','attended','no_show'].includes(r.status)?`<span class="rowbtns">
+          ${r.status!=='attended'?`<button class="btn btn-ghost btn-sm" data-cr-mark="${esc(r.id)}" data-st="attended">Came</button>`:''}
+          ${r.status!=='no_show'?`<button class="btn btn-ghost btn-sm" data-cr-mark="${esc(r.id)}" data-st="no_show">No-show</button>`:''}
+          ${r.status==='booked'?`<button class="btn btn-danger btn-sm" data-cr-cancel="${esc(r.id)}">Cancel place</button>`:''}</span>`:''}
+      </div>`).join(''):'<div class="rem-meta">No one booked yet.</div>'}
+      ${!cancelled&&booked<s.capacity&&new Date(s.starts_at)>new Date()?`<div class="cl-addp">
+        <input id="cp_q_${esc(s.id)}" placeholder="Find a client: name or phone" autocomplete="off"><div id="cp_res_${esc(s.id)}"></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;"><input id="cp_name_${esc(s.id)}" placeholder="…or a new name" style="flex:1;min-width:120px;"><input id="cp_phone_${esc(s.id)}" placeholder="Phone" inputmode="tel" style="flex:1;min-width:110px;">
+          <button class="btn btn-primary btn-sm" data-cp-add="${esc(s.id)}">Add</button></div></div>`:''}
+    </div>`:''}
+  </div>`;
+}
+function clFormHtml(){
+  const f=CL.form, s=f.id?CL.schedules.find(x=>x.id===f.id):null;
+  const v=s||{class_type:'',title:'',weekday:'',start_time:'',duration_min:'',instructor:'',capacity:'',effective_from:isoOf(new Date()),effective_to:'',active:true};
+  const coreSvcs=svcList('core');
+  return `<div class="bk-form">
+    <div class="full"><b>${s?'Edit weekly class':'New weekly class'}</b></div>
+    <label>Class type<select id="cf_type"><option value="">— choose —</option>${Object.entries(CLASS_TYPES).map(([k,l])=>`<option value="${k}" ${v.class_type===k?'selected':''}>${l}</option>`).join('')}</select></label>
+    <label>Name shown to clients<input id="cf_title" type="text" maxlength="60" value="${esc(v.title)}" placeholder="optional, e.g. Reformer Beginners"></label>
+    <label>Day<select id="cf_day"><option value="">— choose —</option>${WEEK_ORDER.map(d=>`<option value="${d}" ${String(v.weekday)===String(d)?'selected':''}>${DAY_NAMES.en[d]}</option>`).join('')}</select></label>
+    <label>Start time<input id="cf_time" type="time" step="300" value="${esc(String(v.start_time).slice(0,5))}"></label>
+    <label>Length (min)<input id="cf_dur" type="number" min="10" max="300" value="${esc(v.duration_min)}"></label>
+    <label>Places (capacity)<input id="cf_cap" type="number" min="1" max="100" value="${esc(v.capacity)}"></label>
+    <label class="full">Instructor<input id="cf_ins" type="text" maxlength="60" value="${esc(v.instructor)}"></label>
+    <label>Starts from<input id="cf_from" type="date" value="${esc(v.effective_from)}"></label>
+    <label>Ends on (optional)<input id="cf_to" type="date" value="${esc(v.effective_to||'')}"></label>
+    ${coreSvcs.length?`<label class="full">Price from service (optional)<select id="cf_svc"><option value="">—</option>${coreSvcs.map(x=>`<option value="${esc(x.id)}" ${v.service_id===x.id?'selected':''}>${esc(x.n)} · ${fmtMoney(effectivePrice(x))}</option>`).join('')}</select></label>`:''}
+    ${s?`<label class="full nt-check"><input type="checkbox" id="cf_active" ${v.active?'checked':''}> Running (untick to stop this weekly class)</label>`:''}
+    <div class="full rowbtns"><button class="btn btn-ghost btn-sm" id="cf_back">Back</button><button class="btn btn-primary btn-sm" id="cf_save">${s?'Save changes':'Add to timetable'}</button></div>
+  </div>`;
+}
+function clApplyHtml(){
+  return `<div class="bk-form">
+    <div class="full"><b>Change classes already on the calendar?</b><div class="note">Saved for new weeks. Choose whether classes already made from this weekly class should change too. Classes with places booked are never moved, shrunk or removed — they are flagged for you instead.</div></div>
+    <label>Apply from<input id="ca_from" type="date" value="${isoOf(new Date())}"></label>
+    <div class="full rowbtns"><button class="btn btn-ghost btn-sm" id="ca_skip">Only new weeks</button><button class="btn btn-primary btn-sm" id="ca_go">Apply to classes from this date</button></div>
+  </div>`;
+}
+function bindAdminClasses(el){
+  const re=async()=>{ await pullClasses(); renderAdminClasses(); };
+  const vis=document.getElementById('cl_vis');
+  if(vis) vis.addEventListener('change',async()=>{
+    const value={enabled:vis.checked};
+    const {error}=await supa.from('settings').upsert({key:'core_classes',value:JSON.stringify(value)});
+    if(error){ toast('Could not save: '+error.message); vis.checked=!vis.checked; return; }
+    STORE.coreClasses=value; saveStore(); toast(value.enabled?'Clients can now see and book classes.':'Timetable hidden from clients.'); renderAdminClasses();
+  });
+  document.getElementById('cl_add').addEventListener('click',()=>{ CL.form={}; CL.applyFor=null; renderAdminClasses(); });
+  el.querySelectorAll('[data-cs-edit]').forEach(b=>b.addEventListener('click',()=>{ CL.form={id:b.dataset.csEdit}; CL.applyFor=null; renderAdminClasses(); try{ document.getElementById('clFormWrap').scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){} }));
+  const back=document.getElementById('cf_back'); if(back) back.addEventListener('click',()=>{ CL.form=null; renderAdminClasses(); });
+  const save=document.getElementById('cf_save');
+  if(save) save.addEventListener('click',async()=>{
+    const g=(id)=>document.getElementById(id);
+    const row={class_type:g('cf_type').value,title:g('cf_title').value.trim(),weekday:g('cf_day').value===''?null:Number(g('cf_day').value),
+      start_time:g('cf_time').value,duration_min:Number(g('cf_dur').value),capacity:Number(g('cf_cap').value),
+      instructor:g('cf_ins').value.trim(),effective_from:g('cf_from').value,effective_to:g('cf_to').value||null,
+      service_id:g('cf_svc')?(g('cf_svc').value||null):null,brand:'core'};
+    if(g('cf_active')) row.active=g('cf_active').checked;
+    if(!row.class_type||row.weekday==null||!row.start_time||!row.effective_from){ toast('Fill in type, day, start time and start date.'); return; }
+    if(!(row.duration_min>=10&&row.duration_min<=300)){ toast('Length must be 10–300 minutes.'); return; }
+    if(!(row.capacity>=1&&row.capacity<=100)){ toast('Places must be 1–100.'); return; }
+    if(row.effective_to && row.effective_to<row.effective_from){ toast('The end date is before the start date.'); return; }
+    if(!row.title) row.title=CLASS_TYPES[row.class_type];
+    save.disabled=true;
+    const id=CL.form.id;
+    const res=id?await supa.from('class_schedules').update({...row,updated_at:new Date().toISOString(),updated_by:currentUser.id}).eq('id',id).select()
+                :await supa.from('class_schedules').insert({...row,updated_by:currentUser.id}).select();
+    if(res.error||!res.data||!res.data.length){ save.disabled=false; toast(clErr(res.error?res.error.message:'not saved')); return; }
+    CL.form=null;
+    if(id){ CL.applyFor=id; toast('Saved for new weeks.'); }
+    else{ const t0=isoOf(new Date()), t1=new Date(); t1.setDate(t1.getDate()+56);
+      const gr=await supa.rpc('generate_class_sessions',{p_from:t0,p_to:isoOf(t1)});
+      toast(gr.error?clErr(gr.error.message):`Added — ${gr.data||0} classes on the calendar for the next 8 weeks.`); }
+    re();
+  });
+  const skip=document.getElementById('ca_skip'); if(skip) skip.addEventListener('click',async()=>{
+    const t0=isoOf(new Date()), t1=new Date(); t1.setDate(t1.getDate()+56);
+    await supa.rpc('generate_class_sessions',{p_from:t0,p_to:isoOf(t1)}); CL.applyFor=null; re(); });
+  const go=document.getElementById('ca_go'); if(go) go.addEventListener('click',async()=>{
+    go.disabled=true;
+    const {data,error}=await supa.rpc('apply_class_schedule',{p_schedule:CL.applyFor,p_from:document.getElementById('ca_from').value||isoOf(new Date())});
+    if(error){ go.disabled=false; toast(clErr(error.message)); return; }
+    const fl=(data&&data.flagged)||[];
+    toast(`${data.updated} classes updated${data.removed_empty?`, ${data.removed_empty} empty ones removed`:''}${data.added?`, ${data.added} added`:''}.${fl.length?` ⚠ ${fl.length} with bookings kept as they were — see the flags below.`:''}`);
+    CL.applyFor=null; re();
+  });
+  document.getElementById('cl_prev').addEventListener('click',()=>{ const d=new Date(clWeekStart()); d.setDate(d.getDate()-7); CL.week=d; re(); });
+  document.getElementById('cl_next').addEventListener('click',()=>{ const d=new Date(clWeekStart()); d.setDate(d.getDate()+7); CL.week=d; re(); });
+  document.getElementById('cl_reload').addEventListener('click',re);
+  el.querySelectorAll('[data-cl-open]').forEach(b=>b.addEventListener('click',()=>{ CL.open=CL.open===b.dataset.clOpen?'':b.dataset.clOpen; renderAdminClasses(); }));
+  el.querySelectorAll('[data-cl-edit]').forEach(b=>b.addEventListener('click',()=>{ CL.edit=CL.edit===b.dataset.clEdit?'':b.dataset.clEdit; renderAdminClasses(); }));
+  el.querySelectorAll('[data-ce-back]').forEach(b=>b.addEventListener('click',()=>{ CL.edit=''; renderAdminClasses(); }));
+  el.querySelectorAll('[data-ce-save]').forEach(b=>b.addEventListener('click',async()=>{
+    const g=(id)=>document.getElementById(id); b.disabled=true;
+    const {error}=await supa.rpc('update_class_session',{p_id:b.dataset.ceSave,p_date:g('ce_date').value,p_time:g('ce_time').value,
+      p_duration:Number(g('ce_dur').value),p_instructor:g('ce_ins').value.trim(),p_capacity:Number(g('ce_cap').value),p_note:null});
+    if(error){ b.disabled=false; toast(clErr(error.message)); return; }
+    CL.edit=''; toast('Class changed. Booked clients are told the new time if it moved (when messages are on).'); re();
+  }));
+  el.querySelectorAll('[data-cl-cancel]').forEach(b=>b.addEventListener('click',async()=>{
+    const id=b.dataset.clCancel, booked=clBooked(id);
+    if(booked>0 && CL.cancelArm!==id){ CL.cancelArm=id; renderAdminClasses(); return; }
+    if(booked===0 && !confirmTap(b,'Cancel this class?')) return;
+    b.disabled=true;
+    const {error}=await supa.rpc('cancel_class_session',{p_id:id,p_confirm:booked>0});
+    CL.cancelArm='';
+    if(error){ toast(/HAS_RESERVATIONS/.test(error.message)?'Someone booked meanwhile — check the places and try again.':clErr(error.message)); re(); return; }
+    toast(booked?`Class cancelled — ${booked} place${booked>1?'s':''} marked "class cancelled".`:'Class cancelled.'); re();
+  }));
+  el.querySelectorAll('[data-cl-clear]').forEach(b=>b.addEventListener('click',async()=>{
+    const {error}=await supa.rpc('clear_class_conflict',{p_id:b.dataset.clClear}); if(error){ toast(clErr(error.message)); return; } re(); }));
+  el.querySelectorAll('[data-cr-mark]').forEach(b=>b.addEventListener('click',async()=>{
+    const {error}=await supa.rpc('mark_class_place',{p_id:b.dataset.crMark,p_status:b.dataset.st}); if(error){ toast(clErr(error.message)); return; } re(); }));
+  el.querySelectorAll('[data-cr-cancel]').forEach(b=>b.addEventListener('click',async()=>{
+    if(!confirmTap(b,'Cancel this place?')) return;
+    const {error}=await supa.rpc('cancel_class_place',{p_id:b.dataset.crCancel}); if(error){ toast(clErr(error.message)); return; }
+    toast('Place cancelled.'); re(); }));
+  el.querySelectorAll('[data-cp-add]').forEach(b=>{
+    const sid=b.dataset.cpAdd, q=document.getElementById('cp_q_'+sid), out=document.getElementById('cp_res_'+sid);
+    let picked=null;
+    q.addEventListener('input',()=>{
+      picked=null;
+      const list=findClientsFor(q.value).slice(0,6);
+      out.innerHTML=list.map(c=>`<button class="lo-pick" data-cp-pick="${esc(String(c.id))}">${clientLine(c)}</button>`).join('')||(q.value.trim()?'<div class="lo-none">No match — type a new name and phone below.</div>':'');
+      out.querySelectorAll('[data-cp-pick]').forEach(x=>x.addEventListener('click',()=>{
+        picked=(STORE.clients||[]).find(c=>String(c.id)===x.dataset.cpPick)||null;
+        if(picked){ q.value=picked.name||''; out.innerHTML=`<div class="rem-meta">Selected: ${clientLine(picked)}</div>`; }
+      }));
+    });
+    b.addEventListener('click',async()=>{
+      const name=document.getElementById('cp_name_'+sid).value.trim(), phone=document.getElementById('cp_phone_'+sid).value.trim();
+      if(!picked && !name){ toast('Pick a client, or type a name.'); return; }
+      b.disabled=true;
+      const {error}=await supa.rpc('staff_book_class',{p_session:sid,p_client:picked?String(picked.id):null,
+        p_name:picked?(picked.name||''):name,p_phone:picked?(picked.phone||picked.contactPhone||''):phone,p_lang:''});
+      if(error){ b.disabled=false; toast(clErr(error.message)); return; }
+      toast('Place booked.'); re();
+    });
+  });
+}
+
+/* ======================= CORE classes (client app) ======================= */
+function coreClassesOn(){ return !!(STORE.coreClasses&&STORE.coreClasses.enabled&&supa); }
+let TT={day:null,rows:[],at:0,loading:false,err:''}, MYCLS=[];
+function ttDay(){ if(!TT.day){ const d=new Date(); d.setHours(0,0,0,0); TT.day=d; } return TT.day; }
+async function loadTimetable(force){
+  if(!coreClassesOn()||TT.loading) return false;
+  if(!force && Date.now()-TT.at<30000) return false;
+  TT.loading=true;
+  const from=new Date(); from.setHours(0,0,0,0); const to=new Date(from); to.setDate(to.getDate()+13);
+  try{
+    const c=clientIn()?clientSupa():(anonSupa()||supa);
+    const {data,error}=await c.rpc('class_timetable',{p_from:isoOf(from),p_to:isoOf(to)});
+    TT.err=error?error.message:''; if(!error) TT.rows=data||[];
+  }catch(e){ TT.err='fetch'; }
+  TT.loading=false; TT.at=Date.now(); return true;
+}
+async function loadMyClassPlaces(){
+  if(!clientIn()||!coreClassesOn()){ MYCLS=[]; return; }
+  try{ const {data,error}=await clientSupa().rpc('my_class_places'); if(!error) MYCLS=data||[]; }catch(e){}
+}
+function clsName(r){ return r.title&&!Object.values(CLASS_TYPES).includes(r.title)?r.title:t({reformer:'clsReformer',mat:'clsMat',yoga:'clsYoga'}[r.class_type]||'clsYoga'); }
+function clsTime(iso){ return new Date(iso).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:'Asia/Baghdad'}); }   // same digits as the rest of the app
+function timetableHtml(){
+  if(currentBrand!=='core'||!coreClassesOn()) return '';
+  if(!TT.at && !TT.loading) setTimeout(()=>loadTimetable().then(ch=>{ if(ch&&currentScreen==='services'&&currentBrand==='core'){ navDirection='none'; render(); } }),0);
+  const day=ttDay(), days=[...Array(7)].map((_,i)=>{ const d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()+i); return d; });
+  const iso=isoOf(day);
+  const list=TT.rows.filter(r=>r.session_date===iso);
+  return `<section class="tt-sec">
+    <div class="lux-eyebrow">${t('classTimetable')}</div><div class="tt-sub">${t('classesSub')}</div>
+    <div class="date-chip-row tt-days">${days.map(d=>{ const on=isoOf(d)===iso; const n=TT.rows.filter(r=>r.session_date===isoOf(d)).length;
+      return `<button class="date-chip ${on?'active':''}" data-tt-day="${isoOf(d)}"><span class="dow">${fmtDow(d)}</span><span class="day">${d.getDate()}</span>${n?'<i class="tt-dot"></i>':''}</button>`; }).join('')}</div>
+    ${TT.loading&&!TT.rows.length?'<div class="tt-empty">…</div>':list.length?list.map(r=>{
+      const full=r.places_left<=0;
+      return `<div class="tt-row">
+        <div class="tt-time" dir="ltr">${esc(clsTime(r.starts_at))}</div>
+        <div class="tt-info"><div class="tt-name">${esc(clsName(r))}</div>
+          <div class="tt-meta">${t('minutesShort').replace('{n}',r.duration_min)}${r.instructor?' · '+esc(t('withInstructor').replace('{name}',r.instructor)):''}</div>
+          <div class="tt-left ${full?'full':r.places_left<=2?'few':''}">${r.mine?t('youreIn'):full?t('classFullTag'):(r.places_left===1?t('onePlaceLeft'):t('placesLeft').replace('{n}',r.places_left))}</div></div>
+        ${r.mine?'<span class="tt-in">✓</span>':`<button class="tt-book" data-tt-book="${esc(r.id)}" ${full?'disabled':''}>${t('bookPlace')}</button>`}
+      </div>`; }).join(''):`<div class="tt-empty">${t('noClassesDay')}</div>`}
+  </section>`;
+}
+function classErrText(m){
+  m=String(m||'');
+  if(/CLASS_FULL/.test(m)) return t('classFull');
+  if(/ALREADY_BOOKED|23505/.test(m)) return t('alreadyBooked');
+  if(/CLASS_UNAVAILABLE|CLASS_STARTED/.test(m)) return t('classUnavailable');
+  if(/CLASSES_OFF/.test(m)) return t('classesOff');
+  if(/SIGN_IN|NO_CLIENT/.test(m)) return t('signInToBook');
+  return t('orderFailed');
+}
+function bindTimetable(root){
+  root.querySelectorAll('[data-tt-day]').forEach(b=>b.addEventListener('click',()=>{ const [y,m,d]=b.dataset.ttDay.split('-').map(Number); TT.day=new Date(y,m-1,d); navDirection='none'; render(); }));
+  root.querySelectorAll('[data-tt-book]').forEach(b=>b.addEventListener('click',async()=>{
+    if(!clientIn()){ toast(t('signInToBook')); pendingScreen='services'; authStep='phone'; authPhone=''; goto('auth'); return; }
+    if(b.dataset.busy) return; b.dataset.busy='1'; b.disabled=true;
+    let res; try{ res=await clientSupa().rpc('book_class',{p_session:b.dataset.ttBook,p_lang:lang}); }catch(e){ res={error:{message:'fetch'}}; }
+    if(res.error){ toast(classErrText(res.error.message)); await loadTimetable(true); navDirection='none'; render(); return; }
+    haptic(); toast(t('classBooked'));
+    await loadTimetable(true); loadMyClassPlaces(); navDirection='none'; render();
+    maybeAskPush();
+  }));
+}
+function myClassesHtml(){
+  if(!MYCLS.length) return '';
+  const now=Date.now();
+  const up=MYCLS.filter(r=>new Date(r.starts_at).getTime()>now-3600e3);
+  if(!up.length) return '';
+  const st=(r)=>r.status==='booked'?t('youreIn'):r.status==='session_cancelled'?t('classCancelledByStudio'):r.status==='cancelled'?t('placeCancelled'):'';
+  return `<section class="lux-sec">${LuxHeader(t('myClasses'))}${up.map(r=>`<div class="pv-book">
+      <div class="pv-book-top"><span class="lux-eyebrow">${esc(BRANDS.core.name)}</span><span class="pv-status ${r.status==='booked'?'ok':''}">${esc(st(r))}</span></div>
+      <div class="pv-book-name">${esc(clsName(r))}</div>
+      <div class="pv-book-when">${esc(new Date(r.starts_at).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:'Asia/Baghdad'}))} · <span dir="ltr">${esc(clsTime(r.starts_at))}</span>${r.instructor?' · '+esc(r.instructor):''}</div>
+    </div>${r.status==='booked'&&clientChangesOn()&&new Date(r.starts_at).getTime()-now>=STORE.settings.clientChanges.cutoffHours*3600e3
+      ?`<div class="cl-chg"><button class="cl-chg-btn" data-cls-cancel="${esc(r.id)}">${t('cancelPlace')}</button></div>`:''}`).join('')}</section>`;
+}
+function bindMyClasses(root){
+  root.querySelectorAll('[data-cls-cancel]').forEach(b=>b.addEventListener('click',async()=>{
+    if(!confirmTap(b,t('cancelPlace')+'?')) return;
+    b.disabled=true;
+    let res; try{ res=await clientSupa().rpc('cancel_class_place',{p_id:b.dataset.clsCancel}); }catch(e){ res={error:{message:'fetch'}}; }
+    if(res.error){ b.disabled=false; toast(clientChangeError(res.error.message)); return; }
+    toast(t('placeCancelled')); await loadMyClassPlaces(); navDirection='none'; render();
+  }));
+}
+
+/* ---- Push notifications (installed iPhone app) ----
+   Asked once, right after the client has booked something — the moment a
+   reminder obviously helps — and only when the owner has chosen app
+   notifications in Settings. Needs the native plugin
+   (@capacitor/push-notifications) and Apple setup; without them this quietly
+   does nothing. */
+const PUSH_ASKED_KEY='odc_push_asked_v1';
+function pushPlugin(){ try{ return window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()&&window.Capacitor.Plugins&&window.Capacitor.Plugins.PushNotifications||null; }catch(e){ return null; } }
+function pushWanted(){ const c=notifCfg(); return c.enabled && (c.channel==='push'||c.channel==='both'); }
+let pushListening=false;
+async function registerPush(P){
+  if(!pushListening){
+    pushListening=true;
+    P.addListener('registration',async(tk)=>{
+      try{ const cs=clientSupa(); if(cs&&tk&&tk.value) await cs.rpc('register_push_device',{p_token:tk.value,p_platform:(window.Capacitor.getPlatform&&window.Capacitor.getPlatform())==='android'?'android':'ios',p_lang:lang}); }catch(e){}
+    });
+    P.addListener('registrationError',()=>{});
+  }
+  try{ await P.register(); }catch(e){}
+}
+async function maybeAskPush(){
+  const P=pushPlugin(); if(!P||!pushWanted()||!clientIn()) return;
+  let st=null; try{ st=await P.checkPermissions(); }catch(e){ return; }
+  if(st&&st.receive==='granted'){ registerPush(P); return; }
+  let asked=false; try{ asked=localStorage.getItem(PUSH_ASKED_KEY)==='1'; }catch(e){}
+  if(asked||!st||st.receive==='denied') return;
+  const wrap=document.createElement('div'); wrap.className='push-ask';
+  wrap.innerHTML=`<div class="push-card"><div class="push-t">${t('pushAskTitle')}</div><div class="push-b">${t('pushAskBody')}</div>
+    <div class="push-a"><button class="push-later">${t('pushLater')}</button><button class="push-yes">${t('pushAllow')}</button></div></div>`;
+  document.body.appendChild(wrap);
+  const done=()=>{ try{ localStorage.setItem(PUSH_ASKED_KEY,'1'); }catch(e){} wrap.remove(); };
+  wrap.querySelector('.push-later').addEventListener('click',done);
+  wrap.querySelector('.push-yes').addEventListener('click',async()=>{
+    done();
+    let r=null; try{ r=await P.requestPermissions(); }catch(e){}
+    if(r&&r.receive==='granted'){ await registerPush(P); toast(t('pushOn')); }
+  });
+}
+// Keep the phone's registration fresh when the app starts with permission already given.
+setTimeout(async()=>{ const P=pushPlugin(); if(!P||!clientIn()||!pushWanted()) return;
+  try{ const st=await P.checkPermissions(); if(st&&st.receive==='granted') registerPush(P); }catch(e){} },4000);
 
 function openBookingForm(){
   const brands=userBrands(currentUser);
@@ -11239,20 +11865,60 @@ function openRescheduleForm(bk){
   ['rs_date','rs_time'].forEach(id=>document.getElementById(id).addEventListener('input',check));
   check();
   document.getElementById('rs_cancel').addEventListener('click',()=>{ wrap.innerHTML=''; });
-  document.getElementById('rs_save').addEventListener('click',(e)=>{
+  let forceArm=false;
+  document.getElementById('rs_save').addEventListener('click',async(e)=>{
+    const btn=e.currentTarget;
     const v=check(); if(!v){ toast('Pick a date and a time.'); return; }
     const live=STORE.bookings[idxById(STORE.bookings,bk.id)];
     if(!live || !['Requested','Confirmed'].includes(live.status)){ wrap.innerHTML=''; renderAdminBookings(); return; }
     if(v.date===live.date && v.time===live.time){ toast('That is the same date and time.'); return; }
-    if((v.clash||v.off) && !confirmTap(e.currentTarget,'Book it anyway?')) return;
-    live.rescheduleLog=[...(live.rescheduleLog||[]),{at:new Date().toISOString(),by:(currentUser&&currentUser.name)||'staff',
-      from:{date:live.date,time:live.time},to:{date:v.date,time:v.time}}];
-    live.date=v.date; live.time=v.time; live.reminders={};
-    saveStore(); cloudSave('bookings',live.id);
-    wrap.innerHTML=''; renderAdminBookings();
-    toast(`${live.clientName}'s booking moved to ${v.date} at ${v.time}.`);
-    if(live.status==='Confirmed') offerWhatsApp(live,'confirm');
+    // Demo copy without a database: the old local behaviour.
+    if(!supa){
+      if((v.clash||v.off) && !confirmTap(btn,'Book it anyway?')) return;
+      live.rescheduleLog=[...(live.rescheduleLog||[]),{at:new Date().toISOString(),by:(currentUser&&currentUser.name)||'staff',
+        from:{date:live.date,time:live.time},to:{date:v.date,time:v.time}}];
+      live.date=v.date; live.time=v.time; live.reminders={};
+      saveStore(); cloudSave('bookings',live.id); wrap.innerHTML=''; renderAdminBookings();
+      toast(`${live.clientName}'s booking moved to ${v.date} at ${v.time}.`);
+      if(live.status==='Confirmed') offerWhatsApp(live,'moved');
+      return;
+    }
+    // Checked and saved by the server: service length, opening hours and
+    // overlapping bookings. If anything fails, the booking stays as it was.
+    await flushOutbox();
+    btn.disabled=true;
+    const tv=document.getElementById('rs_time').value;
+    let r; try{ r=await supa.rpc('staff_reschedule_booking',{p_id:String(live.id),p_date:document.getElementById('rs_date').value,p_time:tv,p_force:forceArm}); }
+    catch(err){ r={error:{message:'fetch'}}; }
+    btn.disabled=false;
+    if(r.error){
+      const m=String(r.error.message||'');
+      document.getElementById('rs_warn').textContent=/IN_PAST/.test(m)?'That time has already passed.':/SAME_TIME/.test(m)?'That is the same date and time.'
+        :/BAD_STATUS/.test(m)?'Only requested or confirmed bookings can be moved.':/NOT_ALLOWED|42501/.test(m)?'Your account is not allowed to move this booking.'
+        :/function|schema cache|does not exist/i.test(m)?'The server part is not installed yet (supabase_migration_notifications_classes.sql). Nothing was changed.'
+        :/fetch|network/i.test(m)?'No connection — nothing was changed.':'Could not move it: '+m;
+      return;
+    }
+    const res=r.data||{};
+    if(!res.ok){
+      forceArm=true;
+      document.getElementById('rs_warn').innerHTML=`<b>Not moved yet.</b> The server found:<ul style="margin:6px 0 0 18px;">${(res.problems||[]).map(p=>`<li>${esc(p.text)}</li>`).join('')}</ul>Press <b>Move anyway</b> to keep this time (it is logged).`;
+      btn.textContent='Move anyway'; btn.classList.add('btn-danger');
+      return;
+    }
+    live.date=res.date||v.date; live.time=res.time||v.time; live.reminders={};
+    if(Array.isArray(res.log)) live.rescheduleLog=res.log;
+    if(res.date_iso) live.dateIso=res.date_iso;
+    saveStore();
+    wrap.innerHTML=''; if(typeof bookingDay!=='undefined' && bookingDayKey(live)) bookingDay=bookingDayKey(live);
+    renderAdminBookings();
+    const told=autoMsgsOn() && notifCfg().moved!==false && live.status==='Confirmed';
+    toast(`${live.clientName}'s booking moved to ${live.date} at ${live.time}.${told?' The client is told the new time automatically.':''}`);
+    if(!told && live.status==='Confirmed') offerWhatsApp(live,'moved');
+    if(told) setTimeout(()=>pullNotifications(true).then(ok=>{ if(ok&&adminTab==='bookings') renderAdminBookings(); }),2500);
   });
+  ['rs_date','rs_time'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{
+    forceArm=false; const sb=document.getElementById('rs_save'); sb.textContent='Save new time'; sb.classList.remove('btn-danger'); }));
 }
 
 /* ---- Refunds (visits and shop orders) ----

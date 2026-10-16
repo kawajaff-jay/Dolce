@@ -193,4 +193,5 @@ export async function handle(req: Request): Promise<Response> {
   }
 }
 
-if (import.meta.main) Deno.serve(handle);
+// Always serve on Supabase; tests import this file with DOLCE_TEST=1 instead.
+if (!Deno.env.get("DOLCE_TEST")) Deno.serve(handle);
