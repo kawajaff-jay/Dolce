@@ -179,13 +179,13 @@ It starts switched off. The owner chooses the channel (automatic WhatsApp, notif
 
 When staff move an appointment, the server now checks the new time first. It looks at the treatment's full length, the brand's opening hours and days off, and any other appointment it would overlap. If something clashes, nothing is changed and staff see the reason. They can still choose "Move anyway", and that choice is logged. Every move records who made it and the old and new times. The server does not yet know which staff member or room a treatment needs. Each brand counts as one diary until that list exists.
 
-## Core group classes: a weekly timetable
+## Core group classes: Mindbody stays the timetable
 
-Core's Reformer, Mat and Yoga group classes now have their own weekly timetable, kept separate from one-to-one appointments. For each class, the owner enters the type, day, start time, length, instructor, number of places and the dates it runs from and to. A day can have any number of classes. From this, the database makes the dated classes for the coming weeks, in Erbil time.
+CORE already runs its Reformer, Mat and Yoga classes in Mindbody, so Mindbody stays the one place the timetable is kept. Dolce+ only shows it. A small server program reads CORE's classes through Mindbody's official API, using a key that stays on the server. It keeps a copy for 15 minutes, so clients opening the app don't each cost a paid Mindbody call. On Core's page, clients see each class's date, time, type, instructor and places left, can move week by week, and can filter by Reformer, Mat or Yoga. "Book" opens CORE's own Mindbody booking page, and the place is confirmed by Mindbody, not by Dolce+. Opening that page is never recorded as a booking.
 
-Staff can change or cancel a single class without touching the timetable. They can also apply a timetable change to future classes from a chosen date. A class that already has bookings is never moved, made smaller or removed by a timetable change. It is flagged for staff to sort out with the clients. Cancelling a class with bookings needs a second tap. The clients' places are kept, marked "class cancelled", and the clients are told.
+Until Mindbody approves the API connection, the app shows only a clearly labelled button to CORE's Mindbody schedule. It never shows a made-up timetable or sample availability. Dolce+'s own group-class timetable (built earlier) is switched off while Mindbody is used, so staff never update two schedules. Nothing in it was deleted.
 
-Clients see the week's classes on Core's page with the places left, and book a place in one tap after logging in. The database enforces the capacity, including when several people press "Book" for the last place at the same moment. It also stops the same client booking one class twice. The timetable stays hidden from clients until the owner has entered the real classes and switched it on.
+Booking inside Dolce+ later would need more than reading the schedule: linking each Dolce+ account to the client's Mindbody record, checking their class pass or membership, booking and cancelling through Mindbody (which also applies its own capacity, waitlist and late-cancel rules), and keeping the two in step.
 
 ## A phased build, so you are never blocked waiting for "the whole thing"
 
