@@ -185,6 +185,8 @@ CORE already runs its Reformer, Mat and Yoga classes in Mindbody, so Mindbody st
 
 Until Mindbody approves the API connection, the app shows only a clearly labelled button to CORE's Mindbody schedule. It never shows a made-up timetable or sample availability. Dolce+'s own group-class timetable (built earlier) is switched off while Mindbody is used, so staff never update two schedules. Nothing in it was deleted.
 
+CORE's group-class services in the Dolce+ price list (for example "Reformer Pilates – 1 session (Group Class)") are also sent to Mindbody, by the owner's decision of 18 Oct. They stay visible with their price, but their Book button opens CORE's Mindbody schedule instead of a Dolce+ booking, so the same class can never be booked in two places. The owner chooses which services count as group classes in Admin → Classes. Private sessions stay bookable in Dolce+, and bookings already made are kept as they are.
+
 Booking inside Dolce+ later would need more than reading the schedule: linking each Dolce+ account to the client's Mindbody record, checking their class pass or membership, booking and cancelling through Mindbody (which also applies its own capacity, waitlist and late-cancel rules), and keeping the two in step.
 
 ## A phased build, so you are never blocked waiting for "the whole thing"

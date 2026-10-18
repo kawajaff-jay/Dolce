@@ -4028,13 +4028,14 @@ function renderDetail(){
     <div class="section-label" style="margin-top:0;">${t('whatsInc')}</div>
     ${pts}
     ${galleryHtml}
-    <button class="primary-btn" id="toBooking">${t('requestBooking')}</button>
+    ${mbGroupSvc(currentBrand,s)?mbGroupBookHtml():`<button class="primary-btn" id="toBooking">${t('requestBooking')}</button>`}
   `;
 }
 
 function renderBooking(){
   const b=BRANDS[currentBrand];
   const s=svcList(currentBrand).find(x=>x.id===currentService);
+  if(mbGroupSvc(currentBrand,s)) return `<div class="detail-title">${esc(s.n)}</div>${mbGroupBookHtml()}`;   // booked on Mindbody only
   const dates=ensureBookingSelection();
   const dateStr=fmtDate(selectedDateObj);
   const slots=availableTimesForDate(currentBrand,dateStr,selectedDateObj);
@@ -7084,6 +7085,7 @@ function bindScreen(){
   const hoursToggle=document.getElementById('hoursToggle');
   if(hoursToggle) hoursToggle.addEventListener('click',()=>{ hoursOpen=!hoursOpen; navDirection='none'; render(); });
   if(currentScreen==='services' && currentBrand==='core'){ if(mindbodyOn()) bindMindbody(screenEl); else bindTimetable(screenEl); }
+  if((currentScreen==='detail'||currentScreen==='booking') && currentBrand==='core' && mindbodyOn()) bindMindbody(screenEl);
   if(currentScreen==='bookings') bindMyClasses(screenEl);
   /* Picking a date or a time must not redraw the screen as if it had just
      been opened: that replayed the slide-in animation and jumped back to the
@@ -11555,7 +11557,17 @@ function bindAdminClasses(el){
    classes, no sample availability. */
 const MB_TYPES={reformer:'clsReformer',mat:'clsMat',yoga:'clsYoga',other:'clsOther'};
 let MBS={rows:[],status:'',fetchedAt:'',msg:'',at:0,loading:false,week:0,type:'all'};
-function mbCfg(){ const m=STORE.mindbody||{}; return {enabled:m.enabled===true,site_id:String(m.site_id||'').trim(),booking_url:String(m.booking_url||'').trim()}; }
+function mbCfg(){ const m=STORE.mindbody||{}; return {enabled:m.enabled===true,site_id:String(m.site_id||'').trim(),booking_url:String(m.booking_url||'').trim(),group_ids:Array.isArray(m.group_ids)?m.group_ids.map(String):null}; }
+// CORE group classes the owner has sent to Mindbody: shown with their price,
+// but "Book" opens CORE's Mindbody schedule instead of a Dolce+ booking, so a
+// class can never be booked in two places. Private sessions are unaffected.
+function mbGroupGuess(s){ return /group|class|حصة|جماعي|وانە|گروپ/i.test(String(s&&s.n||'')); }
+function mbGroupIds(){ const c=mbCfg(); return c.group_ids!==null?c.group_ids:(svcList('core')||[]).filter(mbGroupGuess).map(x=>String(x.id)); }
+function mbGroupSvc(brand,s){ return brand==='core' && !!s && mindbodyOn() && !!mbBookingUrl() && mbGroupIds().includes(String(s.id)); }
+function mbGroupBookHtml(){
+  return `<a class="primary-btn mb-ext" style="display:block;text-align:center;text-decoration:none;" href="${attr(mbBookingUrl())}" target="_blank" rel="noopener" data-mb-go>${t('mbBook')} ↗</a>
+    <div class="mb-note" style="margin-top:10px;">${t('mbBookNote')}</div>`;
+}
 function mindbodyOn(){ return mbCfg().enabled; }
 // CORE's Mindbody booking page (optionally opened on a given date).
 function mbBookingUrl(dateIso){
@@ -11646,6 +11658,9 @@ function mbAdminHtml(){
     <label class="nt-check"><input type="checkbox" id="mb_on" ${c.enabled?'checked':''}> Show CORE's Mindbody classes in the client app (booking stays on Mindbody)</label>
     <div class="nt-tpl"><span>Site ID</span><input id="mb_site" type="text" inputmode="numeric" value="${esc(c.site_id)}" placeholder="CORE's Mindbody Site ID"></div>
     <div class="nt-tpl"><span>Booking page</span><input id="mb_url" type="url" value="${esc(c.booking_url)}" placeholder="https://… (optional — CORE's own Mindbody booking link)"></div>
+    ${(()=>{ const ids=mbGroupIds(), list=svcList('core')||[]; return list.length?`<div style="margin:10px 0 4px;"><b>Group classes booked on Mindbody</b></div>
+      <div class="rem-meta" style="margin-bottom:6px;">Ticked services stay visible with their price, but "Book" opens CORE's Mindbody schedule — they can no longer be booked inside Dolce+. Leave private sessions unticked. Existing bookings are not changed.${c.group_ids===null?' <b>Suggested from the names — check and press Save.</b>':''}</div>
+      ${list.map(x=>`<label class="nt-check"><input type="checkbox" class="mb-grp" value="${esc(String(x.id))}" ${ids.includes(String(x.id))?'checked':''}> ${esc(x.n)}${x.dur?` <span class="rem-meta">(${esc(x.dur)})</span>`:''}</label>`).join('')}`:''; })()}
     <div class="rem-meta" style="margin:6px 0 10px;">The Site ID and booking page are public. The Mindbody API key is a server secret and is never typed here. Without a booking page, clients are sent to Mindbody's schedule for this Site ID.</div>
     <button class="btn btn-primary btn-sm" id="mb_save">Save</button>`:''}
   </div>`;
@@ -11655,7 +11670,8 @@ function bindMbAdmin(){
   if(test) test.addEventListener('click',async()=>{ test.disabled=true; await loadMindbody(true); renderAdminClasses(); });
   const save=document.getElementById('mb_save');
   if(save) save.addEventListener('click',async()=>{
-    const v={enabled:document.getElementById('mb_on').checked,site_id:document.getElementById('mb_site').value.trim(),booking_url:document.getElementById('mb_url').value.trim()};
+    const v={enabled:document.getElementById('mb_on').checked,site_id:document.getElementById('mb_site').value.trim(),booking_url:document.getElementById('mb_url').value.trim(),
+      group_ids:[...document.querySelectorAll('.mb-grp')].filter(b=>b.checked).map(b=>b.value)};
     if(v.site_id && !/^-?\d{1,9}$/.test(v.site_id)){ toast('The Site ID is a number (from Mindbody).'); return; }
     if(v.booking_url && !/^https:\/\//i.test(v.booking_url)){ toast('The booking page must start with https://'); return; }
     if(v.enabled && !v.site_id && !v.booking_url){ toast('Add the Site ID or the booking page first.'); return; }
