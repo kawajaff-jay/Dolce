@@ -11637,7 +11637,7 @@ function mbAdminHtml(){
     :st==='not_configured'?'On, but the Mindbody API is not connected yet — clients see the booking link only.'
     :st==='not_deployed'?'On, but the server function "mindbody-classes" is not deployed yet — clients see the booking link only.'
     :st==='error'?`On, but Mindbody refused: ${esc(MBS.msg)} — clients see the booking link only.`
-    :st==='offline'?'Could not reach the server — check the connection.':'Checking…';
+    :st==='offline'?(c.enabled?'On, but the Mindbody server function could not be reached (normal until it is set up, or check the internet) — clients see the booking link only.':'Could not reach the server — check the connection.'):'Checking…';
   return `<div class="admin-form cl-vis" style="display:block;">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;"><b>CORE classes from Mindbody</b>
       <button class="btn btn-ghost btn-sm" id="mb_test">↻ Check connection</button></div>
