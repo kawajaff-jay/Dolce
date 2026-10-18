@@ -11321,7 +11321,7 @@ function clErr(m){
 function renderAdminClasses(){
   const el=document.getElementById('adminClasses'); if(!el) return;
   if(!supa){ el.innerHTML=`<h2 class="adm-page-title">Classes</h2><div class="admin-empty">Classes need the internet connection to the database.</div>`; return; }
-  if((mindbodyOn()||(STORE.mindbody&&STORE.mindbody.site_id)) && !MBS.at && !MBS.loading) loadMindbody(true).then(()=>{ if(adminTab==='classes') renderAdminClasses(); });
+  if(mindbodyOn() && !MBS.at && !MBS.loading) loadMindbody(true).then(ch=>{ if(ch && adminTab==='classes') renderAdminClasses(); });   // only re-draw after a real check (no loop)
   if(mindbodyOn()){
     // CORE's classes live in Mindbody: nothing to keep up to date here.
     const wkEnd=new Date(); wkEnd.setDate(wkEnd.getDate()+6);
