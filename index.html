@@ -783,8 +783,8 @@
   .pv-track{position:absolute;inset:0;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch;transition:transform .15s ease;}
   .pv-track::-webkit-scrollbar{display:none;}
   .pv-slide{flex:0 0 100%;height:100%;scroll-snap-align:center;scroll-snap-stop:always;display:flex;align-items:center;justify-content:center;
-    padding:calc(56px + env(safe-area-inset-top,0px)) 0 calc(56px + env(safe-area-inset-bottom,0px));box-sizing:border-box;}
-  .pv-slide img{max-width:100%;max-height:100%;object-fit:contain;display:block;user-select:none;-webkit-user-select:none;}
+    padding:calc(60px + env(safe-area-inset-top,0px)) calc(8px + env(safe-area-inset-right,0px)) calc(44px + env(safe-area-inset-bottom,0px)) calc(8px + env(safe-area-inset-left,0px));box-sizing:border-box;}
+  .pv-slide img{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain;display:block;user-select:none;-webkit-user-select:none;}
   .pv-close{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:14px;z-index:2;width:40px;height:40px;border-radius:50%;border:0;
     background:rgba(255,255,255,.14);color:#fff;font-size:18px;line-height:40px;text-align:center;cursor:pointer;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);}
   html[dir="rtl"] .pv-close{right:auto;left:14px;}
@@ -2181,16 +2181,23 @@ function descLines(raw,name){
   // list: at least two "* " marks, and every piece is short and contains words
   // (so "5 * 3 * 2" or "*Terms apply" stay exactly as typed).
   txt=txt.split('\n').map(line=>{
-    if((line.match(/(^|\s)[*•]\s+(?=\S)/g)||[]).length<2) return line;
-    const parts=line.split(/\s+[*•]\s+(?=\S)/);
+    if((line.match(/(^|\s)[*•·]\s+(?=\S)/g)||[]).length<2) return line;
+    const parts=line.split(/\s+[*•·]\s+(?=\S)/);
     let head=parts.shift().trim();
     const items=parts.map(x=>x.trim());
-    if(/^[*•]\s+/.test(head)){ items.unshift(head.replace(/^[*•]\s+/,'')); head=''; }
+    if(/^[*•·]\s+/.test(head)){ items.unshift(head.replace(/^[*•·]\s+/,'')); head=''; }
+    // "Benefits: Glow · Hydration · Firmness" — the label and the first item share a line.
+    let lead='';
+    if(head && !/:$/.test(head)){
+      const m=head.match(/^(?:(.*?[.!?])\s+)?([^.!?:\n]{1,48}:)\s*(\S.{0,79})$/);
+      if(m && /\p{L}/u.test(m[3])){ lead=(m[1]?m[1]+'\n':'')+m[2]; items.unshift(m[3].trim()); head=''; }
+    }
     if(items.length<2 || !items.every(x=>x.length<=80 && /\p{L}/u.test(x))) return line;
     // The text before the first mark must introduce the list ("Best For:") or be empty,
     // so a sentence like "Buy 2 * 3 sessions * 10% off." is left alone.
     if(head && !/:$/.test(head)) return line;
     const out=[];
+    if(lead) out.push(...lead.split('\n'));
     const lab=head.match(/^(.*?[.!?])\s+([^.!?:\n]{1,48}:)$/);
     if(lab){ out.push(lab[1],lab[2]); }
     else if(head) out.push(head);
@@ -2996,7 +3003,7 @@ function updateSyncBadge(){
   if(typeof document==='undefined'||!document.body) return;
   let el=document.getElementById('cloudSyncPill');
   const waiting=outbox.length, failed=syncFailures.length;
-  if(!waiting && !failed){ if(el) el.style.display='none'; return; }
+  if(!waiting && !failed){ if(el && el.style.display!=='none'){ el.style.display='none'; try{ if(typeof fitBottomClearance==='function'&&screenEl) fitBottomClearance(); }catch(e){} } return; }
   if(!el){
     el=document.createElement('div');
     el.id='cloudSyncPill';
@@ -3025,6 +3032,7 @@ function updateSyncBadge(){
     el.title='Click to try sending now';
     el.textContent=`☁︎ ${waiting} change${waiting===1?'':'s'} waiting to sync`;
   }
+  try{ if(typeof fitBottomClearance==='function' && typeof screenEl!=='undefined' && screenEl) fitBottomClearance(); }catch(e){}
 }
 
 /* ---- Reading back from the cloud ----------------------------------------- */
@@ -4100,13 +4108,26 @@ function serviceShots(s){
   const main=s.image||(extra.length?'':STORE.brandImages[currentBrand])||'';
   return [main,...extra].filter(Boolean);
 }
+/* The service photo frame takes the photo's own shape (portrait stays portrait),
+   centred, never taller than SVC_MAX_H, so nothing is cropped or stretched and
+   there are no wide empty side panels. Only extreme shapes are limited (and then
+   shown whole on cream). A framing chosen by hand in Admin keeps the 4:3 frame. */
+const SVC_MAX_H='min(58vh, 540px)';
+function svcAdaptive(url){ return !!url && miDims.has(url) && !(mediaMeta(url)||{}).fit; }
+function svcFrameStyle(r){
+  const k=Math.max(0.56,Math.min(2.2,r));
+  return `aspect-ratio:${k.toFixed(4)};width:min(100%, calc(${SVC_MAX_H} * ${k.toFixed(4)}));margin-left:auto;margin-right:auto`;
+}
 function serviceGalleryHtml(s){
   const shots=serviceShots(s);
   if(shots.length<=1){
-    return mediaHtml(shots[0]||'','service',{cls:'detail-hero'+(shots.length?' pv-open':''),fallback:brandFallback(currentBrand),eager:true,alt:s.n});
+    const u=shots[0]||'';
+    return mediaHtml(u,'service',{cls:'detail-hero svc-adapt'+(shots.length?' pv-open':''),fallback:brandFallback(currentBrand),eager:true,alt:s.n,
+      style:svcAdaptive(u)?svcFrameStyle(miDims.get(u)):''});
   }
-  return `<div class="sd-gallery">
-      <div class="pd-track" id="sdTrack" data-dots="sdDots">${shots.map((url,i)=>mediaHtml(url,'service',{cls:'sd-shot',eager:i===0,alt:s.n})).join('')}</div>
+  const r0=svcAdaptive(shots[0])?Math.max(0.56,Math.min(2.2,miDims.get(shots[0]))):null;
+  return `<div class="sd-gallery svc-adapt" style="${r0?svcFrameStyle(r0):''}">
+      <div class="pd-track" id="sdTrack" data-dots="sdDots">${shots.map((url,i)=>mediaHtml(url,'service',{cls:'sd-shot',eager:i===0,alt:s.n,ratio:r0||undefined})).join('')}</div>
       <div class="pd-dots sd-dots" id="sdDots">${shots.map((_,i)=>`<i class="${i===0?'on':''}"></i>`).join('')}</div>
       <span class="sd-count" id="sdCount">1 / ${shots.length}</span>
     </div>`;
@@ -4114,7 +4135,11 @@ function serviceGalleryHtml(s){
 function renderDetail(){
   const b=BRANDS[currentBrand];
   const s=svcList(currentBrand).find(x=>x.id===currentService);
-  const pts=(s.points||[]).map(p=>`<div class="detail-points"><span class="chk">✓</span><span>${p}</span></div>`).join('');
+  const pts=(s.points||[]).map(p=>{
+    const rich=descHtml(p,'');
+    if(/<ul/.test(rich)) return `<div class="detail-points-rich desc-rich">${rich}</div>`;   // "Best For: A · B" → label + bullets
+    return `<div class="detail-points"><span class="chk">✓</span><span dir="auto">${descInline(p)}</span></div>`;
+  }).join('');
   const gallery=STORE.media.filter(m=>m.visibility==='public'&&m.brand===currentBrand&&(m.serviceId===currentService||m.serviceId===''));
   const galleryHtml=gallery.length?`
     <div class="section-label">${t('beforeAfter')}</div>
@@ -5176,6 +5201,9 @@ function openPhotoViewer(urls,start,title){
   el.addEventListener('click',e=>{ if(e.target.classList.contains('pv-slide')) closePhotoViewer(); });
   // Double-tap zoom: 2.5×, centred on where you tapped; drag to look around.
   const Z={img:null,s:1,tx:0,ty:0,w:0,h:0};
+  // size of the picture itself inside its (screen-filling) box
+  const shown=(img)=>{ const bw=img.offsetWidth, bh=img.offsetHeight, r=(img.naturalWidth||1)/(img.naturalHeight||1);
+    let w=bw, h=bw/r; if(h>bh){ h=bh; w=bh*r; } return {w,h}; };
   const clampZ=()=>{
     const mx=Math.max(0,(Z.w*Z.s-innerWidth)/2), my=Math.max(0,(Z.h*Z.s-innerHeight)/2);
     Z.tx=Math.max(-mx,Math.min(mx,Z.tx)); Z.ty=Math.max(-my,Math.min(my,Z.ty));
@@ -5183,8 +5211,8 @@ function openPhotoViewer(urls,start,title){
   };
   const zoomOut=()=>{ if(!Z.img) return; Z.img.style.transform=''; Z.img=null; Z.s=1; el.classList.remove('zoomed'); track.style.overflowX=''; };
   const zoomIn=(img,cx,cy)=>{
-    const r=img.getBoundingClientRect();
-    Z.img=img; Z.s=2.5; Z.w=r.width; Z.h=r.height;
+    const r=img.getBoundingClientRect(), d=shown(img);
+    Z.img=img; Z.s=2.5; Z.w=d.w; Z.h=d.h;
     Z.tx=(r.left+r.width/2-cx)*(Z.s-1); Z.ty=(r.top+r.height/2-cy)*(Z.s-1);
     el.classList.add('zoomed'); track.style.overflowX='hidden'; clampZ();
   };
@@ -5196,13 +5224,41 @@ function openPhotoViewer(urls,start,title){
       lastTap=0; if(Z.img) zoomOut(); else zoomIn(img,e.clientX,e.clientY);
     } else { lastTap=now; lastX=e.clientX; lastY=e.clientY; }
   });
+  // Pinch to zoom (1×–5×), keeping the spot between the fingers in place.
+  let pinch=null;
+  const curImg=()=>{ const sl=track.children[idx()]; return sl&&sl.querySelector('img'); };
+  const dist=t=>Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);
+  const mid=t=>({x:(t[0].clientX+t[1].clientX)/2,y:(t[0].clientY+t[1].clientY)/2});
+  el.addEventListener('touchstart',e=>{
+    if(e.touches.length!==2) return;
+    const img=Z.img||curImg(); if(!img) return;
+    if(!Z.img){ const d=shown(img); Z.img=img; Z.s=1; Z.tx=0; Z.ty=0; Z.w=d.w; Z.h=d.h; el.classList.add('zoomed'); track.style.overflowX='hidden'; }
+    const r=img.getBoundingClientRect(), c={x:r.left+r.width/2-Z.tx, y:r.top+r.height/2-Z.ty};   // centre without the current move
+    const m=mid(e.touches);
+    pinch={d0:dist(e.touches),s0:Z.s,c,qx:(m.x-c.x-Z.tx)/Z.s,qy:(m.y-c.y-Z.ty)/Z.s};
+    Z.img.style.transition='none'; pan=null;
+  },{passive:true});
+  el.addEventListener('touchmove',e=>{
+    if(!pinch||e.touches.length!==2) return;
+    e.preventDefault();
+    const m=mid(e.touches);
+    Z.s=Math.max(1,Math.min(5,pinch.s0*dist(e.touches)/pinch.d0));
+    Z.tx=m.x-pinch.c.x-Z.s*pinch.qx; Z.ty=m.y-pinch.c.y-Z.s*pinch.qy;
+    clampZ();
+  },{passive:false});
+  el.addEventListener('touchend',e=>{
+    if(!pinch||e.touches.length>=2) return;
+    pinch=null; if(Z.img) Z.img.style.transition='';
+    if(Z.s<1.05) zoomOut();
+  },{passive:true});
+  el.addEventListener('gesturestart',e=>e.preventDefault());   // iOS: no page zoom underneath
   let pan=null;
-  el.addEventListener('pointerdown',e=>{ if(!Z.img) return; pan={x:e.clientX,y:e.clientY,tx:Z.tx,ty:Z.ty}; Z.img.style.transition='none'; });
-  el.addEventListener('pointermove',e=>{ if(!Z.img||!pan) return; Z.tx=pan.tx+(e.clientX-pan.x); Z.ty=pan.ty+(e.clientY-pan.y); clampZ(); });
+  el.addEventListener('pointerdown',e=>{ if(!Z.img||pinch) return; pan={x:e.clientX,y:e.clientY,tx:Z.tx,ty:Z.ty}; Z.img.style.transition='none'; });
+  el.addEventListener('pointermove',e=>{ if(!Z.img||!pan||pinch) return; Z.tx=pan.tx+(e.clientX-pan.x); Z.ty=pan.ty+(e.clientY-pan.y); clampZ(); });
   ['pointerup','pointercancel'].forEach(ev=>el.addEventListener(ev,()=>{ pan=null; if(Z.img) Z.img.style.transition=''; }));
   // Swipe down to close (only when not zoomed in and the swipe is mostly vertical).
   let sy=null,sx=null,dy=0;
-  el.addEventListener('touchstart',e=>{ if(e.touches.length!==1||Z.img){sy=null;return;} sy=e.touches[0].clientY; sx=e.touches[0].clientX; dy=0; },{passive:true});
+  el.addEventListener('touchstart',e=>{ if(e.touches.length!==1||Z.img||pinch){sy=null;return;} sy=e.touches[0].clientY; sx=e.touches[0].clientX; dy=0; },{passive:true});
   el.addEventListener('touchmove',e=>{ if(sy===null||e.touches.length!==1) return;
     const ddy=e.touches[0].clientY-sy, ddx=e.touches[0].clientX-sx;
     if(Math.abs(ddy)>Math.abs(ddx)*1.4 && ddy>0){ dy=ddy; track.style.transform=`translateY(${ddy}px)`; el.style.transition='none'; el.style.opacity=String(Math.max(.35,1-ddy/500)); }
@@ -5375,6 +5431,13 @@ function fitBottomClearance(){
     const t=sr.top+el.offsetTop;
     if(el.offsetHeight && t>br.top+br.height*0.4 && t<top) top=t;
   });
+  // the "changes waiting to sync" notice floats just above the lowest bar, and content ends above it too
+  const pill=document.getElementById('cloudSyncPill');
+  if(pill && pill.style.display!=='none' && (document.body.classList.contains('native-app') || (window.matchMedia&&matchMedia('(max-width: 600px)').matches))){
+    const gap=Math.max(12,(window.innerHeight||0)-top+10);
+    pill.style.setProperty('bottom',gap+'px','important');
+    const pr=pill.getBoundingClientRect(); if(pr.height && pr.top<top) top=pr.top;
+  }
   const clear=Math.ceil((br.bottom-top)+16);
   if(clear>0) screenEl.style.setProperty('--content-bottom',clear+'px');
 }
@@ -5650,6 +5713,8 @@ function bodyHtml(){
 
 const focalCache=new Map();
 const miDims=new Map();   // url → width/height, learnt when a picture first loads
+try{ const saved=JSON.parse(localStorage.getItem('dolce_mi_dims')||'{}'); Object.keys(saved).slice(-300).forEach(k=>miDims.set(k,+saved[k])); }catch(e){}
+function saveMiDims(){ try{ const o={}; [...miDims.entries()].slice(-300).forEach(([k,v])=>{ if(!/^data:/.test(k)) o[k]=+v.toFixed(4); }); localStorage.setItem('dolce_mi_dims',JSON.stringify(o)); }catch(e){} }
 const focalPending=new Map();
 
 function measureFocus(img){
@@ -6138,7 +6203,8 @@ function mediaView(url,preset,metaOverride){
   let wholeBg='';
   // Show the whole picture when filling the frame would cut away too much of it
   // (only when nobody chose a framing for this photo in Admin).
-  if(!m.fit && fit==='cover' && P.wholeIfCropOver && P.ratio && url && miDims.has(url)){
+  if(preset==='service' && !m.fit && url && miDims.has(url)){ fit='contain'; wholeBg=P.wholeBg||''; }
+  else if(!m.fit && fit==='cover' && P.wholeIfCropOver && P.ratio && url && miDims.has(url)){
     const r=miDims.get(url), crop=1-Math.min(r/P.ratio,P.ratio/r);
     if(crop>P.wholeIfCropOver){ fit='contain'; wholeBg=P.wholeBg||''; }
   }
@@ -6271,8 +6337,15 @@ function miLoaded(img){
   try{
     const url=img.getAttribute('src'), box=img.parentNode;
     if(url && img.naturalWidth && img.naturalHeight && !miDims.has(url)){
-      miDims.set(url,img.naturalWidth/img.naturalHeight);
+      miDims.set(url,img.naturalWidth/img.naturalHeight); saveMiDims();
       const preset=box&&box.dataset.preset;
+      // service photo: give the frame the photo's own shape
+      if(preset==='service' && svcAdaptive(url)){
+        const r=Math.max(0.56,Math.min(2.2,miDims.get(url)));
+        if(box.classList.contains('svc-adapt')) box.setAttribute('style',svcFrameStyle(r)+';--mi-r:20px');
+        const g=box.closest('.sd-gallery.svc-adapt');
+        if(g && box===g.querySelector('.sd-shot')){ g.setAttribute('style',svcFrameStyle(r)); g.querySelectorAll('.sd-shot').forEach(x=>x.style.aspectRatio=String(r)); }
+      }
       if(preset && (MEDIA_PRESETS[preset]||{}).wholeIfCropOver){
         const v=mediaView(url,preset);
         img.style.cssText=v.css;
