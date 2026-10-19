@@ -1022,6 +1022,16 @@
   .detail-meta .sep{width:1px;height:13px;background:var(--line);flex:none;}
   .detail-meta b{color:var(--ink);}
   .detail-desc{font-size:14.5px;color:var(--ink-soft);margin-bottom:14px;}
+  .desc-rich{line-height:1.6;overflow-wrap:anywhere;}
+  .desc-rich p{margin:0 0 10px;}
+  .desc-rich .desc-h{font-weight:600;color:var(--ink);margin:0 0 6px;}
+  .desc-rich .desc-label{font-weight:600;color:var(--ink);margin:12px 0 4px;}
+  .desc-rich ul{margin:0 0 10px;padding-inline-start:20px;}
+  .desc-rich li{margin:0 0 4px;padding-inline-start:2px;}
+  .desc-rich li::marker{color:var(--gold);}
+  .desc-rich > :last-child{margin-bottom:0;}
+  .desc-pv-l{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:12px 0 6px;}
+  .desc-pv{background:var(--cream);border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:12px 14px;margin:0;}
   .detail-points{font-size:14px;color:var(--ink-soft);margin:4px 0;display:flex;gap:8px;align-items:flex-start;}
   .detail-points .chk{color:var(--gold-dark);flex:none;font-size:13px;line-height:1.5;}
   .primary-btn{width:100%;background:var(--ink);color:#fff;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;margin-top:16px;}
@@ -2145,6 +2155,79 @@ function esc(v){
     .replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;')
     .replace(/'/g,'&#39;');
+}
+
+
+/* ---------- Service descriptions: plain text in, tidy layout out ----------
+   Descriptions are saved exactly as typed (plain text, nothing changed in the
+   database). Only the display turns them into paragraphs, labels and bullets:
+     * a line starting with "* ", "- " or "• " is a bullet
+     * a short line ending with ":" (e.g. "Best For:") is a label
+     * "## Title" is a heading, **words** are bold
+     * a blank line starts a new paragraph
+   Older descriptions that were pasted as one long line ("… Best For: * A * B")
+   are split the same way. Everything is escaped first, so no HTML typed into
+   a description can ever run. The wording itself is never changed. */
+function descLines(raw,name){
+  let txt=String(raw==null?'':raw).replace(/\r\n?/g,'\n').trim();
+  if(!txt) return [];
+  // One-line "… Label: * item * item" → separate lines.
+  txt=txt.split('\n').map(line=>{
+    const marks=(line.match(/(^|\s)[*•]\s+(?=\S)/g)||[]).length;
+    if(marks<2) return line;
+    let parts=line.split(/\s+[*•]\s+(?=\S)/);
+    let head=parts.shift().trim();
+    const out=[];
+    if(/^[*•]\s+/.test(head)){ out.push(head); head=''; }
+    const lab=head.match(/^(.*?[.!?])\s+([^.!?:\n]{1,48}:)\s*$/);
+    if(lab){ out.push(lab[1]); out.push(lab[2]); }
+    else if(head) out.push(head);
+    parts.forEach(x=>out.push('* '+x.trim()));
+    return out.join('\n');
+  }).join('\n');
+  let lines=txt.split('\n');
+  // A pasted title glued to the first sentence ("Royal Flush IV Therapy Drip A vitamin …"):
+  // only split when every leading word is a word of the service's own name.
+  if(name && lines.length && !/^[*•#\-]/.test(lines[0])){
+    const nameWords=new Set(String(name).toLowerCase().match(/[\p{L}\p{N}]+/gu)||[]);
+    const words=lines[0].split(/\s+/); let k=0;
+    while(k<words.length && nameWords.has((words[k].toLowerCase().match(/[\p{L}\p{N}]+/u)||[''])[0])) k++;
+    if(k>=2 && k<words.length && k>=Math.ceil(nameWords.size*0.6) && !/[.!?:]$/.test(words[k-1])){
+      lines.splice(0,1,'## '+words.slice(0,k).join(' '),words.slice(k).join(' '));
+    }
+  }
+  return lines;
+}
+function descInline(t){ return esc(t).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>'); }
+function descHtml(raw,name){
+  const lines=descLines(raw,name); if(!lines.length) return '';
+  let html='', para=[], list=[];
+  const flushP=()=>{ if(para.length){ html+=`<p dir="auto">${para.map(descInline).join('<br>')}</p>`; para=[]; } };
+  const flushL=()=>{ if(list.length){ html+=`<ul dir="auto">${list.map(x=>`<li>${descInline(x)}</li>`).join('')}</ul>`; list=[]; } };
+  lines.forEach((ln,i)=>{
+    const l=ln.trim(); let m;
+    if(!l){ flushP(); flushL(); return; }
+    if((m=l.match(/^[*•\-–]\s+(.+)$/))){ flushP(); list.push(m[1]); return; }
+    flushL();
+    if((m=l.match(/^#{1,3}\s+(.+)$/))){ flushP(); html+=`<div class="desc-h" dir="auto">${descInline(m[1])}</div>`; return; }
+    if(l.length<=50 && /:$/.test(l) && !/^https?:/i.test(l)){ flushP(); html+=`<div class="desc-label" dir="auto">${descInline(l)}</div>`; return; }
+    // A short first line with no full stop, followed by more text, reads as a title.
+    if(i===0 && lines.length>1 && l.length<=60 && !/[.!?:,;]$/.test(l) && lines[1].trim() && !/^[*•\-–]\s/.test(lines[1].trim())){ html+=`<div class="desc-h" dir="auto">${descInline(l)}</div>`; return; }
+    para.push(l);
+  });
+  flushP(); flushL();
+  return html;
+}
+// Durations typed as plain numbers are minutes: "45-60" → "45–60 min", "50" → "50 min".
+// Anything with words already ("1 hour", "45 min") is shown exactly as typed.
+function fmtDur(d,english){
+  const v=String(d==null?'':d).trim();
+  if(!v) return '';
+  if(/^\d+(\s*[-–—]\s*\d+)?$/.test(v)){
+    const n=v.replace(/\s*[-–—]\s*/,'–');
+    return english?`${n} min`:t('minutesShort').replace('{n}','\u2066'+n+'\u2069');   // keep "45–60" in order inside Kurdish/Arabic
+  }
+  return v;
 }
 
 /* ---------------- Data ---------------- */
@@ -3951,7 +4034,7 @@ function renderServices(){
   const list=svcList(currentBrand).filter(s=>currentCat==='All'||s.cat===currentCat).map(s=>`
     <div class="svc-row" data-svc="${s.id}">
       ${mediaHtml(s.image||STORE.brandImages[currentBrand]||'','thumbnail',{cls:'swatch',fallback:brandFallback(currentBrand),alt:s.n})}
-      <div class="info"><div class="n">${esc(s.n)}</div><div class="m">${esc(s.dur)} · ${esc(s.cat)}</div></div>
+      <div class="info"><div class="n">${esc(s.n)}</div><div class="m">${esc(fmtDur(s.dur))} · ${esc(s.cat)}</div></div>
       <div class="price">${priceHtml(s)}</div><div class="chev">›</div>
     </div>`).join('');
   // An empty brand (or an empty category) should say so, rather than looking
@@ -4023,10 +4106,10 @@ function renderDetail(){
   return `
     ${serviceGalleryHtml(s)}
     <div class="detail-title">${esc(s.n)}</div>
-    <div class="detail-meta"><b>${esc(s.dur)}</b><span class="sep"></span><b>${priceHtml(s)}</b></div>
-    <div class="detail-desc">${esc(s.desc)}</div>
-    <div class="section-label" style="margin-top:0;">${t('whatsInc')}</div>
-    ${pts}
+    <div class="detail-meta"><b>${esc(fmtDur(s.dur))}</b><span class="sep"></span><b>${priceHtml(s)}</b></div>
+    <div class="detail-desc desc-rich">${descHtml(s.desc,s.n)}</div>
+    ${pts?`<div class="section-label" style="margin-top:0;">${t('whatsInc')}</div>
+    ${pts}`:''}
     ${galleryHtml}
     ${mbGroupSvc(currentBrand,s)?mbGroupBookHtml():`<button class="primary-btn" id="toBooking">${t('requestBooking')}</button>`}
   `;
@@ -4048,7 +4131,7 @@ function renderBooking(){
   const timeChips=slots.filter(sl=>!sl.past).map(sl=>`
     <button class="time-chip ${sl.time===selectedTime?'active':''} ${sl.taken?'taken':''}" ${sl.taken?'disabled':''} data-time="${sl.time}">${sl.time}${sl.taken?` · ${t('bookedTag')||'Booked'}`:''}</button>`).join('');
   const canBook=!!selectedTime;
-  const waText=encodeURIComponent(`Hi! I'd like to book ${esc(s.n)} at ${b.name} — ${fmtMoney(effectivePrice(s))}, ${esc(s.dur)}. Preferred: ${dateStr}${selectedTime?' at '+selectedTime:''}.`);
+  const waText=encodeURIComponent(`Hi! I'd like to book ${esc(s.n)} at ${b.name} — ${fmtMoney(effectivePrice(s))}, ${esc(fmtDur(s.dur,true))}. Preferred: ${dateStr}${selectedTime?' at '+selectedTime:''}.`);
   const waHref=`https://wa.me/${BRAND_WHATSAPP[currentBrand]}?text=${waText}`;
   return `
     <div class="section-label" style="margin-top:0;">${t('bookingSummary')}</div>
@@ -5332,7 +5415,7 @@ function PreviewBookingCard(bk){
   return `<div class="pv-book">
       <div class="pv-book-top"><span class="lux-eyebrow">${esc(BRANDS[bk.brand].name)}</span><span class="pv-status ${bk.status==='Confirmed'?'ok':''}">${esc(bk.status)}</span></div>
       <div class="pv-book-name">${esc(bk.service)}</div>
-      <div class="pv-book-when">${esc(bk.date)} · ${esc(bk.time)}${bk.dur?` · ${esc(bk.dur)}`:''}</div>
+      <div class="pv-book-when">${esc(bk.date)} · ${esc(bk.time)}${bk.dur?` · ${esc(fmtDur(bk.dur))}`:''}</div>
     </div>`;
 }
 function previewBanner(){
@@ -7202,7 +7285,7 @@ function bindScreen(){
     }
     const note=document.getElementById('waNote');
     note.style.display='block';
-    note.innerHTML=`<b>${t('waSent')}</b><br><br>"Hi! I'd like to book <b>${esc(s.n)}</b> at <b>${b.name}</b> — ${fmtMoney(effectivePrice(s))}, ${esc(s.dur)}. Preferred: ${dateStr} at ${selectedTime}."`;
+    note.innerHTML=`<b>${t('waSent')}</b><br><br>"Hi! I'd like to book <b>${esc(s.n)}</b> at <b>${b.name}</b> — ${fmtMoney(effectivePrice(s))}, ${esc(fmtDur(s.dur,true))}. Preferred: ${dateStr} at ${selectedTime}."`;
   });
   bindLux();
   // Galleries (product + service): keep the dots in step with the photo on
@@ -8234,7 +8317,7 @@ function aiFollowUp(norm,I,L,T){
   }
   if(I.has('duration')){
     const C=AI_CHAT_TEXT[L];
-    const lines=shown.filter(x=>x.kind==='svc').map(x=>`• ${x.s.n}${x.s.dur?' — '+x.s.dur:''}`);
+    const lines=shown.filter(x=>x.kind==='svc').map(x=>`• ${x.s.n}${x.s.dur?' — '+fmtDur(x.s.dur):''}`);
     const any=shown.some(x=>x.kind==='svc'&&x.s.dur);
     aiBubble('bot',aiTextHtml(aiSay(L,'duration')+'\n'+lines.join('\n')+(any?'':'\n'+C.noDuration)));
     return true;
@@ -9556,7 +9639,7 @@ function renderAdminServices(){
     <tr>
       <td><span class="swdot" style="${s.image?`background-image:url('${s.image}')`:`background:linear-gradient(140deg,${BRANDS[svcBrandTab].c1},${BRANDS[svcBrandTab].c2})`}"></span>${esc(s.n)}</td>
       <td>${esc(s.cat)}</td>
-      <td>${esc(s.dur)}</td>
+      <td>${esc(fmtDur(s.dur,true))}</td>
       <td>${priceHtml(s)}</td>
       <td><div class="rowbtns">
         <button class="btn btn-ghost btn-sm" data-edit-svc="${esc(String(s.id))}">Edit</button>
@@ -9591,7 +9674,10 @@ function openServiceForm(editId){
       <div class="field"><label>Duration</label><input id="sf_dur" type="text" value="${esc(s.dur)}" placeholder="e.g. 45 min"></div>
       <div class="field"><label>Price ($)</label><input id="sf_price" type="number" min="0" step="1" value="${s.price}"></div>
       <div class="field"><label>Discount % (optional)</label><input id="sf_discount" type="number" min="0" max="99" step="1" placeholder="0 — no discount" value="${s.discount||''}"></div>
-      <div class="field full" style="grid-column:1/-1;"><label>Description</label><textarea id="sf_desc" rows="2" placeholder="Short client-facing description">${esc(s.desc||'')}</textarea></div>
+      <div class="field full" style="grid-column:1/-1;"><label>Description</label><textarea id="sf_desc" rows="6" placeholder="Short client-facing description">${esc(s.desc||'')}</textarea>
+        <div class="rem-meta" style="margin-top:6px;">Start a line with <b>*</b> for a bullet, end a short line with <b>:</b> for a label (e.g. "Best For:"), leave an empty line between paragraphs. Duration: a plain number is shown in minutes (e.g. "45-60" → "45–60 min").</div>
+        <div class="desc-pv-l">Preview — as clients see it</div>
+        <div class="detail-desc desc-rich desc-pv" id="sf_desc_pv">${descHtml(s.desc,s.n)||'<span class="rem-meta">Nothing yet.</span>'}</div></div>
       <div class="field full" style="grid-column:1/-1;"><label>Aftercare note (sent to the client when this treatment is marked Completed)</label><textarea id="sf_aftercare" rows="3" placeholder="Written by your clinician — e.g. what to avoid, what to use, when to come back">${esc(s.aftercare||'')}</textarea>
         <div style="font-size:13px;color:var(--muted);margin-top:6px;">Leave this empty and nothing is sent for this treatment. Keep it to general aftercare your doctor has approved — it goes to every client who has this treatment, so it cannot contain advice meant for one person.</div>
       </div>
@@ -9612,6 +9698,8 @@ function openServiceForm(editId){
   const sfPos=attachPhotoPicker('sf_image','sf_frame',s.image||'','service',['service','thumbnail']);
   const sfShots=attachExtraShots('sf_shots','sf_shotGrid',s.images,'service');
   document.getElementById('sf_cancel').addEventListener('click',()=>{document.getElementById('serviceFormWrap').innerHTML='';});
+  { const pv=()=>{ const el=document.getElementById('sf_desc_pv'); if(el) el.innerHTML=descHtml(document.getElementById('sf_desc').value,document.getElementById('sf_name').value)||'<span class="rem-meta">Nothing yet.</span>'; };
+    document.getElementById('sf_desc').addEventListener('input',pv); document.getElementById('sf_name').addEventListener('input',pv); }
   document.getElementById('sf_save').addEventListener('click',async()=>{
     const n=document.getElementById('sf_name').value.trim();
     const cat=document.getElementById('sf_cat').value;
@@ -11660,7 +11748,7 @@ function mbAdminHtml(){
     <div class="nt-tpl"><span>Booking page</span><input id="mb_url" type="url" value="${esc(c.booking_url)}" placeholder="https://… (optional — CORE's own Mindbody booking link)"></div>
     ${(()=>{ const ids=mbGroupIds(), list=svcList('core')||[]; return list.length?`<div style="margin:10px 0 4px;"><b>Group classes booked on Mindbody</b></div>
       <div class="rem-meta" style="margin-bottom:6px;">Ticked services stay visible with their price, but "Book" opens CORE's Mindbody schedule — they can no longer be booked inside Dolce+. Leave private sessions unticked. Existing bookings are not changed.${c.group_ids===null?' <b>Suggested from the names — check and press Save.</b>':''}</div>
-      ${list.map(x=>`<label class="nt-check"><input type="checkbox" class="mb-grp" value="${esc(String(x.id))}" ${ids.includes(String(x.id))?'checked':''}> ${esc(x.n)}${x.dur?` <span class="rem-meta">(${esc(x.dur)})</span>`:''}</label>`).join('')}`:''; })()}
+      ${list.map(x=>`<label class="nt-check"><input type="checkbox" class="mb-grp" value="${esc(String(x.id))}" ${ids.includes(String(x.id))?'checked':''}> ${esc(x.n)}${x.dur?` <span class="rem-meta">(${esc(fmtDur(x.dur,true))})</span>`:''}</label>`).join('')}`:''; })()}
     <div class="rem-meta" style="margin:6px 0 10px;">The Site ID and booking page are public. The Mindbody API key is a server secret and is never typed here. Without a booking page, clients are sent to Mindbody's schedule for this Site ID.</div>
     <button class="btn btn-primary btn-sm" id="mb_save">Save</button>`:''}
   </div>`;
