@@ -2168,51 +2168,68 @@ function esc(v){
    Older descriptions that were pasted as one long line ("… Best For: * A * B")
    are split the same way. Everything is escaped first, so no HTML typed into
    a description can ever run. The wording itself is never changed. */
+// "Royal Flush IV Therapy Drip": every word starts with a capital (or is a number/initials).
+function descTitleCase(words){ return words.length>0 && words.every(w=>/^[\p{Lu}\p{N}]/u.test(w)); }
+const DESC_BULLET=/^[*•\-–]\s+(\S.*)$/;
 function descLines(raw,name){
   let txt=String(raw==null?'':raw).replace(/\r\n?/g,'\n').trim();
   if(!txt) return [];
-  // One-line "… Label: * item * item" → separate lines.
+  // One-line "… Best For: * item * item" → separate lines. Only when it clearly is a
+  // list: at least two "* " marks, and every piece is short and contains words
+  // (so "5 * 3 * 2" or "*Terms apply" stay exactly as typed).
   txt=txt.split('\n').map(line=>{
-    const marks=(line.match(/(^|\s)[*•]\s+(?=\S)/g)||[]).length;
-    if(marks<2) return line;
-    let parts=line.split(/\s+[*•]\s+(?=\S)/);
+    if((line.match(/(^|\s)[*•]\s+(?=\S)/g)||[]).length<2) return line;
+    const parts=line.split(/\s+[*•]\s+(?=\S)/);
     let head=parts.shift().trim();
+    const items=parts.map(x=>x.trim());
+    if(/^[*•]\s+/.test(head)){ items.unshift(head.replace(/^[*•]\s+/,'')); head=''; }
+    if(items.length<2 || !items.every(x=>x.length<=80 && /\p{L}/u.test(x))) return line;
+    // The text before the first mark must introduce the list ("Best For:") or be empty,
+    // so a sentence like "Buy 2 * 3 sessions * 10% off." is left alone.
+    if(head && !/:$/.test(head)) return line;
     const out=[];
-    if(/^[*•]\s+/.test(head)){ out.push(head); head=''; }
-    const lab=head.match(/^(.*?[.!?])\s+([^.!?:\n]{1,48}:)\s*$/);
-    if(lab){ out.push(lab[1]); out.push(lab[2]); }
+    const lab=head.match(/^(.*?[.!?])\s+([^.!?:\n]{1,48}:)$/);
+    if(lab){ out.push(lab[1],lab[2]); }
     else if(head) out.push(head);
-    parts.forEach(x=>out.push('* '+x.trim()));
+    items.forEach(x=>out.push('* '+x));
     return out.join('\n');
   }).join('\n');
   let lines=txt.split('\n');
-  // A pasted title glued to the first sentence ("Royal Flush IV Therapy Drip A vitamin …"):
-  // only split when every leading word is a word of the service's own name.
-  if(name && lines.length && !/^[*•#\-]/.test(lines[0])){
+  // A pasted title glued to the first sentence ("Royal Flush IV Therapy Drip A vitamin …").
+  // Split only when ALL of these hold, so a normal sentence is never cut:
+  // the leading words are all words of the service's own name, written in Title Case,
+  // they cover most of the name, and the next word starts a new capitalised sentence.
+  if(name && lines.length && !DESC_BULLET.test(lines[0])){
     const nameWords=new Set(String(name).toLowerCase().match(/[\p{L}\p{N}]+/gu)||[]);
     const words=lines[0].split(/\s+/); let k=0;
     while(k<words.length && nameWords.has((words[k].toLowerCase().match(/[\p{L}\p{N}]+/u)||[''])[0])) k++;
-    if(k>=2 && k<words.length && k>=Math.ceil(nameWords.size*0.6) && !/[.!?:]$/.test(words[k-1])){
-      lines.splice(0,1,'## '+words.slice(0,k).join(' '),words.slice(k).join(' '));
+    const run=words.slice(0,k), next=words[k]||'';
+    if(k>=2 && k<words.length-3 && k>=Math.ceil(nameWords.size*0.6) && descTitleCase(run)
+       && !/[.!?:,;]$/.test(run[k-1]) && /^\p{Lu}/u.test(next)){
+      lines.splice(0,1,'## '+run.join(' '),words.slice(k).join(' '));
     }
   }
   return lines;
 }
-function descInline(t){ return esc(t).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>'); }
+function descInline(t){ return esc(String(t).replace(/[\u202A-\u202E\u2066-\u2069]/g,'')).replace(/\*\*(?=\S)(.+?)(?<=\S)\*\*/g,'<strong>$1</strong>'); }
 function descHtml(raw,name){
   const lines=descLines(raw,name); if(!lines.length) return '';
+  // "* " / "- " lines are a list only when there are at least two of them;
+  // a single "* Results may vary" footnote keeps its asterisk.
+  const isList=lines.filter(l=>DESC_BULLET.test(l.trim())).length>=2;
   let html='', para=[], list=[];
   const flushP=()=>{ if(para.length){ html+=`<p dir="auto">${para.map(descInline).join('<br>')}</p>`; para=[]; } };
   const flushL=()=>{ if(list.length){ html+=`<ul dir="auto">${list.map(x=>`<li>${descInline(x)}</li>`).join('')}</ul>`; list=[]; } };
   lines.forEach((ln,i)=>{
     const l=ln.trim(); let m;
     if(!l){ flushP(); flushL(); return; }
-    if((m=l.match(/^[*•\-–]\s+(.+)$/))){ flushP(); list.push(m[1]); return; }
+    if(isList && (m=l.match(DESC_BULLET))){ flushP(); list.push(m[1]); return; }
     flushL();
-    if((m=l.match(/^#{1,3}\s+(.+)$/))){ flushP(); html+=`<div class="desc-h" dir="auto">${descInline(m[1])}</div>`; return; }
-    if(l.length<=50 && /:$/.test(l) && !/^https?:/i.test(l)){ flushP(); html+=`<div class="desc-label" dir="auto">${descInline(l)}</div>`; return; }
-    // A short first line with no full stop, followed by more text, reads as a title.
-    if(i===0 && lines.length>1 && l.length<=60 && !/[.!?:,;]$/.test(l) && lines[1].trim() && !/^[*•\-–]\s/.test(lines[1].trim())){ html+=`<div class="desc-h" dir="auto">${descInline(l)}</div>`; return; }
+    if((m=l.match(/^#{1,3}\s+(\S.*)$/))){ flushP(); html+=`<div class="desc-h" dir="auto">${descInline(m[1])}</div>`; return; }
+    if(l.length<=50 && /\p{L}.*:$/u.test(l) && !/^https?:/i.test(l)){ flushP(); html+=`<div class="desc-label" dir="auto">${descInline(l)}</div>`; return; }
+    // A short Title Case first line on its own line, followed by more text, is the title.
+    if(i===0 && lines.length>1 && l.length<=60 && !/[.!?:,;]$/.test(l) && descTitleCase(l.split(/\s+/))
+       && lines[1].trim() && !DESC_BULLET.test(lines[1].trim())){ html+=`<div class="desc-h" dir="auto">${descInline(l)}</div>`; return; }
     para.push(l);
   });
   flushP(); flushL();
