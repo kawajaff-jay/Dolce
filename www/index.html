@@ -762,8 +762,10 @@
     transition:transform .2s ease, background .2s ease;}
   .pd-dots i.on{background:var(--ink);transform:scale(1.35);}
   /* Service photo gallery (more than one photo) */
-  .sd-gallery{position:relative;margin:8px 0 14px;border-radius:16px;overflow:hidden;}
-  .mi.sd-shot{flex:0 0 100%;scroll-snap-align:center;border-radius:0;}
+  .sd-gallery{position:relative;margin:8px 0 14px;border-radius:20px;overflow:hidden;clip-path:inset(0 round 20px);}
+  .sd-gallery .pd-track{scrollbar-width:none;}
+  .sd-gallery{border:1px solid rgba(58,42,31,.1);}
+  .mi.sd-shot{flex:0 0 100%;scroll-snap-align:center;border-radius:0;margin:0!important;border:0!important;}
   .sd-dots{position:absolute;left:0;right:0;bottom:10px;padding:0;z-index:3;}
   .sd-dots i{background:rgba(255,255,255,.55);}
   .sd-dots i.on{background:#fff;}
@@ -1632,6 +1634,7 @@
   body.tablet-land #screen[data-screen="detail"] .screen-body > .mi.detail-hero,
   body.tablet-land #screen[data-screen="detail"] .screen-body > .sd-gallery{grid-column:1;grid-row:1 / span 40;position:sticky;top:0;align-self:start;margin-top:8px;}
   body.tablet .sd-gallery{border-radius:20px;}
+  .mi.detail-hero{border-radius:20px;}
 
   /* Shop */
   body.tablet .shop-filter{max-width:560px;margin-inline:auto;margin-bottom:10px;}
@@ -5646,6 +5649,7 @@ function bodyHtml(){
    screen full of cards sharing a photo costs one measurement, not twenty. */
 
 const focalCache=new Map();
+const miDims=new Map();   // url → width/height, learnt when a picture first loads
 const focalPending=new Map();
 
 function measureFocus(img){
@@ -6081,8 +6085,11 @@ const MEDIA_PRESETS={
              hint:'The large "Curated for you" picture on the home screen. Portrait works best.'},
   brandLogo:{label:'Brand logo',     ratio:3,    fit:'contain', pad:.06, radius:0,  maxEdge:900,  minEdge:300,
              hint:'A logo, shown whole and never stretched. A PNG with a transparent background works best.'},
-  service:  {label:'Service page',   ratio:16/9, fit:'cover',   radius:16, maxEdge:1600, minEdge:900,
-             hint:'Fills the service header. Drag to keep the important part in view.'},
+  // servicePage: a 4:3 rounded frame. A photo close to that shape fills it
+  // (placed on its subject); a much taller or wider one (a portrait phone
+  // photo of an IV bag, say) is shown whole on soft cream instead of being cut.
+  service:  {label:'Service page',   ratio:4/3,  fit:'cover',   radius:20, maxEdge:1600, minEdge:900, wholeIfCropOver:.2, wholeBg:'var(--cream,#f6efe3)',
+             hint:'Service header (4:3). Photos of a very different shape are shown whole on cream. Drag to keep the important part in view.'},
   homeHero: {label:'Home card',      ratio:11/4, fit:'cover',   radius:18, maxEdge:1800, minEdge:1000,
              hint:'The wide card on the home screen. Text sits on the lower left.'},
   banner:   {label:'Event / offer cover', ratio:16/9, fit:'cover', radius:0,  maxEdge:1200, minEdge:600,
@@ -6128,11 +6135,18 @@ function mediaView(url,preset,metaOverride){
   const auto=url?focalCache.get(url):null;      // measured subject / logo test, once known
   let fit=m.fit||P.fit;
   if(!m.fit&&fit==='cover'&&auto&&auto.logo) fit='contain';   // never crop a wordmark
+  let wholeBg='';
+  // Show the whole picture when filling the frame would cut away too much of it
+  // (only when nobody chose a framing for this photo in Admin).
+  if(!m.fit && fit==='cover' && P.wholeIfCropOver && P.ratio && url && miDims.has(url)){
+    const r=miDims.get(url), crop=1-Math.min(r/P.ratio,P.ratio/r);
+    if(crop>P.wholeIfCropOver){ fit='contain'; wholeBg=P.wholeBg||''; }
+  }
   const x=m.x!=null?m.x:(auto&&!auto.logo&&auto.x!=null?auto.x:50);
   const y=m.y!=null?m.y:(auto&&!auto.logo&&auto.y!=null?auto.y:50);
   const z=Math.max(1,m.z||1);
   const pad=fit==='contain'?(m.pad!=null?m.pad:(P.pad||0)):0;
-  const bg=m.bg||(auto&&auto.logo&&auto.bg)||(fit==='contain'?(P.bg||''):'');
+  const bg=m.bg||(auto&&auto.logo&&auto.bg)||wholeBg||(fit==='contain'?(P.bg||P.wholeBg||''):'');
   let css=`object-fit:${fit};object-position:${x}% ${y}%;`;
   if(pad) css+=`padding:${(pad*100).toFixed(2)}%;`;
   if(z>1) css+=`transform:scale(${z.toFixed(3)});transform-origin:${x}% ${y}%;`;
@@ -6163,7 +6177,7 @@ function mediaHtml(url,preset,o){
   if(!url) return `<div class="${cls} mi-empty" style="${box}">${o.inner||''}</div>`;
   const v=mediaView(url,preset,o.meta);
   return `<div class="${cls}${v.fit==='contain'?' mi-contain':''}${v.bg&&v.fit==='contain'&&!(o.meta||mediaMeta(url)||{}).fit&&focalCache.get(url)&&focalCache.get(url).logo?' is-logo':''}" data-preset="${preset}" style="${box}${v.bg?';--mi-bg:'+v.bg:''}">`+
-    `<img src="${attr(url)}" alt="${attr(o.alt||'')}"${o.eager?'':' loading="lazy"'} decoding="async" draggable="false" data-mi="${v.known?1:0}"${preset==='product'&&!o.meta?` data-pf="${productFit.has(url)?1:0}"`:''} style="${v.css}" onload="this.classList.add('ld')" onerror="this.parentNode.classList.add('mi-broken');this.remove()">`+
+    `<img src="${attr(url)}" alt="${attr(o.alt||'')}"${o.eager?'':' loading="lazy"'} decoding="async" draggable="false" data-mi="${v.known?1:0}"${preset==='product'&&!o.meta?` data-pf="${productFit.has(url)?1:0}"`:''} style="${v.css}" onload="miLoaded(this)" onerror="this.parentNode.classList.add('mi-broken');this.remove()">`+
     `${o.inner||''}</div>`;
 }
 
@@ -6251,6 +6265,24 @@ function applyProductFit(root){
   });
 }
 
+// First load of a picture: remember its shape; if that changes how it should sit
+// in its frame (e.g. a tall photo in the 4:3 service frame), re-place it before it fades in.
+function miLoaded(img){
+  try{
+    const url=img.getAttribute('src'), box=img.parentNode;
+    if(url && img.naturalWidth && img.naturalHeight && !miDims.has(url)){
+      miDims.set(url,img.naturalWidth/img.naturalHeight);
+      const preset=box&&box.dataset.preset;
+      if(preset && (MEDIA_PRESETS[preset]||{}).wholeIfCropOver){
+        const v=mediaView(url,preset);
+        img.style.cssText=v.css;
+        box.classList.toggle('mi-contain',v.fit==='contain');
+        if(v.bg) box.style.setProperty('--mi-bg',v.bg); else box.style.removeProperty('--mi-bg');
+      }
+    }
+  }catch(e){}
+  img.classList.add('ld');
+}
 function applyMediaFocus(root){
   (root||document).querySelectorAll('.mi > img[data-mi="0"]').forEach(img=>{
     img.dataset.mi='1';
