@@ -205,6 +205,11 @@
   .adm-note.load{background:#f8f1e4;color:var(--ink-soft);}
   .adm-note.err{background:#f8e6e1;color:#8a3226;}
   .adm-sub-h{font-size:12.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:26px 0 12px;}
+  .bk-client{border:none;background:none;padding:0;font:inherit;color:inherit;font-weight:600;cursor:pointer;text-align:start;
+    text-decoration:underline;text-decoration-color:rgba(58,42,31,.3);text-underline-offset:3px;}
+  .bk-client:hover{color:var(--adm-taupe,#7a6450);text-decoration-color:currentColor;}
+  .bk-guest-ov{position:fixed;inset:0;z-index:950;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;padding:20px;}
+  .bk-guest{background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:85vh;overflow-y:auto;padding:22px;box-shadow:0 20px 50px rgba(0,0,0,.25);}
   .adm-link{border:none;background:none;padding:0;color:var(--adm-taupe);font:inherit;font-size:13px;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
   /* login */
   #adminView .login-wrap{max-width:760px;margin:40px auto;text-align:center;}
@@ -10276,7 +10281,7 @@ function renderAdminBookings(){
     const ptsBtn=(bk.status==='Completed' && loyaltyReady===true && !earnedBookingIds.has(String(bk.id)))
       ? `<button class="btn btn-ghost btn-sm" data-points-booking="${i}" title="Add D+ points for this visit">+ Points</button>` : '';
     return `<tr>
-      <td>${esc(bk.clientName)}</td>
+      <td>${currentAllowedTabs.includes('clients')?`<button class="bk-client" data-bk-client="${esc(String(bk.id))}" title="See this client's details">${esc(bk.clientName)}</button>`:esc(bk.clientName)}</td>
       <td><span class="brand-tag" style="background:${brandColor[bk.brand]}">${BRANDS[bk.brand].name}</span></td>
       <td>${esc(bk.serviceName)}</td>
       <td>${esc(bk.date)}<br><span style="color:var(--muted);font-size:13px;">${esc(bk.time)}</span></td>
@@ -10284,6 +10289,9 @@ function renderAdminBookings(){
       <td>${actions}${ptsBtn}</td>
     </tr>`;
   }).join('');
+  rows.querySelectorAll('[data-bk-client]').forEach(b=>b.addEventListener('click',()=>{
+    const bk=STORE.bookings[idxById(STORE.bookings,b.dataset.bkClient)]; if(bk) openBookingClient(bk);
+  }));
   rows.querySelectorAll('[data-points-booking]').forEach(b=>b.addEventListener('click',()=>{
     const bk=STORE.bookings[idxById(STORE.bookings,b.dataset.pointsBooking)]; if(bk) offerPoints(bk);
   }));
@@ -10634,6 +10642,39 @@ function clientForBooking(bk){
   const p=phoneCore(bk.phone); if(p.length<6) return null;
   const c=STORE.clients.find(x=>phoneCore(x.phone)===p)||STORE.clients.find(x=>phoneCore(x.contactPhone)===p)||null;
   return mainClient(c);
+}
+// Bookings → tap the client's name: their full profile (Clients section), or —
+// for a guest booking with no account — the contact details and every booking
+// made with the same phone number.
+function openBookingClient(bk){
+  const c=clientForBooking(bk);
+  if(c){
+    const tab=document.querySelector('[data-admin-tab="clients"]');
+    if(tab) tab.click();
+    openClientProfile(c.id);
+    return;
+  }
+  const p=phoneCore(bk.phone);
+  const same=(STORE.bookings||[]).filter(x=>p.length>=6&&phoneCore(x.phone)===p&&canSeeBrand(currentUser,x.brand))
+    .sort((a,b)=>bookingTime(b)-bookingTime(a));
+  const d=document.createElement('div'); d.className='bk-guest-ov';
+  d.innerHTML=`<div class="bk-guest" role="dialog" aria-modal="true" aria-label="Client details">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+      <div><h3 style="margin:0;">${esc(bk.clientName||'(no name)')}</h3>
+        <div class="cl-muted">Guest booking — no Dolce+ account linked to this phone number yet</div></div>
+      <button class="btn btn-ghost btn-sm" data-x>Close</button></div>
+    <dl class="cl-dl" style="margin-top:12px;"><dt>Phone</dt><dd dir="ltr">${bk.phone?esc(clientPhoneText(bk.phone)):'<span class="cl-muted">Not given</span>'}</dd></dl>
+    ${bk.phone?`<a class="btn btn-ghost btn-sm" style="margin-top:8px;" href="https://wa.me/${esc(normalizedPhone(bk.phone))}" target="_blank" rel="noopener">Message on WhatsApp</a>`:''}
+    <h4 style="margin:16px 0 6px;">Bookings with this phone (${same.length})</h4>
+    <div class="adm-list">${same.length?same.slice(0,20).map(b=>`<div class="adm-li"><span class="t" style="white-space:normal;">${esc(shortDay(b.date))}<div class="cl-muted" style="font-weight:400;">${esc(b.time||'')}</div></span>
+      <span class="w"><b>${esc(b.serviceName||'')}</b><span>${esc(BRANDS[b.brand]?BRANDS[b.brand].name:'')}</span></span>
+      <span class="status-badge ${esc(b.status)}">${esc(b.status)}</span></div>`).join(''):'<div class="adm-empty">Only this booking.</div>'}</div>
+  </div>`;
+  const close=()=>{ d.remove(); document.removeEventListener('keydown',onKey); };
+  const onKey=e=>{ if(e.key==='Escape') close(); };
+  d.addEventListener('click',e=>{ if(e.target===d||e.target.closest('[data-x]')) close(); });
+  document.addEventListener('keydown',onKey);
+  document.body.appendChild(d);
 }
 function clientLine(c){ return `${esc(c.name||'(no name)')} · <span dir="ltr">${esc(clientPhoneText(c.phone||c.contactPhone||'')||c.email||'')}</span>`; }
 
