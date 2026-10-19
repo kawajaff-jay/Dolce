@@ -2956,6 +2956,36 @@ function clearSyncFailures(){
 function closeSyncFailurePanel(){
   const p=document.getElementById('syncFailPanel'); if(p) p.remove();
 }
+// Tapping "N changes waiting to sync": say exactly what is waiting and why,
+// instead of a notice that never explains itself.
+function showSyncWaiting(){
+  closeSyncFailurePanel();
+  const why=j=>(!j.guest && !j.clientAuth && j.kind!=='settings')
+    ? 'A staff change made on this device. It is sent only while someone is signed in to the Admin App here.'
+    : (lastSyncError && lastSyncError!=='offline' ? 'Not sent yet — the database answered: '+lastSyncError
+       : lastSyncError==='offline' ? 'Not sent yet — no connection to the database right now.' : 'Not sent yet — it will be retried automatically.');
+  const when=j=>j.at?new Date(j.at).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+  const rows=outbox.map(j=>`
+    <div style="padding:10px 0;border-bottom:1px solid rgba(0,0,0,.08);">
+      <div style="font-weight:700;font-size:15px;">${esc(describeJob(j))}</div>
+      <div style="font-size:13px;color:#6b6b6b;margin-top:2px;">${esc(why(j))}${when(j)?' · queued '+esc(when(j)):''}</div>
+    </div>`).join('')||'<div style="color:#6b6b6b;">Nothing is waiting any more.</div>';
+  const p=document.createElement('div');
+  p.id='syncFailPanel';
+  p.style.cssText='position:fixed;inset:0;z-index:960;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:20px;font-family:system-ui,-apple-system,sans-serif;';
+  p.innerHTML=`<div style="background:#fff;border-radius:16px;max-width:460px;width:100%;max-height:80vh;overflow-y:auto;padding:22px;">
+      <div style="font-size:19px;font-weight:800;margin-bottom:6px;">Waiting to sync</div>
+      <div style="font-size:14.5px;color:#444;line-height:1.5;margin-bottom:10px;">Saved on this device, not yet in the shared database:</div>
+      ${rows}
+      <div style="display:flex;gap:8px;margin-top:18px;">
+        <button id="swRetry" style="flex:1;background:#1c1a16;color:#fff;border:none;border-radius:10px;padding:12px;font-size:15px;font-weight:700;">Try again</button>
+        <button id="swClose" style="flex:1;background:#fff;color:#1c1a16;border:1px solid #ddd;border-radius:10px;padding:12px;font-size:15px;font-weight:700;">Close</button>
+      </div></div>`;
+  document.body.appendChild(p);
+  document.getElementById('swRetry').addEventListener('click',()=>{ closeSyncFailurePanel(); flushOutbox(); });
+  document.getElementById('swClose').addEventListener('click',closeSyncFailurePanel);
+  p.addEventListener('click',e=>{ if(e.target===p) closeSyncFailurePanel(); });
+}
 function showSyncFailures(){
   closeSyncFailurePanel();
   const rows=syncFailures.slice().reverse().map(f=>`
@@ -3017,7 +3047,7 @@ function updateSyncBadge(){
     // above everything.
     el.style.zIndex='900';
     el.addEventListener('click',()=>{
-      if(syncFailures.length) showSyncFailures(); else flushOutbox();
+      if(syncFailures.length) showSyncFailures(); else { showSyncWaiting(); flushOutbox(); }
     });
     document.body.appendChild(el);
   }
