@@ -714,6 +714,22 @@
   button.armed{outline:2px solid #a3413a;outline-offset:1px;}
   body.native-app .phone.fullscreen .screen{height:100%;max-width:none;padding-top:env(safe-area-inset-top,0px);}
   body.native-app.kb-open .ai-overlay{border-radius:0;}
+  /* On-screen keyboard open (body.kb-open — set from the visible-area size,
+     never from which field has focus, so an external keyboard changes nothing):
+     the floating bars step away so they cannot sit on top of the results,
+     and the space kept free for them is released. They come back when the
+     keyboard closes. */
+  body.kb-open .phone.fullscreen .bottom-nav,
+  body.kb-open .phone.fullscreen .fab-ai,
+  body.kb-open .phone.fullscreen .basket-pill,
+  body.kb-open .phone.fullscreen .pd-buy,
+  body.kb-open #cloudSyncPill{opacity:0!important;visibility:hidden!important;pointer-events:none!important;}
+  body.kb-open .phone.fullscreen .screen-body{padding-bottom:16px!important;}
+  body.kb-open .phone.fullscreen .sr-body{padding-bottom:16px;}
+  body.kb-back .phone.fullscreen .bottom-nav,body.kb-back .phone.fullscreen .fab-ai,
+  body.kb-back .phone.fullscreen .basket-pill,body.kb-back .phone.fullscreen .pd-buy,body.kb-back #cloudSyncPill{animation:kbBack .28s ease both;}
+  @keyframes kbBack{from{opacity:0;}to{opacity:1;}}
+  @media (prefers-reduced-motion: reduce){ body.kb-back .bottom-nav,body.kb-back .fab-ai,body.kb-back .basket-pill{animation:none!important;} }
   /* Every Face ID iPhone (11 and newer) reserves a strip at the very bottom
      of the screen for the home-indicator bar — the line you swipe up on.
      Without allowing for it, the bottom nav and the AI message box sit
@@ -1354,6 +1370,10 @@
   .shop-search{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 10px 0 16px;margin:6px 0 4px;border-radius:999px;
     border:1px solid var(--lux-hair,#e6dbc9);background:var(--ivory,#fcfaf5);box-shadow:0 6px 16px -12px rgba(58,42,31,.35);}
   .shop-search:focus-within{border-color:var(--gold,#c4a46c);}
+  /* The search field stays in view while the results scroll under it. */
+  .shop-search-wrap{position:sticky;top:-6px;z-index:4;background:var(--cream);margin:-6px -16px 0;padding:12px 16px 6px;}
+  .shop-search-wrap .shop-search{margin:0;}
+  body.tablet .shop-search-wrap{margin-inline:calc(-1 * var(--tab-pad));padding-inline:var(--tab-pad);}
   .shop-search svg{width:18px;height:18px;color:var(--gold-dark,#8c6d3c);flex:none;}
   .shop-search input{flex:1;min-width:0;border:0;background:transparent;font:500 16px/1.2 var(--sans,system-ui);color:var(--ink);outline:none;-webkit-appearance:none;appearance:none;padding:11px 0;}
   .shop-search input::placeholder{color:var(--muted);}
@@ -5175,9 +5195,9 @@ function renderShop(){
     ? CategoryPill('all',t('allBrands'),shopBrand==='all')
     : CategoryPill(b,BRANDS[b].name,shopBrand===b)).join('');
   return `
-    <label class="shop-search">${ICONS.search}<input id="shopSearch" type="search" enterkeyhint="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" dir="auto"
+    <div class="shop-search-wrap"><label class="shop-search">${ICONS.search}<input id="shopSearch" type="search" enterkeyhint="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" dir="auto"
       placeholder="${attr(t('shopSearch'))}" aria-label="${attr(t('shopSearch'))}" value="${attr(shopQ)}">
-      <button class="sr-x" id="shopSearchX" type="button" aria-label="${attr(t('srClearQ'))}" ${shopQ?'':'hidden'}>✕</button></label>
+      <button class="sr-x" id="shopSearchX" type="button" aria-label="${attr(t('srClearQ'))}" ${shopQ?'':'hidden'}>✕</button></label></div>
     <div class="shop-bar">
       <div class="lux-pills" id="shopFilter" role="tablist"><div class="lux-pill-lens" aria-hidden="true"></div>${pills}</div>
       <button class="lux-icon-btn press${filtersActive()?' dot':''}" id="shopSortBtn" aria-label="${t('sortFilter')}">${ICONS.sliders}</button>
@@ -14078,6 +14098,42 @@ flushOutbox();
 
 (function(){ const el=document.getElementById('adminAgencyCredit'); if(el) el.innerHTML=AgencyCredit({mode:'admin'}); })();
 
+/* ---------------- On-screen keyboard ----------------
+   iOS shows the keyboard over the web page and shrinks the "visual viewport".
+   The keyboard counts as open only when the visible area is clearly shorter
+   than the screen (more than 120px — an external keyboard's small shortcut
+   bar does not count), never just because a field has focus. In the
+   installed app the full-screen frame is also resized to the visible area,
+   so the search field and results sit above the keyboard. */
+let kbTracking=false;
+function trackKeyboard(resizeFrame){
+  if(!window.visualViewport || kbTracking) return;
+  kbTracking=true;
+  let was=false;
+  const sync=()=>{
+    const vv=window.visualViewport;
+    const open=(window.innerHeight - vv.height) > 120;
+    if(resizeFrame){
+      const stage=document.querySelector('.phone.fullscreen');
+      if(stage){ stage.style.height=vv.height+'px'; stage.style.top=vv.offsetTop+'px'; }
+    }
+    if(open!==was){
+      was=open;
+      document.body.classList.toggle('kb-open',open);
+      clearTimeout(sync._t); document.body.classList.toggle('kb-back',!open);
+      if(!open) sync._t=setTimeout(()=>document.body.classList.remove('kb-back'),400);
+      // closing: give the floating bars their space back without moving the page
+      if(!open) requestAnimationFrame(()=>{ try{ fitBottomClearance(); }catch(e){} try{ updateSyncBadge(); }catch(e){} });
+    }
+  };
+  window.visualViewport.addEventListener('resize',sync);
+  window.visualViewport.addEventListener('scroll',sync);
+  sync();
+}
+// In a phone browser the frame is not resized (Safari handles that itself),
+// but the floating bars still step away while the keyboard is up.
+try{ if(!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) && matchMedia('(pointer: coarse)').matches) trackKeyboard(false); }catch(e){}
+
 /* ---------------- Native app shell (Capacitor) ----------------
    When this file is running packaged inside the iOS/Android app (not a
    regular browser), skip the marketing website entirely: force Client App
@@ -14111,20 +14167,10 @@ if (window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' 
      header under the status bar and can leave scrollable panels (like the
      AI Assistant chat) rendering blank. No plugin needed — visualViewport
      is built into WKWebView. */
-  if (window.visualViewport) {
-    const syncToKeyboard = () => {
-      const vv = window.visualViewport;
-      const stage = document.querySelector('.phone.fullscreen');
-      if (!stage) return;
-      const kbOpen = vv.height < window.innerHeight - 60;
-      document.body.classList.toggle('kb-open', kbOpen);
-      stage.style.height = vv.height + 'px';
-      stage.style.top = vv.offsetTop + 'px';
-    };
-    window.visualViewport.addEventListener('resize', syncToKeyboard);
-    window.visualViewport.addEventListener('scroll', syncToKeyboard);
-    syncToKeyboard();
-  }
+  // The ONE place the keyboard is handled: the frame is sized to the visible
+  // area (so its height is never counted twice) and body.kb-open is set from
+  // that same measurement — see trackKeyboard() below.
+  trackKeyboard(true);
 }
 
 /* ---------------- Dismissing the Dolce+ loading screen --------------------
