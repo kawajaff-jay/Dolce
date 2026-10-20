@@ -1114,6 +1114,52 @@
   .prod button{width:100%;background:var(--ink);color:#fff;border:none;border-radius:8px;padding:7px;font-size:12.5px;font-weight:700;}
 
   /* AI overlay */
+  /* ---------- Search ---------- */
+  .sr-bar{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:0 16px;margin:2px 0 16px;border-radius:999px;
+    border:1px solid var(--lux-hair,#e6dbc9);background:var(--ivory,#fcfaf5);color:var(--muted);font:500 14.5px/1.2 var(--sans,system-ui);
+    box-shadow:0 6px 16px -12px rgba(58,42,31,.35);text-align:start;cursor:text;}
+  .sr-bar span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .sr-bar svg,.sr-field svg{width:18px;height:18px;color:var(--gold-dark,#8c6d3c);flex:none;}
+  .sr-bar-brand{margin-top:0;}
+  .sr-ov{position:absolute;inset:12px;border-radius:34px;background:var(--cream);z-index:60;display:flex;flex-direction:column;overflow:hidden;}
+  .phone.fullscreen .sr-ov{inset:0;border-radius:0;padding-top:env(safe-area-inset-top,0px);}
+  .sr-head{display:flex;align-items:center;gap:8px;padding:16px 12px 8px;flex:none;}
+  .sr-back{width:40px;height:40px;border-radius:50%;border:1px solid var(--lux-hair,#e6dbc9);background:var(--ivory,#fcfaf5);font-size:22px;line-height:1;color:var(--ink);flex:none;cursor:pointer;}
+  html[dir="rtl"] .sr-back{transform:scaleX(-1);}
+  .sr-field{flex:1;min-width:0;display:flex;align-items:center;gap:8px;height:44px;border-radius:999px;background:var(--ivory,#fcfaf5);border:1px solid var(--gold,#c4a46c);padding:0 10px 0 14px;}
+  .sr-field input{flex:1;min-width:0;border:0;background:transparent;font:500 16px/1.2 var(--sans,system-ui);color:var(--ink);outline:none;-webkit-appearance:none;appearance:none;}
+  .sr-field input::-webkit-search-cancel-button{display:none;}
+  .sr-x{border:0;background:var(--cream-2,#f4ebdb);color:var(--ink-soft);border-radius:50%;width:26px;height:26px;font-size:12px;flex:none;cursor:pointer;}
+  .sr-chips{display:flex;gap:6px;overflow-x:auto;padding:2px 12px 10px;scrollbar-width:none;flex:none;align-items:center;}
+  .sr-chips::-webkit-scrollbar{display:none;}
+  .sr-chip{flex:none;height:32px;padding:0 13px;border-radius:999px;border:1px solid var(--lux-hair,#e6dbc9);background:var(--ivory,#fcfaf5);font:600 12.5px/1 var(--sans,system-ui);color:var(--ink-soft);cursor:pointer;white-space:nowrap;}
+  .sr-chip.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .sr-sep{flex:none;width:1px;height:20px;background:var(--lux-hair,#e6dbc9);margin:0 4px;}
+  .sr-body{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:2px 12px calc(28px + env(safe-area-inset-bottom,0px));-webkit-overflow-scrolling:touch;}
+  .sr-group h4{font:700 11px/1 var(--sans,system-ui);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:16px 4px 8px;}
+  .sr-group h4 span{color:var(--gold-dark,#8c6d3c);margin-inline-start:4px;}
+  .sr-gh{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .sr-row{display:flex;align-items:center;gap:12px;width:100%;padding:8px;border:1px solid var(--lux-hair,#e6dbc9);background:var(--ivory,#fcfaf5);border-radius:16px;margin-bottom:7px;text-align:start;cursor:pointer;font:inherit;color:inherit;}
+  .sr-row .mi.sr-img{width:54px;height:54px;flex:none;border-radius:12px;}
+  .sr-cal{width:54px;height:54px;flex:none;border-radius:12px;background:var(--cream-2,#f4ebdb);display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink);}
+  .sr-cal b{font:700 18px/1 var(--sans,system-ui);} .sr-cal span{font-size:11px;color:var(--muted);margin-top:3px;}
+  .sr-info{flex:1;min-width:0;}
+  .sr-n{font:600 14.5px/1.3 var(--sans,system-ui);color:var(--ink);overflow-wrap:anywhere;}
+  .sr-m{font-size:12.5px;line-height:1.35;color:var(--muted);margin-top:3px;overflow-wrap:anywhere;}
+  .sr-out{color:#8a3226;font-weight:600;}
+  .sr-p{flex:none;max-width:38%;text-align:end;font:700 13.5px/1.3 var(--sans,system-ui);color:var(--ink);display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
+  .sr-p small{font-weight:500;color:var(--muted);font-size:11.5px;}
+  .sr-p .price-old{font-weight:500;color:var(--muted);text-decoration:line-through;font-size:11.5px;}
+  .sr-p .discount-badge{display:none;}
+  .sr-note{font-size:12.5px;line-height:1.5;color:var(--muted);padding:6px 6px 2px;}
+  .sr-warn{color:#8a5a26;}
+  .sr-empty{padding:18px 6px 6px;font-size:14px;color:var(--ink-soft);line-height:1.6;}
+  .sr-empty-t{font-weight:700;color:var(--ink);margin-bottom:4px;overflow-wrap:anywhere;}
+  .sr-link{border:0;background:none;padding:0;color:var(--gold-dark,#8c6d3c);font:600 13.5px var(--sans,system-ui);text-decoration:underline;text-underline-offset:3px;cursor:pointer;}
+  .sr-recent{display:flex;gap:8px;width:100%;padding:11px 8px;border:0;border-bottom:1px solid var(--lux-hair,#e6dbc9);background:none;text-align:start;font:500 14.5px var(--sans,system-ui);color:var(--ink);cursor:pointer;}
+  .sr-cats{display:flex;flex-wrap:wrap;gap:7px;}
+  .sr-cat{border:1px solid var(--lux-hair,#e6dbc9);background:var(--ivory,#fcfaf5);border-radius:999px;padding:8px 13px;font:600 13px var(--sans,system-ui);color:var(--ink);cursor:pointer;}
+  .sr-cat small{color:var(--muted);font-weight:500;margin-inline-start:4px;}
   .ai-overlay{position:absolute;inset:0;background:var(--cream);z-index:20;display:none;flex-direction:column;border-radius:34px;}
   /* The overlay covers the whole screen INCLUDING the safe-area strip the
      normal screens are padded away from, so it needs that padding itself —
@@ -3128,12 +3174,24 @@ async function isStaffSignedIn(){
 
 // The shop window: services, products, offers, brand photos, exchange rate.
 // Readable without logging in, because customers need it.
+// The database hands out at most 1,000 rows per request: read in pages so a
+// growing catalogue is never cut off (search, shop and lists see all of it).
+async function selectAllRows(table,shape){
+  const size=1000; let all=[];
+  for(let from=0;from<50000;from+=size){
+    const r=await shape(supa.from(table).select('*')).range(from,from+size-1);
+    if(r.error) return r;
+    all=all.concat(r.data||[]);
+    if(!r.data || r.data.length<size) break;
+  }
+  return {data:all,error:null};
+}
 async function pullCatalog(){
   if(!supa) return false;
   try{
     const [svc,prod,off,img,set]=await Promise.all([
-      supa.from('services').select('*').order('sort_order',{ascending:true}),
-      supa.from('products').select('*'),
+      selectAllRows('services',q=>q.order('sort_order',{ascending:true}).order('id',{ascending:true})),
+      selectAllRows('products',q=>q.order('id',{ascending:true})),
       supa.from('offers').select('*'),
       supa.from('brand_images').select('*'),
       supa.from('settings').select('*').in('key',['usd_to_iqd','image_focus','destinations','client_login','wa_templates','hours','loyalty','client_booking_changes','categories:dolce','categories:polished','categories:core']),
@@ -3759,7 +3817,7 @@ Object.assign(I18N.en,{
   loginPrivacy:'We only use your number to log you in and to contact you about your appointments.',
   placeOrder:'Place order',orderSaved:'Order {ref} received',orderSavedSub:'Our team will confirm your order with you.',orderWaOptional:'Message us on WhatsApp (optional)',orderRef:'Order',orderOutOfStock:'Sorry — {name} no longer has enough in stock.',tooManyOrders:'Too many orders from this number — please try again later or message us.',orderFailed:'Your order could not be sent. Please try again.',orderNote:'Your order goes straight to our team, who confirm it with you.',
   cancelBooking:'Cancel booking',changeTime:'Change time',saveNewTime:'Save new time',tooLateChange:'This booking can no longer be changed in the app — please message us.',bookingCancelledMsg:'Booking cancelled.',bookingMovedMsg:'Booking moved — we will confirm the new time.',
-  classTimetable:'Weekly classes',seeClassTimes:'Choose a class time',groupClassNote:'Group classes are booked by time in the weekly class timetable, with limited places.',classesSub:'Group classes — book your place',placesLeft:'{n} places left',onePlaceLeft:'1 place left',classFullTag:'Full',bookPlace:'Book',youreIn:"You're booked",signInToBook:'Log in to book a class',classBooked:'Place booked — see you in class!',classFull:'Sorry — this class is now full.',alreadyBooked:'You already have a place in this class.',classUnavailable:'This class is no longer available.',classesOff:'Classes cannot be booked right now.',myClasses:'My classes',cancelPlace:'Cancel my place',placeCancelled:'Place cancelled',classCancelledByStudio:'Cancelled by the studio',noClassesDay:'No classes on this day.',withInstructor:'with {name}',minutesShort:'{n} min',clsReformer:'Reformer',clsMat:'Mat',clsYoga:'Yoga',pushAskTitle:'Get reminders on this phone?',pushAskBody:'We will send a notification before your appointments, and if a time changes.',pushAllow:'Allow',pushLater:'Not now',pushOn:'Notifications are on.',
+  classTimetable:'Weekly classes',searchAll:'Search services, products & classes',searchIn:'Search {b}',srServices:'Services',srProducts:'Products',srClasses:'Classes',srAll:'All',srAnyPrice:'Any price',srUnder:'Under {p}',srFrom:'From',srRecent:'Recent searches',srClearHistory:'Clear history',srNoResults:'No exact results for “{q}”',srDidYouMean:'Did you mean',srTry:'Browse instead',srRelated:'Closest matches:',srBrowse:'Browse categories',srShowing:'Showing',srOffline:'You’re offline — showing the services and products saved on this phone. Class times need a connection.',srClassNote:'Times from the class timetable. Places are confirmed only when you book.',srLoadingClasses:'Loading class times…',srClassErr:'Class times could not be loaded right now.',srBack:'Back',srClearQ:'Clear search',srAllTypes:'All types',srElsewhere:'{n} found in other Dolce+ businesses.',seeClassTimes:'Choose a class time',groupClassNote:'Group classes are booked by time in the weekly class timetable, with limited places.',classesSub:'Group classes — book your place',placesLeft:'{n} places left',onePlaceLeft:'1 place left',classFullTag:'Full',bookPlace:'Book',youreIn:"You're booked",signInToBook:'Log in to book a class',classBooked:'Place booked — see you in class!',classFull:'Sorry — this class is now full.',alreadyBooked:'You already have a place in this class.',classUnavailable:'This class is no longer available.',classesOff:'Classes cannot be booked right now.',myClasses:'My classes',cancelPlace:'Cancel my place',placeCancelled:'Place cancelled',classCancelledByStudio:'Cancelled by the studio',noClassesDay:'No classes on this day.',withInstructor:'with {name}',minutesShort:'{n} min',clsReformer:'Reformer',clsMat:'Mat',clsYoga:'Yoga',pushAskTitle:'Get reminders on this phone?',pushAskBody:'We will send a notification before your appointments, and if a time changes.',pushAllow:'Allow',pushLater:'Not now',pushOn:'Notifications are on.',
   clsOther:'Class',mbManualFrom:'CORE\'s weekly timetable — times can change; Mindbody confirms your place',justNow:'just now',minAgo:'{n} min ago',mbBookTitle:'Book CORE classes on Mindbody',mbFallbackBody:'CORE\'s Reformer, Mat and Yoga classes are booked through Mindbody. Open the schedule to see times and book your place.',mbOpenSchedule:'Open CORE\'s schedule',mbFrom:'Live from CORE\'s Mindbody schedule',mbUpdated:'updated',mbStale:'could not refresh — may be out of date',mbWaitlist:'Full — waitlist on Mindbody',mbBook:'Book on Mindbody',mbNoClassesWeek:'No classes this week.',mbBookNote:'Booking, payment and cancellation for classes happen on Mindbody. Your place is confirmed by Mindbody, not by Dolce+.',mbOpening:'Opening Mindbody — finish booking there.',
   slotTaken:'That time was just taken — please pick another time.',
   linkTitle:'You already have an account',linkLede:'This number already has a Dolce+ account:',linkNote:"To keep your points and bookings in one place, confirm it's you with a code on WhatsApp. After that you can log in with your email or your number.",linkSend:'Send WhatsApp code',linkOther:'Use a different number',loginWith:'Log in with',
@@ -3800,7 +3858,7 @@ Object.assign(I18N.ar,{
   placeOrder:'إرسال الطلب',orderSaved:'تم استلام الطلب {ref}',orderSavedSub:'سيتواصل معك فريقنا لتأكيد طلبك.',orderWaOptional:'راسلنا عبر واتساب (اختياري)',orderRef:'الطلب',orderOutOfStock:'عذراً — لم تعد الكمية المتوفرة من {name} كافية.',tooManyOrders:'طلبات كثيرة من هذا الرقم — يرجى المحاولة لاحقاً أو مراسلتنا.',orderFailed:'تعذّر إرسال طلبك. يرجى المحاولة مرة أخرى.',orderNote:'يصل طلبك مباشرة إلى فريقنا، وسيؤكده معك.',
   cancelBooking:'إلغاء الحجز',changeTime:'تغيير الوقت',saveNewTime:'حفظ الوقت الجديد',tooLateChange:'لم يعد بالإمكان تعديل هذا الحجز من التطبيق — يرجى مراسلتنا.',bookingCancelledMsg:'تم إلغاء الحجز.',bookingMovedMsg:'تم نقل الحجز — سنؤكد الوقت الجديد.',
   classTimetable:'الحصص الأسبوعية',classesSub:'حصص جماعية — احجز مكانك',placesLeft:'متبقٍ {n} أماكن',onePlaceLeft:'متبقٍ مكان واحد',classFullTag:'مكتملة',bookPlace:'احجز',youreIn:'تم حجز مكانك',signInToBook:'سجّل الدخول لحجز حصة',classBooked:'تم حجز مكانك — نراك في الحصة!',classFull:'عذراً — اكتملت هذه الحصة.',alreadyBooked:'لديك مكان في هذه الحصة بالفعل.',classUnavailable:'هذه الحصة لم تعد متاحة.',classesOff:'لا يمكن حجز الحصص حالياً.',myClasses:'حصصي',cancelPlace:'إلغاء مكاني',placeCancelled:'تم إلغاء المكان',classCancelledByStudio:'ألغاها الاستوديو',noClassesDay:'لا توجد حصص في هذا اليوم.',withInstructor:'مع {name}',minutesShort:'{n} دقيقة',clsReformer:'ريفورمر',clsMat:'مات',clsYoga:'يوغا',pushAskTitle:'هل تريد التذكيرات على هذا الهاتف؟',pushAskBody:'سنرسل إشعاراً قبل مواعيدك وعند تغيير أي موعد.',pushAllow:'السماح',pushLater:'ليس الآن',pushOn:'تم تفعيل الإشعارات.',
-  clsOther:'حصة',seeClassTimes:'اختر موعد الحصة',groupClassNote:'تُحجز الحصص الجماعية حسب الموعد من جدول الحصص الأسبوعي، والأماكن محدودة.',mbManualFrom:'جدول CORE الأسبوعي — قد تتغيّر الأوقات، ويؤكّد Mindbody مكانك',justNow:'الآن',minAgo:'قبل {n} دقيقة',mbBookTitle:'احجز حصص CORE عبر Mindbody',mbFallbackBody:'تُحجز حصص الريفورمر والمات واليوغا في CORE عبر Mindbody. افتح الجدول لرؤية الأوقات وحجز مكانك.',mbOpenSchedule:'افتح جدول CORE',mbFrom:'مباشرة من جدول CORE على Mindbody',mbUpdated:'آخر تحديث',mbStale:'تعذّر التحديث — قد لا يكون محدّثاً',mbWaitlist:'مكتملة — قائمة انتظار على Mindbody',mbBook:'احجز على Mindbody',mbNoClassesWeek:'لا توجد حصص هذا الأسبوع.',mbBookNote:'الحجز والدفع والإلغاء للحصص تتم على Mindbody. يؤكد Mindbody مكانك، وليس Dolce+.',mbOpening:'جارٍ فتح Mindbody — أكمل الحجز هناك.',
+  clsOther:'حصة',searchAll:'ابحث في الخدمات والمنتجات والحصص',searchIn:'ابحث في {b}',srServices:'الخدمات',srProducts:'المنتجات',srClasses:'الحصص',srAll:'الكل',srAnyPrice:'أي سعر',srUnder:'أقل من {p}',srFrom:'من',srRecent:'عمليات البحث الأخيرة',srClearHistory:'مسح السجل',srNoResults:'لا توجد نتائج مطابقة لـ «{q}»',srDidYouMean:'هل تقصد',srTry:'تصفّح بدلاً من ذلك',srRelated:'أقرب النتائج:',srBrowse:'تصفّح الفئات',srShowing:'المعروض',srOffline:'أنت غير متصل — نعرض الخدمات والمنتجات المحفوظة على هذا الهاتف. مواعيد الحصص تحتاج إلى اتصال.',srClassNote:'المواعيد من جدول الحصص. لا تُؤكَّد الأماكن إلا عند الحجز.',srLoadingClasses:'جارٍ تحميل مواعيد الحصص…',srClassErr:'تعذّر تحميل مواعيد الحصص الآن.',srBack:'رجوع',srClearQ:'مسح البحث',srAllTypes:'كل الأنواع',srElsewhere:'وُجد {n} في أقسام Dolce+ الأخرى.',seeClassTimes:'اختر موعد الحصة',groupClassNote:'تُحجز الحصص الجماعية حسب الموعد من جدول الحصص الأسبوعي، والأماكن محدودة.',mbManualFrom:'جدول CORE الأسبوعي — قد تتغيّر الأوقات، ويؤكّد Mindbody مكانك',justNow:'الآن',minAgo:'قبل {n} دقيقة',mbBookTitle:'احجز حصص CORE عبر Mindbody',mbFallbackBody:'تُحجز حصص الريفورمر والمات واليوغا في CORE عبر Mindbody. افتح الجدول لرؤية الأوقات وحجز مكانك.',mbOpenSchedule:'افتح جدول CORE',mbFrom:'مباشرة من جدول CORE على Mindbody',mbUpdated:'آخر تحديث',mbStale:'تعذّر التحديث — قد لا يكون محدّثاً',mbWaitlist:'مكتملة — قائمة انتظار على Mindbody',mbBook:'احجز على Mindbody',mbNoClassesWeek:'لا توجد حصص هذا الأسبوع.',mbBookNote:'الحجز والدفع والإلغاء للحصص تتم على Mindbody. يؤكد Mindbody مكانك، وليس Dolce+.',mbOpening:'جارٍ فتح Mindbody — أكمل الحجز هناك.',
   slotTaken:'تم حجز هذا الوقت للتو — يرجى اختيار وقت آخر.',
   linkTitle:'لديك حساب بالفعل',linkLede:'هذا الرقم لديه حساب Dolce+ بالفعل:',linkNote:'لإبقاء نقاطك وحجوزاتك في مكان واحد، أكّد أنه أنت برمز يصلك على واتساب. بعدها يمكنك الدخول ببريدك الإلكتروني أو برقمك.',linkSend:'أرسل الرمز عبر واتساب',linkOther:'استخدم رقماً آخر',loginWith:'الدخول عبر',
   emailLoginTitle:'تسجيل الدخول بالبريد الإلكتروني',
@@ -3840,7 +3898,7 @@ Object.assign(I18N.ku,{
   placeOrder:'ناردنی داواکاری',orderSaved:'داواکاری {ref} وەرگیرا',orderSavedSub:'تیمەکەمان پەیوەندیت پێوە دەکات بۆ پشتڕاستکردنەوەی داواکارییەکەت.',orderWaOptional:'لە واتساپ نامەمان بۆ بنێرە (ئارەزوومەندانە)',orderRef:'داواکاری',orderOutOfStock:'ببورە — {name} بەشی پێویست لە کۆگادا نەماوە.',tooManyOrders:'داواکاری زۆر لەم ژمارەیەوە — تکایە دواتر هەوڵ بدەرەوە یان نامەمان بۆ بنێرە.',orderFailed:'داواکارییەکەت نەنێردرا. تکایە دووبارە هەوڵ بدەرەوە.',orderNote:'داواکارییەکەت ڕاستەوخۆ دەگاتە تیمەکەمان و پشتڕاستی دەکەنەوە لەگەڵت.',
   cancelBooking:'هەڵوەشاندنەوەی حجز',changeTime:'گۆڕینی کات',saveNewTime:'پاشەکەوتکردنی کاتی نوێ',tooLateChange:'ئیتر ناتوانرێت ئەم حجزە لە ئەپەکەدا بگۆڕدرێت — تکایە نامەمان بۆ بنێرە.',bookingCancelledMsg:'حجزەکە هەڵوەشێندرایەوە.',bookingMovedMsg:'حجزەکە گوازرایەوە — کاتە نوێیەکە پشتڕاست دەکەینەوە.',
   classTimetable:'وانە هەفتانەکان',classesSub:'وانەی بەکۆمەڵ — شوێنی خۆت بگرە',placesLeft:'{n} شوێن ماوە',onePlaceLeft:'یەک شوێن ماوە',classFullTag:'پڕە',bookPlace:'بیگرە',youreIn:'شوێنت گیراوە',signInToBook:'بۆ گرتنی وانە بچۆ ژوورەوە',classBooked:'شوێنەکەت گیرا — لە وانەکەدا دەتبینین!',classFull:'ببورە — ئەم وانەیە پڕ بووە.',alreadyBooked:'پێشتر شوێنت لەم وانەیەدا هەیە.',classUnavailable:'ئەم وانەیە چیتر بەردەست نییە.',classesOff:'لە ئێستادا ناتوانرێت وانە بگیرێت.',myClasses:'وانەکانم',cancelPlace:'هەڵوەشاندنەوەی شوێنەکەم',placeCancelled:'شوێنەکە هەڵوەشێنرایەوە',classCancelledByStudio:'ستۆدیۆکە هەڵیوەشاندەوە',noClassesDay:'لەم ڕۆژەدا وانە نییە.',withInstructor:'لەگەڵ {name}',minutesShort:'{n} خولەک',clsReformer:'ڕیفۆرمەر',clsMat:'مات',clsYoga:'یۆگا',pushAskTitle:'بیرخستنەوە لەسەر ئەم مۆبایلە وەردەگریت؟',pushAskBody:'پێش کاتەکانت، و کاتێک کاتێک دەگۆڕێت، ئاگادارکردنەوەت بۆ دەنێرین.',pushAllow:'ڕێگە بدە',pushLater:'ئێستا نا',pushOn:'ئاگادارکردنەوەکان چالاککران.',
-  clsOther:'وانە',seeClassTimes:'کاتی وانە هەڵبژێرە',groupClassNote:'وانە گروپییەکان بەپێی کات لە خشتەی هەفتانەی وانەکان دەگیرێن، شوێنەکان سنووردارن.',mbManualFrom:'خشتەی هەفتانەی CORE — کاتەکان لەوانەیە بگۆڕێن، Mindbody شوێنەکەت پشتڕاست دەکاتەوە',justNow:'ئێستا',minAgo:'{n} خولەک لەمەوبەر',mbBookTitle:'وانەکانی CORE لە Mindbody بگرە',mbFallbackBody:'وانەکانی ڕیفۆرمەر و مات و یۆگای CORE لە ڕێگەی Mindbody دەگیرێن. خشتەکە بکەرەوە بۆ بینینی کاتەکان و گرتنی شوێنەکەت.',mbOpenSchedule:'خشتەی CORE بکەرەوە',mbFrom:'ڕاستەوخۆ لە خشتەی CORE لە Mindbody',mbUpdated:'نوێکرایەوە',mbStale:'نوێنەکرایەوە — لەوانەیە کۆن بێت',mbWaitlist:'پڕە — لیستی چاوەڕوانی لە Mindbody',mbBook:'لە Mindbody بیگرە',mbNoClassesWeek:'ئەم هەفتەیە وانە نییە.',mbBookNote:'گرتن و پارەدان و هەڵوەشاندنەوەی وانەکان لە Mindbody دەکرێت. Mindbody شوێنەکەت پشتڕاست دەکاتەوە، نەک Dolce+.',mbOpening:'Mindbody دەکرێتەوە — گرتنەکە لەوێ تەواو بکە.',
+  clsOther:'وانە',searchAll:'گەڕان لە خزمەتگوزاری، بەرهەم و وانەکان',searchIn:'گەڕان لە {b}',srServices:'خزمەتگوزارییەکان',srProducts:'بەرهەمەکان',srClasses:'وانەکان',srAll:'هەموو',srAnyPrice:'هەر نرخێک',srUnder:'کەمتر لە {p}',srFrom:'لە',srRecent:'دوایین گەڕانەکان',srClearHistory:'سڕینەوەی مێژوو',srNoResults:'هیچ ئەنجامێکی ڕێک نییە بۆ «{q}»',srDidYouMean:'مەبەستت ئەمەیە',srTry:'لە جیاتی ئەوە بگەڕێ',srRelated:'نزیکترین ئەنجامەکان:',srBrowse:'پۆلەکان ببینە',srShowing:'پیشاندراو',srOffline:'ئینتەرنێتت نییە — ئەو خزمەتگوزاری و بەرهەمانەی لەسەر ئەم مۆبایلە پاشەکەوت کراون پیشان دەدرێن. کاتی وانەکان پێویستیان بە ئینتەرنێتە.',srClassNote:'کاتەکان لە خشتەی وانەکانەوەن. شوێن تەنها لە کاتی گرتندا پشتڕاست دەکرێتەوە.',srLoadingClasses:'کاتی وانەکان بار دەکرێن…',srClassErr:'ئێستا نەتوانرا کاتی وانەکان بار بکرێن.',srBack:'گەڕانەوە',srClearQ:'سڕینەوەی گەڕان',srAllTypes:'هەموو جۆرەکان',srElsewhere:'{n} ئەنجام لە بەشەکانی تری Dolce+ هەیە.',seeClassTimes:'کاتی وانە هەڵبژێرە',groupClassNote:'وانە گروپییەکان بەپێی کات لە خشتەی هەفتانەی وانەکان دەگیرێن، شوێنەکان سنووردارن.',mbManualFrom:'خشتەی هەفتانەی CORE — کاتەکان لەوانەیە بگۆڕێن، Mindbody شوێنەکەت پشتڕاست دەکاتەوە',justNow:'ئێستا',minAgo:'{n} خولەک لەمەوبەر',mbBookTitle:'وانەکانی CORE لە Mindbody بگرە',mbFallbackBody:'وانەکانی ڕیفۆرمەر و مات و یۆگای CORE لە ڕێگەی Mindbody دەگیرێن. خشتەکە بکەرەوە بۆ بینینی کاتەکان و گرتنی شوێنەکەت.',mbOpenSchedule:'خشتەی CORE بکەرەوە',mbFrom:'ڕاستەوخۆ لە خشتەی CORE لە Mindbody',mbUpdated:'نوێکرایەوە',mbStale:'نوێنەکرایەوە — لەوانەیە کۆن بێت',mbWaitlist:'پڕە — لیستی چاوەڕوانی لە Mindbody',mbBook:'لە Mindbody بیگرە',mbNoClassesWeek:'ئەم هەفتەیە وانە نییە.',mbBookNote:'گرتن و پارەدان و هەڵوەشاندنەوەی وانەکان لە Mindbody دەکرێت. Mindbody شوێنەکەت پشتڕاست دەکاتەوە، نەک Dolce+.',mbOpening:'Mindbody دەکرێتەوە — گرتنەکە لەوێ تەواو بکە.',
   slotTaken:'ئەم کاتە ئێستا حجز کرا — تکایە کاتێکی تر هەڵبژێرە.',
   linkTitle:'تۆ پێشتر هەژمارت هەیە',linkLede:'ئەم ژمارەیە پێشتر هەژماری Dolce+ ی هەیە:',linkNote:'بۆ ئەوەی خاڵ و حجزەکانت لە یەک شوێن بمێنن، بە کۆدێک لە واتساپ پشتڕاستی بکەرەوە کە خۆتی. دوای ئەوە دەتوانیت بە ئیمەیڵ یان ژمارەکەت بچیتە ژوورەوە.',linkSend:'ناردنی کۆد بە واتساپ',linkOther:'ژمارەیەکی تر بەکاربهێنە',loginWith:'چوونەژوورەوە بە',
   emailLoginTitle:'چوونەژوورەوە بە ئیمەیڵ',
@@ -4058,6 +4116,7 @@ document.querySelectorAll('[data-currency-btn]').forEach(b=>{
    Overlays (the AI assistant, the photo lightbox) are handled first, so Back
    closes what is on top instead of jumping a whole screen. */
 function closeTopOverlay(){
+  if(document.getElementById('srOverlay')){ srFinishLeave(); return true; }
   const bs=document.getElementById('basketSheet');
   if(bs && bs.classList.contains('open')){ closeBasket(); return true; }
   const ss=document.getElementById('sortSheet');
@@ -4118,6 +4177,7 @@ function renderServices(){
   // like the app failed to load.
   const empty=`<div style="padding:30px 6px;color:var(--muted);font-size:14px;text-align:center;">${t('noServicesYet')}</div>`;
   return `
+    <button class="sr-bar sr-bar-brand" type="button" data-sr-open="${currentBrand}">${ICONS.search}<span>${t('searchIn').replace('{b}',b.name)}</span></button>
     ${hoursCardHtml(currentBrand)}
     ${timetableHtml()}
     <div class="cat-tabs cat-glass" id="catRow"><div class="cat-lens" aria-hidden="true"></div>${tabs}</div>
@@ -4500,6 +4560,7 @@ function renderBookings(){
    edited in the Admin App. */
 
 const ICONS={
+  search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>',
   bag:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 8.5h13l-1.1 11.2a1.5 1.5 0 0 1-1.5 1.3H8.1a1.5 1.5 0 0 1-1.5-1.3L5.5 8.5z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg>',
   heart:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.4s-7.1-4.4-8.8-8.7C2 8.4 4 5.2 7.3 5.2c2 0 3.6 1.1 4.7 2.8 1.1-1.7 2.7-2.8 4.7-2.8 3.3 0 5.3 3.2 4.1 6.5-1.7 4.3-8.8 8.7-8.8 8.7z"/></svg>',
   sliders:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>',
@@ -4628,6 +4689,7 @@ function renderWelcome(){
   const events=[...STORE.offers.filter(o=>o.kind!=='curated'&&isLiveItem(o)).sort(byDisplayOrder),
                 ...activeDiscountOffers()];
   return `
+    <button class="sr-bar" type="button" data-sr-open="all">${ICONS.search}<span>${t('searchAll')}</span></button>
     <section class="lux-sec">
       ${LuxHeader(t('chooseDestination'))}
       <p class="lux-lede">${t('welcomeSub')}</p>
@@ -7325,6 +7387,7 @@ function bindScreen(){
   }));
   screenEl.querySelectorAll('[data-cat]').forEach(el=>el.addEventListener('click',()=>CatGlass.select(el.dataset.cat)));
   screenEl.querySelectorAll('[data-svc]').forEach(el=>el.addEventListener('click',()=>{currentService=el.dataset.svc;goto('detail');}));
+  screenEl.querySelectorAll('[data-sr-open]').forEach(el=>el.addEventListener('click',()=>openSearch(el.dataset.srOpen)));
   const toBooking=document.getElementById('toBooking'); if(toBooking) toBooking.addEventListener('click',()=>{selectedDateObj=null;selectedTime=null;goto('booking');});
   // The on-screen back arrow goes through history too, so it and the phone's
   // own Back button behave identically instead of drifting apart.
@@ -8072,6 +8135,409 @@ function aiFind(text,topics){
     pickedSvc=[...first,...rest];
   }
   return {svc:pickedSvc.slice(0,topics.some(tp=>tp.multi)?5:3), prod:prod.slice(0,3), allSvc:pickedSvc, allProd:prod};
+}
+
+/* ======================= Search (client app) =======================
+   One search for the whole client app: services, products and CORE classes.
+   It reads the same catalogue the app shows (all of it, not one screen), so
+   it never shows anything a client could not open, and never invents prices,
+   stock, translations or class places. It runs on the phone: instant, works
+   offline for services/products, costs nothing and sends no data anywhere.
+
+   Matching, most important first:
+     exact name → name starts with / contains → words of the name → category
+     → brand → curated synonyms and translations → description.
+   Small typing slips are forgiven (1 letter in 4–7-letter words, 2 in longer
+   ones). Arabic/Kurdish letter variants and diacritics count as the same
+   letter — for matching only; what is shown is never changed.
+   "Polished hair under $50" is read from the real catalogue fields: brand,
+   category/name words and price.                                             */
+
+// Same-meaning words: established spellings and everyday translations only.
+const SR_SYN=[
+  ['color','colour','colors','colours','dye','coloring','colouring','صبغة','صبغ','لون','رنگ','ڕەنگ','بۆیە','بۆیەکردن'],
+  ['hair','شعر','قژ'],
+  ['nail','nails','أظافر','اظافر','ظفر','نینۆک','نینۆکەکان'],
+  ['manicure','mani','مانيكير','مانیکیور'],
+  ['pedicure','pedi','باديكير','پێدیکیور'],
+  ['massage','massages','مساج','تدليك','مەساج'],
+  ['facial','facials','فيشل'],
+  ['lash','lashes','eyelash','eyelashes','رموش','برژانگ'],
+  ['brow','brows','eyebrow','eyebrows','حواجب','حاجب','برۆ'],
+  ['wax','waxing','واكس','شمع'],
+  ['laser','ليزر','لەیزەر'],
+  ['skin','بشرة','پێست'],
+  ['yoga','يوغا','یۆگا'],
+  ['pilates','بيلاتس','پیلاتس'],
+  ['reformer','ريفورمر','ڕیفۆرمەر'],
+  ['filler','fillers','فيلر','فیلەر'],
+  ['botox','بوتوكس','بۆتۆکس'],
+  ['serum','serums','سيروم','سیرۆم'],
+  ['shampoo','شامبو','شامپۆ'],
+  ['cream','creams','كريم','کرێم'],
+  ['haircut','hair cut','قص شعر','بڕینی قژ'],
+  ['blow dry','blowdry','blow-dry','blowout','سشوار'],
+  ['makeup','make up','make-up','مكياج','مەکیاج'],
+  ['class','classes','group class','حصة','حصص','وانە','وانەکان'],
+  ['private','one on one','خاص','تایبەت'],
+];
+const SR_BRAND_WORDS={
+  dolce:['dolce','دولتشي','دولچي','دۆلچێ','clinic','عيادة','کلینیک'],
+  polished:['polished','بوليشد','پۆلیشد','salon','صالون','سالۆن'],
+  core:['core','كور','کۆر','studio','ستوديو','ستۆدیۆ'],
+};
+const SR_TYPE_WORDS={
+  svc:['service','services','treatment','treatments','خدمة','خدمات','علاج','خزمەتگوزاری','خزمەتگوزارییەکان','چارەسەر'],
+  prod:['product','products','shop','buy','منتج','منتجات','بەرهەم','بەرهەمەکان','کڕین'],
+  cls:['timetable','schedule','جدول','خشتە'],
+};
+const SR_STOP=new Set(['the','a','an','and','or','for','in','at','of','to','with','me','my','show','find','i','want','need','some','any','please','looking','all','is','are','do','you','have',
+  'في','من','على','عن','مع','الى','اريد','ابي','ممكن','هل','عندكم','بدي','و',
+  'له','بو','دهمهویت','ههیه']);
+
+function srNorm(s){
+  return String(s==null?'':s).normalize('NFKC').toLowerCase()
+    .replace(/[٠-٩]/g,d=>String(d.charCodeAt(0)-0x660)).replace(/[۰-۹]/g,d=>String(d.charCodeAt(0)-0x6F0))
+    .replace(/[ً-ٰٟۖ-ۭـ]/g,'')
+    .replace(/[أإآٱ]/g,'ا').replace(/[ىيێئ]/g,'ی').replace(/ك/g,'ک')
+    .replace(/[ةەۀھ]/g,'ه').replace(/[ؤۆ]/g,'و').replace(/ڵ/g,'ل').replace(/ڕ/g,'ر').replace(/ء/g,'')
+    .replace(/[’'`]/g,'').replace(/[^\p{L}\p{N}$.,<>\s-]+/gu,' ').replace(/\s+/g,' ').trim();
+}
+function srWords(s){ return srNorm(s).replace(/[$.,<>-]+/g,' ').split(' ').filter(Boolean); }
+// A word and its plain forms: Arabic "ال…", Kurdish "…ەکان / …ەکە", English plural.
+function srForms(w){
+  const out=new Set([w]);
+  if(/^ال/.test(w) && w.length>4) out.add(w.slice(2));
+  [['هکان',3],['کان',3],['هکه',3],['ان',4],['ی',3]].forEach(([suf,min])=>{ if(w.endsWith(suf) && w.length-suf.length>=min) out.add(w.slice(0,-suf.length)); });
+  if(/^[a-z]+$/.test(w) && w.length>4){ if(w.endsWith('es')) out.add(w.slice(0,-2)); if(w.endsWith('s')) out.add(w.slice(0,-1)); }
+  return [...out];
+}
+// Typing distance (with swapped letters); stops early once clearly too far.
+function srDist(a,b,max){
+  if(Math.abs(a.length-b.length)>max) return max+1;
+  const m=a.length,n=b.length; let prev2=null, prev=Array.from({length:n+1},(_,j)=>j);
+  for(let i=1;i<=m;i++){ const cur=[i]; let best=i;
+    for(let j=1;j<=n;j++){ const c=a[i-1]===b[j-1]?0:1;
+      let v=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+c);
+      if(prev2 && i>1 && j>1 && a[i-1]===b[j-2] && a[i-2]===b[j-1]) v=Math.min(v,prev2[j-2]+1);
+      cur[j]=v; if(v<best) best=v; }
+    if(best>max) return max+1; prev2=prev; prev=cur; }
+  return prev[n];
+}
+function srTol(w){ return w.length>=8?2:(w.length>=4?1:0); }
+let SR_SYNMAP=null;
+function srSynMap(){
+  if(SR_SYNMAP) return SR_SYNMAP;
+  const m={word:new Map(),phrases:[],groups:[]};
+  SR_SYN.forEach((g,i)=>{ const terms=[...new Set(g.map(srNorm))]; m.groups[i]=terms;
+    terms.forEach(tm=>{ if(tm.includes(' ')) m.phrases.push({p:tm,i}); else { if(!m.word.has(tm)) m.word.set(tm,new Set()); m.word.get(tm).add(i); } }); });
+  return (SR_SYNMAP=m);
+}
+
+/* ---------- what can be found: the client-visible catalogue ---------- */
+function srClassSource(){
+  if(mindbodyOn()){
+    if(['ok','stale'].includes(MBS.status)) return {kind:'mb',rows:MBS.rows,loading:MBS.loading,err:''};
+    if(manualOn()) return {kind:'man',rows:MAN.rows,loading:MAN.loading||!MAN.at,err:MAN.err};
+    return {kind:'none',rows:[],loading:false,err:''};
+  }
+  if(coreClassesOn()) return {kind:'tt',rows:TT.rows,loading:TT.loading||!TT.at,err:TT.err};
+  return {kind:'none',rows:[],loading:false,err:''};
+}
+async function srEnsureClasses(){
+  if(mindbodyOn()){
+    if(!MBS.at && !MBS.loading) await loadMindbody();
+    if(!['ok','stale'].includes(MBS.status) && manualOn() && !MAN.at && !MAN.loading) await loadManualTimetable();
+  } else if(coreClassesOn() && !TT.at && !TT.loading) await loadTimetable();
+}
+// The search index is rebuilt only when the catalogue or the class times change.
+let SR_INDEX={sig:'',items:[]};
+function srItems(){
+  let sig=[TT.at,MBS.at,MAN.at,isoOf(new Date()),(STORE.products||[]).length].join('|');
+  let h=0; const mix=(x)=>{ x=String(x==null?'':x); for(let i=0;i<x.length;i+=7) h=(h*31+x.charCodeAt(i))|0; h=(h*31+x.length)|0; };
+  Object.keys(BRANDS).forEach(b=>(svcList(b)||[]).forEach(s=>{ mix(s.id); mix(s.n); mix(s.cat); mix(s.price); mix(s.discount); mix(s.desc); mix(s.image); }));
+  (STORE.products||[]).forEach(p=>{ mix(p.id); mix(p.n); mix(p.price); mix(p.discount); mix(p.active); mix(p.stock); mix(p.category); mix(p.image); });
+  sig+='|'+h;
+  if(SR_INDEX.sig===sig) return SR_INDEX.items;
+  SR_INDEX={sig,items:srBuildItems()};
+  return SR_INDEX.items;
+}
+function srBuildItems(){
+  const out=[], today=isoOf(new Date());
+  const add=(o)=>{ o.nameN=srNorm(o.name); o.nameW=srWords(o.name); o.catW=srWords(o.cat); o.catN=srNorm(o.cat);
+    o.descW=srWords(o.desc).slice(0,160); o.brandW=srWords(BRANDS[o.brand]?BRANDS[o.brand].name:''); o.extraW=srWords(o.extra||''); out.push(o); };
+  Object.keys(BRANDS).forEach(b=>(svcList(b)||[]).forEach(s=>add({kind:'svc',brand:b,id:String(s.id),name:s.n||'',cat:s.cat||'',
+    desc:[s.desc,(s.points||[]).join(' ')].join(' '),price:effectivePrice(s),item:s,image:s.image||STORE.brandImages[b]||''})));
+  (STORE.products||[]).filter(p=>p.active!==false && BRANDS[p.brand]).forEach(p=>add({kind:'prod',brand:p.brand,id:String(p.id),name:p.n||'',
+    cat:p.category||'',desc:p.desc||'',price:effectivePrice(p),item:p,image:p.image||(p.images||[])[0]||''}));
+  const src=srClassSource();
+  (src.rows||[]).forEach(r=>{
+    const date=src.kind==='tt'?r.session_date:r.date; if(!date||date<today) return;
+    const name=src.kind==='tt'?clsName(r):r.name;
+    const typeLbl=src.kind==='tt'?(CLASS_TYPES[r.class_type]||''):(MB_TYPES[r.type]?t(MB_TYPES[r.type]):'');
+    add({kind:'cls',brand:'core',id:String(r.id),name:name||typeLbl,cat:typeLbl,desc:'',extra:[r.instructor,r.class_type||r.type].join(' '),
+      price:null,date,time:src.kind==='tt'?clsTime(r.starts_at):mbTime(r.start),instructor:r.instructor||'',src:src.kind,
+      dur:src.kind==='tt'?r.duration_min:mbDur(r),image:''});
+  });
+  return out;
+}
+
+/* ---------- understanding the query ---------- */
+function srParse(raw){
+  let n=' '+srNorm(raw)+' ';
+  const q={brands:new Set(),types:new Set(),min:null,max:null,tokens:[],text:'',phraseSyn:[]};
+  const num='(\\d+(?:[.,]\\d+)?)';
+  const cur='\\s*(?:\\$|usd|dollars?|دولار|iqd|دینار)?(?=\\s)';
+  const iqd=/iqd|دینار/.test(n);
+  const val=(s)=>{ let v=parseFloat(String(s).replace(',','.')); if(iqd||(currency==='IQD'&&v>=1000)) v=v/(STORE.settings.usdToIqd||1450); return v; };
+  const take=(re,fn)=>{ n=n.replace(re,(...m)=>{ fn(m); return ' '; }); };
+  take(new RegExp(' (?:between|from|بین|له نیوان)\\s*\\$?'+num+cur+'\\s*(?:and|to|-|و|تا)\\s*\\$?'+num+cur,'g'),m=>{ q.min=val(m[1]); q.max=val(m[2]); });
+  take(new RegExp(' (?:under|below|less than|cheaper than|up to|upto|max|maximum|<|اقل من|اقل|تحت|ارخص من|کهمتر له|کهمتر|ژیر|خوار)\\s*\\$?'+num+cur,'g'),m=>{ q.max=val(m[1]); });
+  take(new RegExp(' (?:over|above|more than|at least|min|minimum|>|اکثر من|فوق|زیاتر له|زیاتر|سهرووی)\\s*\\$?'+num+cur,'g'),m=>{ q.min=val(m[1]); });
+  take(new RegExp(' \\$\\s*'+num+'(?=\\s)| '+num+'\\s*(?:\\$|usd|dollars?|دولار|iqd|دینار)(?=\\s)','g'),m=>{ if(q.max==null) q.max=val(m[1]||m[2]); });
+  const takeWords=(words,fn)=>[...new Set(words.map(srNorm))].sort((a,b)=>b.length-a.length).forEach(w=>{ if(n.includes(' '+w+' ')){ n=n.split(' '+w+' ').join(' '); fn(); } });
+  Object.entries(SR_BRAND_WORDS).forEach(([b,ws])=>takeWords(ws,()=>q.brands.add(b)));
+  Object.entries(SR_TYPE_WORDS).forEach(([k,ws])=>takeWords(ws,()=>q.types.add(k)));
+  n=n.replace(/[$.,<>-]+/g,' ').replace(/\s+/g,' ').trim();
+  q.text=n;
+  q.tokens=n.split(' ').filter(w=>w && !SR_STOP.has(w) && (w.length>1 || /\d/.test(w)));
+  srSynMap().phrases.forEach(ph=>{ if((' '+n+' ').includes(' '+ph.p+' ')) q.phraseSyn.push(ph.i); });
+  return q;
+}
+
+/* ---------- scoring ---------- */
+function srTokenScore(tok,it){
+  const forms=srForms(tok), sm=srSynMap();
+  const syn=new Set(); forms.forEach(f=>(sm.word.get(f)||[]).forEach(i=>sm.groups[i].forEach(x=>{ if(!x.includes(' ')) syn.add(x); })));
+  let best=0;
+  const field=(words,eq,pre,fuzzy)=>{
+    for(const w of words){
+      const wf=srForms(w);
+      if(forms.some(f=>wf.includes(f))){ best=Math.max(best,eq); continue; }
+      if(tok.length>=2 && wf.some(x=>x.startsWith(tok))){ best=Math.max(best,pre); continue; }
+      if(syn.size && wf.some(x=>syn.has(x))){ best=Math.max(best,eq*0.75); continue; }
+      const tol=srTol(tok);
+      if(fuzzy && tol && w.length>=4 && srDist(tok,w,tol)<=tol) best=Math.max(best,eq*0.6);
+    }
+  };
+  field(it.nameW,30,22,true);
+  field(it.catW,16,12,true);
+  field(it.brandW,12,9,false);
+  field(it.extraW,12,9,true);
+  if(best<6) field(it.descW,6,4,false);
+  if(best===0 && tok.length>=3 && it.nameN.includes(tok)) best=14;
+  return best;
+}
+let SR_TOPICS=null;
+function srTopicHits(q){
+  if(!q.text) return [];
+  if(!SR_TOPICS) SR_TOPICS=AI_TOPICS.map(tp=>({tp,keys:[...new Set(tp.keys.map(srNorm))].filter(Boolean),cats:new Set((tp.cats||[]).map(srNorm))}));
+  const n=' '+q.text+' ', hits=[];
+  SR_TOPICS.forEach(({tp,keys,cats})=>{
+    const ks=keys.filter(k=>n.includes(' '+k+' ')); if(!ks.length) return;
+    const covered=new Set(); ks.forEach(k=>k.split(' ').forEach(w=>covered.add(w)));
+    hits.push({tp,covered,cats});
+  });
+  return hits;
+}
+function srSearch(raw,opts){
+  opts=opts||{};
+  const q=srParse(raw);
+  if(opts.brand) q.brands=new Set([opts.brand]);
+  else if(opts.brandChip && opts.brandChip!=='all') q.brands=new Set([opts.brandChip]);
+  if(opts.typeChip && opts.typeChip!=='all') q.types=new Set([opts.typeChip]);
+  if(opts.maxChip!=null && q.max==null) q.max=opts.maxChip;
+  const items=(opts.items||srItems()).filter(it=>(!q.brands.size||q.brands.has(it.brand)) && (!q.types.size||q.types.has(it.kind))
+    && (q.max==null || (it.price!=null && it.price<=q.max+1e-9)) && (q.min==null || (it.price!=null && it.price>=q.min-1e-9)));
+  const hits=srTopicHits(q), full=q.text, sm=srSynMap();
+  // Curated topics (e.g. "anti-wrinkle" → the Botox category) only stand in for
+  // words that match nothing in the catalogue by themselves.
+  const direct=new Set(); q.tokens.forEach(tok=>{ if(items.some(it=>srTokenScore(tok,it)>0)) direct.add(tok); });
+  const scored=[], partial=[];
+  items.forEach(it=>{
+    if(!q.tokens.length && !q.phraseSyn.length){ scored.push({it,sc:0}); return; }   // filters only, e.g. "Polished under $50"
+    let sc=0, matched=0;
+    const topicFor=hits.filter(h=>it.kind==='svc' && h.cats.has(it.catN) && (!h.tp.brand||h.tp.brand===it.brand));
+    q.tokens.forEach(tok=>{
+      let s=srTokenScore(tok,it);
+      if(!s && !direct.has(tok) && topicFor.some(h=>h.covered.has(tok))) s=10;
+      if(!s && q.phraseSyn.some(i=>sm.groups[i].some(tm=>tm.split(' ').includes(tok)))) s=-1;   // part of a phrase handled below
+      if(s>0){ matched++; sc+=s; } else if(s<0) matched++;
+    });
+    q.phraseSyn.forEach(i=>{ const hay=' '+it.nameN+' '+it.catN+' '; if(sm.groups[i].some(tm=>hay.includes(' '+tm+' ')||hay.includes(' '+tm))) sc+=20; });
+    if(topicFor.length) sc+=8;
+    if(full){ if(it.nameN===full) sc+=100; else if(it.nameN.startsWith(full)) sc+=50; else if(it.nameN.includes(full)) sc+=30; else if(it.catN===full) sc+=20; }
+    if(sc<=0) return;
+    if(matched>=q.tokens.length) scored.push({it,sc}); else if(matched>0) partial.push({it,sc:sc*matched/q.tokens.length});
+  });
+  const order=(a,b)=>b.sc-a.sc || (a.it.date&&b.it.date?(a.it.date+a.it.time).localeCompare(b.it.date+b.it.time):0) || a.it.name.localeCompare(b.it.name);
+  scored.sort(order); partial.sort(order);
+  const res={q,exact:scored,related:scored.length?[]:partial.slice(0,12),dym:null,alts:[]};
+  if(!scored.length && q.tokens.length) res.dym=srDidYouMean(q,opts.items||srItems());
+  if(!scored.length){
+    const bs=q.brands.size?[...q.brands]:Object.keys(BRANDS);
+    bs.forEach(b=>catsFor(b).forEach(c=>{ if(res.alts.length<10) res.alts.push({brand:b,cat:c}); }));
+  }
+  return res;
+}
+// "Did you mean …?" — the nearest real word from the catalogue, spelled as it is there.
+function srDidYouMean(q,items){
+  const vocab=new Map();
+  items.forEach(it=>[it.name,it.cat].forEach(txt=>String(txt||'').split(/\s+/).forEach(orig=>{
+    const clean=orig.replace(/[()\[\],.:;!?"“”]+/g,''); const k=srNorm(clean).replace(/[$.,<>-]+/g,'');
+    if(k.length>=3 && !vocab.has(k)) vocab.set(k,clean); })));
+  let changed=false;
+  const words=q.tokens.map(tok=>{
+    if(vocab.has(tok)||srSynMap().word.has(tok)) return tok;
+    let best=null, bd=9; const tol=tok.length>=6?2:(tok.length>=3?1:0); if(!tol) return tok;
+    vocab.forEach((orig,k)=>{ const d=srDist(tok,k,tol); if(d<=tol && d<bd){ bd=d; best=orig; } });
+    if(best){ changed=true; return best; } return tok;
+  });
+  return changed?words.join(' '):null;
+}
+
+/* ---------- the search screen ---------- */
+const SR_RECENT_KEY='dolce_recent_searches';
+function srRecent(){ try{ const a=JSON.parse(localStorage.getItem(SR_RECENT_KEY)||'[]'); return Array.isArray(a)?a.filter(x=>typeof x==='string').slice(0,8):[]; }catch(e){ return []; } }
+function srRemember(qs){ qs=String(qs||'').trim(); if(qs.length<2) return; try{ const a=srRecent().filter(x=>x.toLowerCase()!==qs.toLowerCase()); a.unshift(qs); localStorage.setItem(SR_RECENT_KEY,JSON.stringify(a.slice(0,8))); }catch(e){} }
+function srForget(){ try{ localStorage.removeItem(SR_RECENT_KEY); }catch(e){} }
+let SR={open:false,scope:'all',q:'',brandChip:'all',typeChip:'all',maxChip:null,seq:0,timer:null};
+const SR_PRICES=[25,50,100,200];
+function srPriceLabel(v){ return t('srUnder').replace('{p}',fmtMoney(v)); }
+function openSearch(scope){
+  closeSearch();
+  SR.open=true; SR.scope=BRANDS[scope]?scope:'all'; SR.q=''; SR.brandChip='all'; SR.typeChip='all'; SR.maxChip=null;
+  const host=document.querySelector('.phone')||document.body;
+  const el=document.createElement('div'); el.className='sr-ov'; el.id='srOverlay'; el.setAttribute('role','dialog'); el.setAttribute('aria-modal','true');
+  const ph=SR.scope==='all'?t('searchAll'):t('searchIn').replace('{b}',BRANDS[SR.scope].name);
+  el.setAttribute('aria-label',ph);
+  el.innerHTML=`<div class="sr-head">
+      <button class="sr-back" type="button" aria-label="${attr(t('srBack'))}">‹</button>
+      <label class="sr-field">${ICONS.search}<input id="srInput" type="search" enterkeyhint="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="${attr(ph)}" dir="auto">
+        <button class="sr-x" type="button" aria-label="${attr(t('srClearQ'))}" hidden>✕</button></label>
+    </div>
+    <div class="sr-chips" id="srChips"></div>
+    <div class="sr-body" id="srBody" aria-live="polite"></div>`;
+  host.appendChild(el);
+  try{ history.pushState({dolce:1,screen:currentScreen,sr:1},''); }catch(e){}
+  const inp=el.querySelector('#srInput'), x=el.querySelector('.sr-x');
+  // Closing goes through the browser history (like the phone's Back button), so
+  // the screen underneath is left exactly as it was, scroll position included.
+  el.querySelector('.sr-back').addEventListener('click',()=>srLeave(null));
+  x.addEventListener('click',()=>{ inp.value=''; SR.q=''; x.hidden=true; srRun(); inp.focus(); });
+  inp.addEventListener('input',()=>{ x.hidden=!inp.value; clearTimeout(SR.timer); SR.timer=setTimeout(()=>{ SR.q=inp.value; srRun(); },140); });
+  inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); clearTimeout(SR.timer); SR.q=inp.value; srRemember(SR.q); srRun(); inp.blur(); } });
+  srRun();
+  setTimeout(()=>{ try{ inp.focus(); }catch(e){} },60);
+  // Class times are fetched when search opens; only the newest request may redraw.
+  const seq=++SR.seq;
+  if(SR.scope==='all'||SR.scope==='core') srEnsureClasses().catch(()=>{}).then(()=>{ if(SR.open && seq===SR.seq) srRun(); });
+}
+function srLeave(after){
+  SR.after=after||null;
+  let ours=false; try{ ours=!!(history.state&&history.state.sr); }catch(e){}
+  if(ours){ history.back(); setTimeout(()=>{ if(document.getElementById('srOverlay')) srFinishLeave(); },400); }
+  else srFinishLeave();
+}
+function srFinishLeave(){ const a=SR.after; SR.after=null; closeSearch(); if(a) setTimeout(a,0); }
+function closeSearch(){
+  const el=document.getElementById('srOverlay');
+  SR.open=false; clearTimeout(SR.timer); SR.seq++;
+  if(!el) return false; el.remove(); return true;
+}
+function srChipsHtml(){
+  const chip=(grp,val,label,on)=>`<button class="sr-chip ${on?'on':''}" data-sr-${grp}="${val}" type="button" aria-pressed="${on}">${esc(label)}</button>`;
+  let h='';
+  if(SR.scope==='all') h+=['all',...Object.keys(BRANDS)].map(b=>chip('b',b,b==='all'?t('srAll'):BRANDS[b].name,SR.brandChip===b)).join('')+'<span class="sr-sep"></span>';
+  const types=[['all',t('srAllTypes')],['svc',t('srServices')],['prod',t('srProducts')]];
+  if((SR.scope==='all'||SR.scope==='core') && srClassSource().kind!=='none') types.push(['cls',t('srClasses')]);
+  h+=types.map(([k,l])=>chip('t',k,l,SR.typeChip===k)).join('');
+  if(SR.typeChip!=='cls') h+='<span class="sr-sep"></span>'+[null,...SR_PRICES].map(v=>chip('p',v==null?'':v,v==null?t('srAnyPrice'):srPriceLabel(v),SR.maxChip===v)).join('');
+  return h;
+}
+function srRowHtml(it){
+  const brand=BRANDS[it.brand]?BRANDS[it.brand].name:'';
+  if(it.kind==='cls'){
+    const d=new Date(it.date+'T12:00:00');
+    return `<button class="sr-row" type="button" data-sr-go="cls" data-id="${attr(it.id)}" data-date="${attr(it.date)}">
+      <div class="sr-cal"><b>${d.getDate()}</b><span>${esc(fmtDow(d))}</span></div>
+      <div class="sr-info"><div class="sr-n" dir="auto">${esc(it.name)}</div><div class="sr-m">${esc(brand)} · <span dir="ltr">${esc(it.time)}</span>${it.instructor?' · '+esc(t('withInstructor').replace('{name}',it.instructor)):''}</div></div>
+      <div class="sr-p">${it.dur?`<small>${esc(t('minutesShort').replace('{n}',it.dur))}</small>`:''}${it.src==='mb'||it.src==='man'?'<small>Mindbody ↗</small>':''}</div></button>`;
+  }
+  const out=it.kind==='prod' && numOr0(it.item.stock)<=0;
+  return `<button class="sr-row" type="button" data-sr-go="${it.kind}" data-brand="${attr(it.brand)}" data-id="${attr(it.id)}">
+    ${mediaHtml(it.image,'thumbnail',{cls:'sr-img',fallback:brandFallback(it.brand),alt:''})}
+    <div class="sr-info"><div class="sr-n" dir="auto">${esc(it.name)}</div><div class="sr-m">${esc(brand)}${it.cat?' · <span dir="auto">'+esc(it.cat)+'</span>':''}${out?` · <span class="sr-out">${esc(t('soldOut'))}</span>`:''}</div></div>
+    <div class="sr-p">${priceHtml(it.item)}${it.kind==='svc'&&it.item.dur?`<small>${esc(fmtDur(it.item.dur))}</small>`:''}</div></button>`;
+}
+function srRun(){
+  const body=document.getElementById('srBody'); if(!body) return;
+  const chips=document.getElementById('srChips'); if(chips) chips.innerHTML=srChipsHtml();
+  const qs=String(SR.q||'').trim();
+  const offline=typeof navigator!=='undefined'&&navigator.onLine===false;
+  const src=srClassSource();
+  const wantCls=(SR.scope==='all'||SR.scope==='core') && src.kind!=='none' && (SR.typeChip==='all'||SR.typeChip==='cls');
+  let html=offline?`<div class="sr-note sr-warn">${esc(t('srOffline'))}</div>`:'';
+  const filtersOn=SR.brandChip!=='all'||SR.typeChip!=='all'||SR.maxChip!=null;
+  if(!qs && !filtersOn){
+    const rec=srRecent();
+    if(rec.length) html+=`<div class="sr-group"><div class="sr-gh"><h4>${esc(t('srRecent'))}</h4><button class="sr-link" data-sr-forget type="button">${esc(t('srClearHistory'))}</button></div>
+      ${rec.map(r=>`<button class="sr-recent" type="button" data-sr-q="${attr(r)}"><span aria-hidden="true">↺</span> <span dir="auto">${esc(r)}</span></button>`).join('')}</div>`;
+    const bs=SR.scope==='all'?Object.keys(BRANDS):[SR.scope];
+    html+=`<div class="sr-group"><h4>${esc(t('srBrowse'))}</h4><div class="sr-cats">${bs.map(b=>catsFor(b).map(c=>`<button class="sr-cat" type="button" data-sr-q="${attr(c)}" data-sr-cb="${b}"><span dir="auto">${esc(c)}</span>${SR.scope==='all'?` <small>${esc(BRANDS[b].name)}</small>`:''}</button>`).join('')).join('')}</div></div>`;
+    body.innerHTML=html; srBind(body); return;
+  }
+  const res=srSearch(qs,{brand:SR.scope==='all'?null:SR.scope,brandChip:SR.brandChip,typeChip:SR.typeChip,maxChip:SR.maxChip});
+  const list=res.exact.length?res.exact:res.related;
+  const groups={svc:[],prod:[],cls:[]}; list.forEach(x=>groups[x.it.kind].push(x.it));
+  const seen={}; groups.cls=groups.cls.filter(it=>{ const k=it.nameN; seen[k]=(seen[k]||0)+1; return seen[k]<=2; }).slice(0,12);
+  const hint=[];
+  if(res.q.max!=null||res.q.min!=null) hint.push(res.q.min!=null&&res.q.max!=null?`${fmtMoney(res.q.min)} – ${fmtMoney(res.q.max)}`:res.q.max!=null?srPriceLabel(res.q.max):`${t('srFrom')} ${fmtMoney(res.q.min)}`);
+  if(SR.scope==='all'&&res.q.brands.size&&SR.brandChip==='all') hint.push([...res.q.brands].map(b=>BRANDS[b].name).join(', '));
+  if(hint.length) html+=`<div class="sr-note">${esc(t('srShowing'))}: <b>${esc(hint.join(' · '))}</b></div>`;
+  if(!res.exact.length){
+    html+=`<div class="sr-empty"><div class="sr-empty-t">${esc(t('srNoResults').replace('{q}',qs||'—'))}</div>
+      ${res.dym?`<div>${esc(t('srDidYouMean'))} <button class="sr-link" type="button" data-sr-q="${attr(res.dym)}" dir="auto">${esc(res.dym)}</button>?</div>`:''}</div>`;
+    if(res.related.length) html+=`<div class="sr-note">${esc(t('srRelated'))}</div>`;
+    // Searching inside one business: say so when other businesses have it.
+    if(SR.scope!=='all' && qs){ const other=srSearch(qs,{typeChip:SR.typeChip,maxChip:SR.maxChip}).exact.filter(x=>x.it.brand!==SR.scope);
+      if(other.length) html+=`<div class="sr-note">${esc(t('srElsewhere').replace('{n}',other.length))} <button class="sr-link" type="button" data-sr-all>${esc(t('searchAll'))}</button></div>`; }
+  }
+  const sec=(k,label)=>groups[k].length?`<div class="sr-group"><h4>${esc(label)} <span>${groups[k].length}</span></h4>${groups[k].map(srRowHtml).join('')}${k==='cls'?`<div class="sr-note">${esc(t('srClassNote'))}</div>`:''}</div>`:'';
+  html+=sec('svc',t('srServices'))+sec('prod',t('srProducts'))+sec('cls',t('srClasses'));
+  if(wantCls && src.loading && !src.rows.length && !offline) html+=`<div class="sr-note">${esc(t('srLoadingClasses'))}</div>`;
+  if(wantCls && src.err && !src.rows.length) html+=`<div class="sr-note sr-warn">${esc(t('srClassErr'))}</div>`;
+  if(!res.exact.length && res.alts.length) html+=`<div class="sr-group"><h4>${esc(t('srTry'))}</h4><div class="sr-cats">${res.alts.map(a=>`<button class="sr-cat" type="button" data-sr-q="${attr(a.cat)}" data-sr-cb="${a.brand}"><span dir="auto">${esc(a.cat)}</span>${SR.scope==='all'?` <small>${esc(BRANDS[a.brand].name)}</small>`:''}</button>`).join('')}</div></div>`;
+  body.innerHTML=html; srBind(body); try{ applyMediaFocus(body); }catch(e){}
+}
+function srSetQuery(v){
+  const inp=document.getElementById('srInput'); if(!inp) return;
+  inp.value=v; SR.q=v; const x=document.querySelector('#srOverlay .sr-x'); if(x) x.hidden=!v; srRun();
+}
+function srBind(body){
+  const ov=document.getElementById('srOverlay'); if(!ov) return;
+  ov.querySelectorAll('[data-sr-b]').forEach(b=>b.onclick=()=>{ SR.brandChip=b.dataset.srB; srRun(); });
+  ov.querySelectorAll('[data-sr-t]').forEach(b=>b.onclick=()=>{ SR.typeChip=b.dataset.srT; if(SR.typeChip==='cls') SR.maxChip=null; srRun(); });
+  ov.querySelectorAll('[data-sr-p]').forEach(b=>b.onclick=()=>{ SR.maxChip=b.dataset.srP===''?null:Number(b.dataset.srP); srRun(); });
+  body.querySelectorAll('[data-sr-q]').forEach(b=>b.addEventListener('click',()=>{ if(b.dataset.srCb && SR.scope==='all') SR.brandChip=b.dataset.srCb; srSetQuery(b.dataset.srQ); }));
+  body.querySelectorAll('[data-sr-all]').forEach(b=>b.addEventListener('click',()=>{
+    SR.scope='all'; SR.brandChip='all'; const inp=document.getElementById('srInput'); if(inp) inp.placeholder=t('searchAll'); srRun();
+    const seq=++SR.seq; srEnsureClasses().catch(()=>{}).then(()=>{ if(SR.open && seq===SR.seq) srRun(); }); }));
+  body.querySelectorAll('[data-sr-forget]').forEach(b=>b.addEventListener('click',()=>{ srForget(); srRun(); }));
+  body.querySelectorAll('[data-sr-go]').forEach(b=>b.addEventListener('click',()=>{
+    srRemember(SR.q); const kind=b.dataset.srGo, id=b.dataset.id, brand=b.dataset.brand, d=b.dataset.date;
+    srLeave(()=>{
+    if(kind==='svc'){ currentBrand=brand; currentService=id; goto('detail'); }
+    else if(kind==='prod'){ currentProduct=id; goto('product'); }
+    else if(kind==='cls'){
+      currentBrand='core'; currentCat='All';
+      if(mindbodyOn()){ MBS.week=Math.max(0,Math.floor((new Date(d+'T12:00:00')-mbWeekStart(0))/(7*864e5))); MBS.type='all'; }
+      else TT.day=new Date(d+'T00:00:00');
+      goto('services');
+      setTimeout(()=>{ const s=screenEl.querySelector('.tt-sec'); if(s) s.scrollIntoView({behavior:'smooth',block:'start'}); },350);
+    }
+    });
+  }));
 }
 
 const AI_TEXT={
