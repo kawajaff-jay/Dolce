@@ -205,6 +205,10 @@ The decision on customer accounts has been made — WhatsApp login is built and 
 
 Beyond that, the accounting work sketched in this document is scoped but unbuilt: recording expenses, making the dashboard show real figures rather than placeholders, and locking a service's price to what it was when the booking was made rather than what it is today. That is the natural next block of building once the items above are settled.
 
+### Until Mindbody is connected: CORE's timetable typed in by hand
+
+While Mindbody reviews the API request, the owner can type CORE's real weekly classes into Admin → Classes (day, time, class, length, instructor) and switch on "Show this weekly timetable to clients". Clients then see the week's classes on Core's page, but "Book" still opens CORE's Mindbody page. Dolce+ does not take class bookings or count places, so a class can never be booked in two systems. The typed timetable has to be kept the same as Mindbody by hand. Once Mindbody's live schedule is connected, it replaces the typed one automatically. The database only lets the app read these times (no places, no client data) while the owner's switch is on (supabase_migration_core_manual_timetable.sql).
+
 ## Service descriptions: tidy layout without changing the words
 
 Service descriptions are still saved exactly as typed, as plain text, so nothing in the database changes. The app lays them out when it shows them. A line starting with "* " becomes a bullet, a short line ending with ":" (such as "Best For:") becomes a small label, and an empty line starts a new paragraph. Older descriptions that were pasted as one long line ("… Best For: * A * B") are split the same way, and a title pasted in front of the first sentence is shown as a heading. Anything typed is shown as text, never run as code. Each paragraph follows its own language direction, so an English description reads correctly inside the Kurdish or Arabic app. A duration typed as a plain number is shown in minutes ("45-60" → "45–60 min"). The Admin service form shows a live preview, exactly as clients will see it.
