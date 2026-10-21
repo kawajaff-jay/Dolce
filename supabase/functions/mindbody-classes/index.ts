@@ -54,14 +54,21 @@ export function mapClass(c: any): MbClass | null {
   const name = String(c.ClassDescription?.Name ?? "").trim();
   const program = String(c.ClassDescription?.Program?.Name ?? "");
   const staff = c.Staff ? String(c.Staff.DisplayName || c.Staff.Name || [c.Staff.FirstName, c.Staff.LastName].filter(Boolean).join(" ")).trim() : "";
-  // Places as Mindbody shows them to online clients: web capacity when set.
-  const cap = Number.isFinite(c.WebCapacity) && c.WebCapacity > 0 ? c.WebCapacity : (Number.isFinite(c.MaxCapacity) ? c.MaxCapacity : null);
-  const booked = Number.isFinite(c.WebCapacity) && c.WebCapacity > 0 && Number.isFinite(c.WebBooked) ? c.WebBooked
-    : (Number.isFinite(c.TotalBooked) ? c.TotalBooked : null);
+  // Places: count EVERY booking (made online, at the desk or by staff), not
+  // only web bookings — otherwise a class with 5 of 7 taken at the desk would
+  // show "7 places left". The tighter of the overall and the online limit wins.
+  const n = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
+  const max = n(c.MaxCapacity), total = n(c.TotalBooked), web = n(c.WebCapacity), webBooked = n(c.WebBooked);
+  const cap = max ?? (web && web > 0 ? web : null);
+  const booked = total ?? webBooked;
+  const lefts: number[] = [];
+  if (max != null && total != null) lefts.push(max - total);
+  if (web != null && web > 0 && webBooked != null) lefts.push(web - webBooked);
+  if (!lefts.length && cap != null && booked != null) lefts.push(cap - booked);
   return {
     id: String(c.Id ?? `${c.ClassScheduleId}-${start}`), date: start.slice(0, 10), start, end, name: name || program || "Class",
     type: classType(name, program), instructor: staff,
-    capacity: cap, booked, places_left: cap != null && booked != null ? Math.max(0, cap - booked) : null,
+    capacity: cap, booked, places_left: lefts.length ? Math.max(0, Math.min(...lefts)) : null,
     waitlist: !!c.IsWaitlistAvailable, substitute: !!c.Substitute,
   };
 }
@@ -121,7 +128,7 @@ export async function handle(req: Request): Promise<Response> {
   // One shared window (today + 4 weeks) → at most one paid call per 15 minutes.
   const now = new Date(); const from = new Date(now.getTime() + 3 * 3600e3);   // Erbil "today"
   const to = new Date(from.getTime() + WEEKS * 7 * 864e5);
-  const key = "core";
+  const key = "core-v2";   // v2: places count all bookings (older saved copies are ignored)
   try {
     const c = await rest(`mindbody_cache?select=payload,fetched_at&id=eq.${key}`);
     const row = c.ok ? (await c.json())[0] : null;
