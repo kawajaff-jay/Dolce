@@ -222,3 +222,12 @@ It matches names, categories, brands and descriptions in English, Arabic and Kur
 CORE classes appear only when a timetable is switched on (Dolce+'s own, or Mindbody's). Search shows times, never guarantees a place: places are confirmed when the client books. No AI service was added, because catalogue search already covers these requests without cost or sending client searches elsewhere.
 
 The Shop has its own "Search products" box. It uses the same matching (typos, Arabic and Kurdish, synonyms, "under $30") and stays within the brand, category and favourites the client has chosen. If nothing matches but other brands or filters have it, it says so and offers to clear the filters. Opening a product from the Shop and coming back, with the in-app back button, the browser's Back or the iPhone swipe, returns to the same place: same search, brand, category and sorting, with the product just opened in the same spot on screen. Opening the Shop from the bottom menu is a fresh visit and starts at the top. When new data arrives in the background, the screen being looked at no longer jumps to the top.
+
+## CORE classes booked in Dolce+, straight into Mindbody
+
+Clients choose a CORE class time inside Dolce+ (the live Mindbody list, with real places left) and tap **Book**, then **Confirm Booking**. The server function `mindbody-book` checks who the client is from their Dolce+ login, finds them in CORE's Mindbody (exact phone or e-mail match only) or adds them as a new Mindbody client, and books them into the class. Mindbody counts the places, so a full class is refused by Mindbody itself, and the booking appears in Mindbody at once for Shatu.
+
+- **Payment:** not taken in the app. If the client has a CORE package in Mindbody, Mindbody uses it; otherwise the visit shows as unpaid and CORE takes payment at the studio.
+- **Cancelling:** done by CORE for now (the app says "To cancel, please contact CORE").
+- **"You're booked":** the timetable marks the client's own upcoming classes, read from Mindbody.
+- **Needs:** a CORE Mindbody staff login saved as server secrets (`MINDBODY_STAFF_USERNAME`, `MINDBODY_STAFF_PASSWORD`) — Mindbody requires a staff login for any booking — and the one-time `supabase_migration_mindbody_booking.sql`.
