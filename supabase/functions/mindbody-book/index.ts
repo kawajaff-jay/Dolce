@@ -1,31 +1,43 @@
 // Dolce+ — book a CORE class straight into Mindbody from the app.
 //
-// A signed-in Dolce+ client taps "Book" on a class in CORE's live timetable.
-// This function, on the server:
-//   1. checks who the client is from their Dolce+ login (never trusts the app);
-//   2. finds that client in CORE's Mindbody (exact phone or e-mail match only),
-//      or adds them as a new Mindbody client, and remembers the link;
-//   3. adds them to the class in Mindbody (official Public API v6,
-//      POST /class/addclienttoclass). Mindbody is the one that counts places,
-//      so a full class is refused by Mindbody itself.
-// Payment is NOT taken in the app: if the client has a CORE package in
-// Mindbody, Mindbody uses it; otherwise the visit is unpaid and CORE takes
-// payment at the studio (RequirePayment:false).
-// Cancelling is done by CORE for now (not from the app).
+// SAFETY RULES (checked by tests):
+//  * Who the client is comes ONLY from their Dolce+ login, checked here with
+//    Supabase Auth. Nothing the app sends about the client is trusted — the app
+//    sends only the action and the Mindbody class id.
+//  * An existing Mindbody client is linked only through a contact the client has
+//    PROVED they own: the phone number or e-mail they verified with a one-time
+//    code when logging in to Dolce+. Contacts typed into a profile are never
+//    used for matching. If the verified contacts point to more than one Mindbody
+//    client, or to a client already linked to someone else, nothing is linked or
+//    booked: the case is saved for CORE to review (mindbody_link_issues).
+//  * "Booked" is returned only when Mindbody confirms the reservation. Repeated
+//    taps or retries cannot book twice: one attempt per client and class at a
+//    time (mindbody_booking_attempts), and Mindbody is checked for an existing
+//    booking before adding one.
+//  * Booking is OFF unless the server secret MINDBODY_BOOKING says otherwise:
+//      off  (default) nobody can book from Dolce+
+//      test           only the verified phones / e-mails in MINDBODY_BOOKING_TESTERS
+//      on             every signed-in client
+//
+// Payment is NOT taken in the app. The booking is made with RequirePayment:false
+// (CORE's package rules in Mindbody decide what happens) — this MUST be checked in
+// a controlled live test against CORE's real Mindbody settings before "on".
+// Cancelling is done by CORE for now.
 //
 // Secrets (Supabase → Edge Functions → Secrets). Never put these in the app:
-//   MINDBODY_API_KEY, MINDBODY_SITE_ID          (already set)
-//   MINDBODY_STAFF_USERNAME / MINDBODY_STAFF_PASSWORD
-//        a CORE Mindbody staff login allowed to add clients and book them
-//        into classes. Mindbody requires a staff login for any booking.
+//   MINDBODY_API_KEY, MINDBODY_SITE_ID                 (already set)
+//   MINDBODY_STAFF_USERNAME / MINDBODY_STAFF_PASSWORD  dedicated CORE staff login for Dolce+
+//   MINDBODY_BOOKING           off | test | on
+//   MINDBODY_BOOKING_TESTERS   e.g. "9647501234567,someone@example.com" (verified contacts)
 // Provided automatically: SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY.
-// Deploy with "Verify JWT" OFF — the function checks the client's login itself.
+// Deploy with "Verify JWT" OFF — this function checks the login itself.
 //
-// Actions (POST JSON, with the client's login token in Authorization):
-//   {action:"mine"}                 → {status:"ok", class_ids:[…]} upcoming classes
-//   {action:"book", class_id:"123"} → {status:"ok"} or {status:"error", code, message}
-//     codes: SIGN_IN, NO_CLIENT, CLASS_FULL, ALREADY_BOOKED, CLASS_UNAVAILABLE,
-//            NEEDS_STAFF_LOGIN, CLIENT_FIELDS (Mindbody wants more details), MINDBODY
+// Actions (POST JSON, client's login token in Authorization):
+//   {action:"mine"}                 → {status:"ok", can_book, class_ids:[…]}
+//   {action:"book", class_id:"123"} → {status:"ok", class_id} or {status:"error", code}
+//     codes: SIGN_IN, BOOKING_OFF, LINK_REVIEW, CLASS_FULL, ALREADY_BOOKED,
+//            CLASS_UNAVAILABLE, IN_PROGRESS, UNCONFIRMED, NEEDS_STAFF_LOGIN,
+//            CLIENT_FIELDS, MINDBODY
 
 const env = (k: string) => Deno.env.get(k) ?? "";
 const MB = () => env("MINDBODY_BASE_URL") || "https://api.mindbodyonline.com/public/v6";
@@ -36,6 +48,7 @@ const CORS = {
 };
 const out = (b: unknown) => new Response(JSON.stringify(b), { status: 200, headers: { ...CORS, "Content-Type": "application/json" } });
 const fail = (code: string, message = "") => out({ status: "error", code, message: message.slice(0, 300) });
+class MbError extends Error { constructor(public code: string, msg: string) { super(msg); } }
 
 async function rest(path: string, init: RequestInit = {}): Promise<Response> {
   const k = env("SUPABASE_SERVICE_ROLE_KEY");
@@ -43,23 +56,37 @@ async function rest(path: string, init: RequestInit = {}): Promise<Response> {
     ...init, headers: { apikey: k, Authorization: `Bearer ${k}`, "Content-Type": "application/json", ...(init.headers ?? {}) },
   });
 }
-
-// ---- who is asking (from their Dolce+ login) ----
-async function whoIs(req: Request): Promise<string> {
-  const auth = req.headers.get("Authorization") ?? "";
-  if (!/^Bearer\s+\S+/.test(auth)) return "";
-  const r = await fetch(`${env("SUPABASE_URL")}/auth/v1/user`, { headers: { apikey: env("SUPABASE_ANON_KEY"), Authorization: auth } });
-  if (!r.ok) return "";
-  const u = await r.json();
-  return String(u?.id ?? "");
+// deno-lint-ignore no-explicit-any
+async function restJson(path: string): Promise<any[]> {
+  const r = await rest(path);
+  if (!r.ok) throw new MbError("MINDBODY", `database ${r.status}`);
+  return await r.json();
 }
-type Client = { id: string; name: string; phone: string; email: string };
-async function dolceClient(userId: string): Promise<Client | null> {
-  const r = await rest(`clients?select=id,name,phone,contact_phone,email&user_id=eq.${encodeURIComponent(userId)}&limit=1`);
+const enc = encodeURIComponent;
+
+// ---- who is asking: Supabase Auth checks the login token ----
+export type Me = { userId: string; phone: string; email: string; name: string; clientId: string };
+const digits = (s: unknown) => String(s ?? "").replace(/\D/g, "");
+export async function whoIs(req: Request): Promise<Me | null> {
+  const auth = req.headers.get("Authorization") ?? "";
+  if (!/^Bearer\s+\S+$/.test(auth)) return null;
+  const r = await fetch(`${env("SUPABASE_URL")}/auth/v1/user`, { headers: { apikey: env("SUPABASE_ANON_KEY"), Authorization: auth } });
   if (!r.ok) return null;
-  const c = (await r.json())[0];
-  if (!c) return null;
-  return { id: String(c.id), name: String(c.name ?? "").trim(), phone: String(c.phone || c.contact_phone || "").replace(/\D/g, ""), email: String(c.email ?? "").trim().toLowerCase() };
+  const u = await r.json();
+  if (!u?.id || u?.role !== "authenticated" || u?.is_anonymous) return null;
+  // Only contacts proved with a one-time code count.
+  const phone = u.phone && u.phone_confirmed_at ? digits(u.phone) : "";
+  const email = u.email && u.email_confirmed_at ? String(u.email).trim().toLowerCase() : "";
+  const rows = await restJson(`clients?select=id,name&user_id=eq.${enc(u.id)}&limit=1`);
+  return { userId: String(u.id), phone, email, name: String(rows[0]?.name ?? "").trim(), clientId: String(rows[0]?.id ?? "") };
+}
+
+export function bookingAllowed(me: Me): boolean {
+  const mode = env("MINDBODY_BOOKING").trim().toLowerCase();
+  if (mode === "on") return true;
+  if (mode !== "test") return false;
+  const list = env("MINDBODY_BOOKING_TESTERS").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
+  return list.some((x) => (me.phone && digits(x) && digits(x) === me.phone) || (me.email && x === me.email));
 }
 
 // ---- Mindbody ----
@@ -77,7 +104,6 @@ async function staffToken(): Promise<string> {
   tokenCache = { token: String(j.AccessToken ?? ""), at: Date.now() };
   return tokenCache.token;
 }
-class MbError extends Error { constructor(public code: string, msg: string) { super(msg); } }
 // deno-lint-ignore no-explicit-any
 async function mb(path: string, init: { method?: string; body?: unknown } = {}): Promise<any> {
   const tok = await staffToken();
@@ -98,84 +124,139 @@ async function mb(path: string, init: { method?: string; body?: unknown } = {}):
 }
 export function mapCode(code: string, msg: string): string {
   const s = `${code} ${msg}`.toLowerCase();
-  if (/full|capacity|maxcapacity/.test(s)) return "CLASS_FULL";
-  if (/already (booked|enrolled|in|scheduled)|alreadybooked|clientalready/.test(s)) return "ALREADY_BOOKED";
-  if (/cancel|not found|invalidclass|past|started|online booking/.test(s) && /class/.test(s)) return "CLASS_UNAVAILABLE";
-  if (/required|missing/.test(s) && /client|field/.test(s)) return "CLIENT_FIELDS";
-  if (/unauthori|staff|permission|token/.test(s)) return "NEEDS_STAFF_LOGIN";
+  if (/full|capacity/.test(s)) return "CLASS_FULL";
+  if (/already/.test(s) && /(book|enrol|class|schedul|visit)/.test(s)) return "ALREADY_BOOKED";
+  if (/class/.test(s) && /(cancel|not found|invalid|past|started|online booking|not bookable)/.test(s)) return "CLASS_UNAVAILABLE";
+  if (/(required|missing)/.test(s) && /(client|field)/.test(s)) return "CLIENT_FIELDS";
+  if (/(unauthori|forbidden|permission|staff|token)/.test(s)) return "NEEDS_STAFF_LOGIN";
   return "MINDBODY";
 }
-
-const last9 = (p: string) => p.replace(/\D/g, "").slice(-9);
+const last9 = (p: string) => digits(p).slice(-9);
 export function splitName(n: string): { first: string; last: string } {
   const parts = n.trim().split(/\s+/).filter(Boolean);
   if (parts.length <= 1) return { first: parts[0] || "Dolce+", last: parts[0] || "Client" };
   return { first: parts.slice(0, -1).join(" "), last: parts[parts.length - 1] };
 }
 
-// The Mindbody client for this Dolce+ client: remembered link → exact match → new.
-async function mbClientId(userId: string, c: Client): Promise<string> {
-  const saved = await rest(`mindbody_clients?select=mb_client_id&user_id=eq.${encodeURIComponent(userId)}&limit=1`);
-  if (saved.ok) { const row = (await saved.json())[0]; if (row?.mb_client_id) return String(row.mb_client_id); }
+async function flag(me: Me, reason: string, candidates: string[]) {
+  await rest("mindbody_link_issues", { method: "POST", headers: { Prefer: "resolution=merge-duplicates" },
+    body: JSON.stringify({ user_id: me.userId, client_id: me.clientId, reason, candidates, verified_phone: me.phone, verified_email: me.email, updated_at: new Date().toISOString() }) });
+}
 
-  let id = "";
-  // Only an exact phone (last 9 digits) or exact e-mail match counts, and only if
-  // it is the one and only match — never guess between two people.
-  for (const q of [c.phone ? last9(c.phone) : "", c.email].filter(Boolean)) {
-    const j = await mb(`/client/clients?${new URLSearchParams({ SearchText: q, Limit: "20" })}`);
+// The Mindbody client for this person: saved link → verified-contact match → new client.
+// Returns "" when the case must be reviewed by CORE (it is flagged).
+export async function mbClientId(me: Me): Promise<string> {
+  const saved = await restJson(`mindbody_clients?select=mb_client_id&user_id=eq.${enc(me.userId)}&limit=1`);
+  if (saved[0]?.mb_client_id) return String(saved[0].mb_client_id);
+  if (!me.phone && !me.email) { await flag(me, "no verified phone or e-mail", []); return ""; }
+
+  const byPhone = new Set<string>(), byEmail = new Set<string>();
+  if (me.phone) {
+    const j = await mb(`/client/clients?${new URLSearchParams({ SearchText: last9(me.phone), Limit: "50" })}`);
     // deno-lint-ignore no-explicit-any
-    const hits = (j?.Clients ?? []).filter((x: any) =>
-      (c.phone && [x.MobilePhone, x.HomePhone, x.WorkPhone].some((p: unknown) => p && last9(String(p)) === last9(c.phone))) ||
-      (c.email && String(x.Email ?? "").trim().toLowerCase() === c.email));
-    if (hits.length === 1) { id = String(hits[0].Id); break; }
-    if (hits.length > 1) break;   // two people share it: add a fresh client rather than pick one
+    for (const x of j?.Clients ?? []) if ([x.MobilePhone, x.HomePhone, x.WorkPhone].some((p: unknown) => p && last9(String(p)) === last9(me.phone))) byPhone.add(String(x.Id));
   }
-  if (!id) {
-    const { first, last } = splitName(c.name);
+  if (me.email) {
+    const j = await mb(`/client/clients?${new URLSearchParams({ SearchText: me.email, Limit: "50" })}`);
+    // deno-lint-ignore no-explicit-any
+    for (const x of j?.Clients ?? []) if (String(x.Email ?? "").trim().toLowerCase() === me.email) byEmail.add(String(x.Id));
+  }
+  const all = [...new Set([...byPhone, ...byEmail])];
+  if (byPhone.size > 1) { await flag(me, "verified phone matches several Mindbody clients", all); return ""; }
+  if (byEmail.size > 1) { await flag(me, "verified e-mail matches several Mindbody clients", all); return ""; }
+  if (all.length > 1) { await flag(me, "verified phone and e-mail match different Mindbody clients", all); return ""; }
+
+  let id = all[0] ?? "";
+  if (id) {
+    const taken = await restJson(`mindbody_clients?select=user_id&mb_client_id=eq.${enc(id)}&limit=1`);
+    if (taken[0] && String(taken[0].user_id) !== me.userId) { await flag(me, "Mindbody client already linked to another Dolce+ account", [id]); return ""; }
+  } else {
+    const { first, last } = splitName(me.name);
     const body: Record<string, unknown> = { FirstName: first, LastName: last };
-    if (c.phone) body.MobilePhone = "+" + c.phone;
-    if (c.email) body.Email = c.email;
+    if (me.phone) body.MobilePhone = "+" + me.phone;
+    if (me.email) body.Email = me.email;
     const j = await mb("/client/addclient", { method: "POST", body });
     id = String(j?.Client?.Id ?? "");
     if (!id) throw new MbError("MINDBODY", "Mindbody did not return a client id");
   }
-  await rest("mindbody_clients", { method: "POST", headers: { Prefer: "resolution=merge-duplicates" },
-    body: JSON.stringify({ user_id: userId, client_id: c.id, mb_client_id: id }) });
+  const r = await rest("mindbody_clients", { method: "POST",
+    body: JSON.stringify({ user_id: me.userId, client_id: me.clientId, mb_client_id: id, linked_by: all.length ? "verified_contact" : "new_client" }) });
+  if (!r.ok && r.status !== 409) throw new MbError("MINDBODY", `database ${r.status}`);
   return id;
 }
 
 const ymd = (d: Date) => d.toISOString().slice(0, 10);
+async function bookedClassIds(mbId: string): Promise<string[]> {
+  const from = new Date(Date.now() + 3 * 3600e3 - 864e5), to = new Date(from.getTime() + 40 * 864e5);
+  const j = await mb(`/client/clientvisits?${new URLSearchParams({ ClientId: mbId, StartDate: ymd(from), EndDate: ymd(to) })}`);
+  // deno-lint-ignore no-explicit-any
+  return [...new Set<string>((j?.Visits ?? []).filter((v: any) => v.ClassId && !v.LateCancelled).map((v: any) => String(v.ClassId)))];
+}
+
+// One attempt per client+class at a time. Returns false if another one is running.
+async function claim(userId: string, classId: number): Promise<boolean> {
+  const row = { user_id: userId, class_id: classId, state: "pending", updated_at: new Date().toISOString() };
+  const r = await rest("mindbody_booking_attempts", { method: "POST", body: JSON.stringify(row) });
+  if (r.ok) return true;
+  if (r.status !== 409) throw new MbError("MINDBODY", `database ${r.status}`);
+  // An older attempt exists: take it over only if it is finished or stuck (> 2 minutes).
+  const stale = new Date(Date.now() - 120e3).toISOString();
+  const u = await rest(`mindbody_booking_attempts?user_id=eq.${enc(userId)}&class_id=eq.${classId}&or=${enc(`(state.neq.pending,updated_at.lt."${stale}")`)}`,
+    { method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify({ state: "pending", updated_at: row.updated_at }) });
+  return u.ok && (await u.json()).length === 1;
+}
+async function settle(userId: string, classId: number, state: string, detail = "") {
+  await rest(`mindbody_booking_attempts?user_id=eq.${enc(userId)}&class_id=eq.${classId}`,
+    { method: "PATCH", body: JSON.stringify({ state, detail: detail.slice(0, 300), updated_at: new Date().toISOString() }) });
+}
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return fail("MINDBODY", "POST only");
-  if (!env("MINDBODY_API_KEY") || !env("MINDBODY_SITE_ID")) return fail("MINDBODY", "Mindbody is not connected on the server.");
   // deno-lint-ignore no-explicit-any
   let body: any = {}; try { body = await req.json(); } catch { /* */ }
-  const userId = await whoIs(req);
-  if (!userId) return fail("SIGN_IN");
-  const c = await dolceClient(userId);
-  if (!c) return fail("NO_CLIENT");
+  let me: Me | null = null;
+  try { me = await whoIs(req); } catch { /* */ }
+  if (!me) return fail("SIGN_IN");
+  const can = bookingAllowed(me);
   try {
     if (body.action === "mine") {
-      const saved = await rest(`mindbody_clients?select=mb_client_id&user_id=eq.${encodeURIComponent(userId)}&limit=1`);
-      const row = saved.ok ? (await saved.json())[0] : null;
-      if (!row?.mb_client_id) return out({ status: "ok", class_ids: [] });   // never booked through Dolce+ yet
-      const from = new Date(Date.now() + 3 * 3600e3), to = new Date(from.getTime() + 35 * 864e5);
-      const j = await mb(`/client/clientvisits?${new URLSearchParams({ ClientId: row.mb_client_id, StartDate: ymd(from), EndDate: ymd(to) })}`);
-      // deno-lint-ignore no-explicit-any
-      const ids = (j?.Visits ?? []).filter((v: any) => v.ClassId && !v.LateCancelled).map((v: any) => String(v.ClassId));
-      return out({ status: "ok", class_ids: [...new Set(ids)] });
+      if (!can) return out({ status: "ok", can_book: false, class_ids: [] });
+      const saved = await restJson(`mindbody_clients?select=mb_client_id&user_id=eq.${enc(me.userId)}&limit=1`);
+      if (!saved[0]?.mb_client_id) return out({ status: "ok", can_book: true, class_ids: [] });
+      return out({ status: "ok", can_book: true, class_ids: await bookedClassIds(String(saved[0].mb_client_id)) });
     }
     if (body.action === "book") {
+      if (!can) return fail("BOOKING_OFF");
+      if (!env("MINDBODY_API_KEY") || !env("MINDBODY_SITE_ID")) return fail("MINDBODY", "Mindbody is not connected on the server.");
       const classId = Number(body.class_id);
-      if (!Number.isInteger(classId) || classId <= 0) return fail("CLASS_UNAVAILABLE");
-      const mbId = await mbClientId(userId, c);
-      await mb("/class/addclienttoclass", { method: "POST",
-        body: { ClientId: mbId, ClassId: classId, RequirePayment: false, Waitlist: false, SendEmail: true } });
-      // Places changed: drop the saved timetable so everyone sees the new count.
-      await rest("mindbody_cache?id=like.core*", { method: "DELETE" });
-      return out({ status: "ok" });
+      if (!Number.isSafeInteger(classId) || classId <= 0) return fail("CLASS_UNAVAILABLE");
+      if (!(await claim(me.userId, classId))) return fail("IN_PROGRESS");
+      try {
+        const mbId = await mbClientId(me);
+        if (!mbId) { await settle(me.userId, classId, "link_review"); return fail("LINK_REVIEW"); }
+        // Already in this class (an earlier tap that timed out, or booked at the desk)?
+        if ((await bookedClassIds(mbId)).includes(String(classId))) { await settle(me.userId, classId, "booked", "already in Mindbody"); return out({ status: "ok", class_id: String(classId), already: true }); }
+        let j;
+        try {
+          j = await mb("/class/addclienttoclass", { method: "POST",
+            body: { ClientId: mbId, ClassId: classId, RequirePayment: false, Waitlist: false, SendEmail: true } });
+        } catch (e) {
+          // A timeout or odd answer may still have booked: Mindbody's own list decides.
+          if (!(e instanceof MbError && e.code !== "MINDBODY") && (await bookedClassIds(mbId)).includes(String(classId))) j = { Visit: { ClassId: classId } };
+          else throw e;
+        }
+        const v = j?.Visit;
+        if (!v || (v.ClassId != null && Number(v.ClassId) !== classId)) {
+          if (!(await bookedClassIds(mbId)).includes(String(classId))) { await settle(me.userId, classId, "unconfirmed"); return fail("UNCONFIRMED"); }
+        }
+        await settle(me.userId, classId, "booked", v?.Id ? `visit ${v.Id}` : "");
+        await rest("mindbody_cache?id=like.core*", { method: "DELETE" });   // places changed
+        return out({ status: "ok", class_id: String(classId) });
+      } catch (e) {
+        await settle(me.userId, classId, "failed", String(e));
+        throw e;
+      }
     }
     return fail("MINDBODY", "Unknown action");
   } catch (e) {

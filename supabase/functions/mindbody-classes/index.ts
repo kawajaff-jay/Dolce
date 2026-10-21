@@ -26,8 +26,11 @@ const CORS = {
   "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
+// Tells the app whether booking inside Dolce+ is open (secret MINDBODY_BOOKING: off | test | on).
+// Only a hint for showing buttons — the booking function checks it again for every booking.
+const bookingMode = () => { const m = env("MINDBODY_BOOKING").trim().toLowerCase(); return m === "on" || m === "test" ? m : "off"; };
 const out = (s: number, b: unknown, extra: Record<string, string> = {}) =>
-  new Response(JSON.stringify(b), { status: s, headers: { ...CORS, "Content-Type": "application/json", ...extra } });
+  new Response(JSON.stringify(typeof b === "object" && b ? { ...b, booking: bookingMode() } : b), { status: s, headers: { ...CORS, "Content-Type": "application/json", ...extra } });
 
 export type MbClass = {
   id: string; date: string; start: string; end: string; name: string; type: "reformer" | "mat" | "yoga" | "other";

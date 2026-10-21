@@ -223,11 +223,17 @@ CORE classes appear only when a timetable is switched on (Dolce+'s own, or Mindb
 
 The Shop has its own "Search products" box. It uses the same matching (typos, Arabic and Kurdish, synonyms, "under $30") and stays within the brand, category and favourites the client has chosen. If nothing matches but other brands or filters have it, it says so and offers to clear the filters. Opening a product from the Shop and coming back, with the in-app back button, the browser's Back or the iPhone swipe, returns to the same place: same search, brand, category and sorting, with the product just opened in the same spot on screen. Opening the Shop from the bottom menu is a fresh visit and starts at the top. When new data arrives in the background, the screen being looked at no longer jumps to the top.
 
-## CORE classes booked in Dolce+, straight into Mindbody
+## CORE classes booked in Dolce+, straight into Mindbody (built — switched OFF until tested live)
 
-Clients choose a CORE class time inside Dolce+ (the live Mindbody list, with real places left) and tap **Book**, then **Confirm Booking**. The server function `mindbody-book` checks who the client is from their Dolce+ login, finds them in CORE's Mindbody (exact phone or e-mail match only) or adds them as a new Mindbody client, and books them into the class. Mindbody counts the places, so a full class is refused by Mindbody itself, and the booking appears in Mindbody at once for Shatu.
+Clients choose a CORE class time inside Dolce+ (the live Mindbody list, with real places left) and tap **Book**, then **Confirm Booking**. The server function `mindbody-book` books them into the class in CORE's Mindbody, where Shatu sees it at once. Mindbody counts the places and refuses a full class.
 
-- **Payment:** not taken in the app. If the client has a CORE package in Mindbody, Mindbody uses it; otherwise the visit shows as unpaid and CORE takes payment at the studio.
-- **Cancelling:** done by CORE for now (the app says "To cancel, please contact CORE").
-- **"You're booked":** the timetable marks the client's own upcoming classes, read from Mindbody.
-- **Needs:** a CORE Mindbody staff login saved as server secrets (`MINDBODY_STAFF_USERNAME`, `MINDBODY_STAFF_PASSWORD`) — Mindbody requires a staff login for any booking — and the one-time `supabase_migration_mindbody_booking.sql`.
+Safety rules built in:
+- **Who is booking** comes only from the client's Dolce+ login, checked on the server. The app sends only the class.
+- **Linking to an existing Mindbody client** happens only through the phone or e-mail the client proved with a one-time login code. If those point to two different Mindbody clients, or to a client already linked to someone else, nothing is booked — the case is saved (`mindbody_link_issues`) for CORE to review. With no match, a new Mindbody client is added using the verified contact.
+- **No double bookings:** one attempt per client and class at a time, and Mindbody is checked for an existing booking first.
+- **"You're booked"** appears only after Mindbody confirms the reservation.
+- **Off switch:** the server secret `MINDBODY_BOOKING` is `off` (default), `test` (only the verified contacts in `MINDBODY_BOOKING_TESTERS`) or `on`. While off, the app shows the Mindbody link exactly as before.
+
+Payment is not taken in the app (bookings are made with "payment not required"). Whether CORE's packages are used automatically and how unpaid bookings appear **must be confirmed in a controlled live test** against CORE's real Mindbody settings before switching to `on`. Cancelling is done by CORE for now.
+
+Setup still needed: a dedicated CORE Mindbody staff login for Dolce+ (secrets `MINDBODY_STAFF_USERNAME` / `MINDBODY_STAFF_PASSWORD`), the one-time `supabase_migration_mindbody_booking.sql`, deploying `mindbody-book` (Verify JWT off) and redeploying `mindbody-classes`, then the live test.
