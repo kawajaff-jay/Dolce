@@ -2251,7 +2251,7 @@ function esc(v){
    a description can ever run. The wording itself is never changed. */
 // "Royal Flush IV Therapy Drip": every word starts with a capital (or is a number/initials).
 function descTitleCase(words){ return words.length>0 && words.every(w=>/^[\p{Lu}\p{N}]/u.test(w)); }
-const DESC_BULLET=/^[*•\-–]\s+(\S.*)$/;
+const DESC_BULLET=/^[*•·∙⋅・･‧●◦▪⦁\-–]\s+(\S.*)$/;   // any of the dot shapes phones and fonts insert
 function descLines(raw,name){
   let txt=String(raw==null?'':raw).replace(/\r\n?/g,'\n').trim();
   if(!txt) return [];
@@ -2259,11 +2259,11 @@ function descLines(raw,name){
   // list: at least two "* " marks, and every piece is short and contains words
   // (so "5 * 3 * 2" or "*Terms apply" stay exactly as typed).
   txt=txt.split('\n').map(line=>{
-    if((line.match(/(^|\s)[*•·]\s+(?=\S)/g)||[]).length<2) return line;
-    const parts=line.split(/\s+[*•·]\s+(?=\S)/);
+    if((line.match(/(^|\s)[*•·∙⋅・･‧●◦▪⦁]\s+(?=\S)/g)||[]).length<2) return line;
+    const parts=line.split(/\s+[*•·∙⋅・･‧●◦▪⦁]\s+(?=\S)/);
     let head=parts.shift().trim();
     const items=parts.map(x=>x.trim());
-    if(/^[*•·]\s+/.test(head)){ items.unshift(head.replace(/^[*•·]\s+/,'')); head=''; }
+    if(/^[*•·∙⋅・･‧●◦▪⦁]\s+/.test(head)){ items.unshift(head.replace(/^[*•·∙⋅・･‧●◦▪⦁]\s+/,'')); head=''; }
     // "Benefits: Glow · Hydration · Firmness" — the label and the first item share a line.
     let lead='';
     if(head && !/:$/.test(head)){
