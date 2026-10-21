@@ -12229,7 +12229,7 @@ function renderAdminClasses(){
       <div class="cl-head"><div class="section-label" style="margin:0;">Next 7 days on Mindbody</div></div>
       <div class="admin-form cl-list">${days.length?days.map(d=>`<div class="cl-day"><div class="cl-dayname">${new Date(d+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'})}</div>
         ${rows.filter(r=>r.date===d).map(r=>`<div class="cl-row"><div><b>${esc(mbTime(r.start))}${r.end?'–'+esc(mbTime(r.end)):''}</b> · ${esc(r.name)} <span class="rem-meta">(${esc({reformer:'Reformer',mat:'Mat',yoga:'Yoga',other:'Other'}[r.type])})${r.instructor?' · '+esc(r.instructor):''}</span><br>
-          ${r.places_left!=null?`<span class="cl-cap ${r.places_left===0?'full':''}">${r.booked} / ${r.capacity} booked online</span>`:'<span class="rem-meta">Places not shared by Mindbody</span>'}</div></div>`).join('')}</div>`).join('')
+          ${r.places_left!=null?`<span class="cl-cap ${r.places_left===0?'full':''}">${r.booked} / ${r.capacity} booked · ${r.places_left===0?'Full':r.places_left+' left'}</span>`:'<span class="rem-meta">Places not shared by Mindbody</span>'}</div></div>`).join('')}</div>`).join('')
         :`<div class="rem-meta">${['ok','stale'].includes(MBS.status)?'No classes in Mindbody for the next 7 days.':'Nothing to show until the Mindbody API is connected. Clients see only the booking link.'}</div>`}</div>
       <div class="rem-meta" style="margin-top:10px;">Dolce+'s own class timetable is switched off while CORE uses Mindbody, so the schedule is kept in one place. Add, change and cancel classes in Mindbody only. Bookings, cancellations and reminders for these classes are handled by Mindbody.</div>`;
     bindMbAdmin(); return;
