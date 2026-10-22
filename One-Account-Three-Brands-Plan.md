@@ -237,3 +237,14 @@ Safety rules built in:
 Payment is not taken in the app (bookings are made with "payment not required"). Whether CORE's packages are used automatically and how unpaid bookings appear **must be confirmed in a controlled live test** against CORE's real Mindbody settings before switching to `on`. Cancelling is done by CORE for now.
 
 Setup still needed: a dedicated CORE Mindbody staff login for Dolce+ (secrets `MINDBODY_STAFF_USERNAME` / `MINDBODY_STAFF_PASSWORD`), the one-time `supabase_migration_mindbody_booking.sql`, deploying `mindbody-book` (Verify JWT off) and redeploying `mindbody-classes`, then the live test.
+
+## CORE's confirmed booking flow (Shatu, 22 Oct 2026) — replaces in-app class booking
+
+Mindbody stays CORE's main system. In the client app, **no CORE service ever opens the Dolce+ booking form**:
+
+- **Group packages** (ticked in Admin → Classes): package details + **Contact reception on WhatsApp**, message pre-filled "Hello CORE, I'd like this package: …".
+- **Private and Duet sessions** (and any other CORE service): **Contact reception on WhatsApp**, pre-filled "Hello CORE, I'd like to book: …".
+- **Daily Classes** (a category shown only in the app, not stored in the catalogue): **View schedule & book on Mindbody** opens CORE's booking page, with the live Mindbody schedule underneath (read-only).
+- Opening WhatsApp or Mindbody records nothing in Dolce+: no reservation, no package credit, no penalty. Cancellations and penalties are handled by CORE in Mindbody.
+- CORE's reception WhatsApp number is set in Admin → Classes (until then the placeholder is used).
+- The in-app Mindbody booking work (`mindbody-book`) is kept but stays switched off.
