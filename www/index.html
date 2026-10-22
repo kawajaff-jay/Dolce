@@ -4224,7 +4224,7 @@ function renderServices(){
     ${hoursCardHtml(currentBrand)}
     ${core?'':timetableHtml()}
     <div class="cat-tabs cat-glass" id="catRow"><div class="cat-lens" aria-hidden="true"></div>${tabs}</div>
-    ${daily?coreDailyHtml():`<div class="svc-list ${CatGlass.listClass()}">${list||empty}</div>`}
+    <div class="svc-list ${CatGlass.listClass()}">${daily?`<div class="core-daily">${coreDailyHtml()}</div>`:(list||empty)}</div>
   `;
 }
 
@@ -7170,7 +7170,7 @@ const CatGlass=(function(){
   const st={pos:null,vel:0,target:0,raf:0,last:0,dragging:false,row:null,lens:null,btns:[],
             brand:null,scroll:0,anim:'',wasHere:false};
   const reduceMotion=()=>{ try{ return matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; } };
-  const cats=()=>currentBrand?['All',...catsFor(currentBrand)]:['All'];
+  const cats=()=>currentBrand?['All',...(currentBrand==='core'?[DAILY_CAT]:[]),...catsFor(currentBrand)]:['All'];   // same order as the chips (CORE: Daily Classes second)
 
   function geom(p){
     const b=st.btns, n=b.length-1; if(n<0) return {x:0,w:0};
