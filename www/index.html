@@ -7194,6 +7194,16 @@ const CatGlass=(function(){
     st.lens.style.width=(w+grow).toFixed(1)+'px';
     st.lens.style.transform=`translate3d(${(x-grow/2).toFixed(1)}px,0,0)`;
     st.btns.forEach((btn,i)=>btn.style.setProperty('--a',Math.max(0,1-Math.abs(st.pos-i)).toFixed(3)));
+    follow();
+  }
+  // The chip row follows the pill — while the list is swiped and while it springs —
+  // so the chosen category never slides out of sight. Measured on screen, so it
+  // works the same left-to-right and right-to-left.
+  function follow(){
+    const row=st.row, lens=st.lens; if(!row||!lens||row.scrollWidth<=row.clientWidth+1) return;
+    const r=row.getBoundingClientRect(), l=lens.getBoundingClientRect();
+    const d=(l.left+l.width/2)-(r.left+r.width/2);
+    if(Math.abs(d)>0.5) row.scrollLeft+=d;
   }
   function frame(t){
     const dt=st.last?Math.min(.034,(t-st.last)/1000):1/60; st.last=t;
@@ -7232,9 +7242,7 @@ const CatGlass=(function(){
     if(st.pos==null){ st.pos=target; st.vel=0; }
     paint();
     if(!st.dragging) springTo(target);
-    if(st.anim) reveal(target);
-    else if(!st.dragging) revealInRow(st.row,st.btns[target],false);   // a redraw mid-slide must not leave it off-screen
-    st.anim='';
+    st.anim='';   // the row follows the pill (see follow), so the chosen chip stays in view
   }
   // Change category: the pill springs, only the list below slides — the
   // header and chip row stay still.
