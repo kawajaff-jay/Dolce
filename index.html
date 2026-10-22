@@ -1014,14 +1014,14 @@
     -webkit-tap-highlight-color:transparent;}
   /* Scale the label, not the chip: a transform on the chip itself would lift
      its background above the sliding pill and hide it. */
-  .cat-tabs.cat-glass button > span{display:inline-block;transform:scale(calc(.97 + .03 * var(--a)));}
+  .cat-tabs.cat-glass button > span{display:inline-block;position:relative;z-index:2;will-change:transform;transform:scale(calc(.97 + .03 * var(--a)));}   /* above the pill on iPhone too */
   .cat-glass,.svc-list{-webkit-user-select:none;user-select:none;}
   .cat-tabs.cat-glass button.active{background:none;border-color:transparent;}
   .cat-tabs.cat-glass button::before{content:'';position:absolute;inset:0;border-radius:999px;
     background:var(--card);border:1px solid var(--line);z-index:-1;}
   .cat-lens{position:absolute;top:2px;height:0;left:0;width:0;border-radius:999px;background:var(--ink);
     box-shadow:0 2px 5px rgba(28,26,22,.16), inset 0 1px 0 rgba(255,255,255,.14);
-    will-change:transform,width;pointer-events:none;}
+    will-change:transform,width;pointer-events:none;z-index:1;}
   .svc-list.in-fwd{animation:listIn .28s cubic-bezier(.22,1,.36,1);}
   .svc-list.in-back{animation:listInBack .28s cubic-bezier(.22,1,.36,1);}
   @keyframes listIn{from{opacity:0;transform:translate3d(18px,0,0);}to{opacity:1;transform:none;}}
@@ -7233,6 +7233,7 @@ const CatGlass=(function(){
     paint();
     if(!st.dragging) springTo(target);
     if(st.anim) reveal(target);
+    else if(!st.dragging) revealInRow(st.row,st.btns[target],false);   // a redraw mid-slide must not leave it off-screen
     st.anim='';
   }
   // Change category: the pill springs, only the list below slides — the
