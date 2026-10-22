@@ -3233,7 +3233,7 @@ async function pullCatalog(){
       selectAllRows('products',q=>q.order('id',{ascending:true})),
       supa.from('offers').select('*'),
       supa.from('brand_images').select('*'),
-      supa.from('settings').select('*').in('key',['usd_to_iqd','image_focus','destinations','client_login','wa_templates','hours','loyalty','client_booking_changes','categories:dolce','categories:polished','categories:core']),
+      supa.from('settings').select('*').in('key',['usd_to_iqd','image_focus','destinations','client_login','wa_templates','hours','loyalty','client_booking_changes','categories:dolce','categories:polished','categories:core','mindbody']),   // mindbody: CORE's public setup (Site ID, booking page, reception WhatsApp) — no secrets
     ]);
     if(svc.error||prod.error||off.error) return false;
 
