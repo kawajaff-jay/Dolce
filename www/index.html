@@ -4312,7 +4312,7 @@ function renderDetail(){
     if(/<ul/.test(rich)) return `<div class="detail-points-rich desc-rich">${rich}</div>`;   // "Best For: A · B" → label + bullets
     return `<div class="detail-points"><span class="chk">✓</span><span dir="auto">${descInline(p)}</span></div>`;
   }).join('');
-  const gallery=STORE.media.filter(m=>m.visibility==='public'&&m.brand===currentBrand&&(m.serviceId===currentService||m.serviceId===''));
+  const gallery=!GALLERY_ON?[]:STORE.media.filter(m=>m.visibility==='public'&&m.brand===currentBrand&&(m.serviceId===currentService||m.serviceId===''));
   const galleryHtml=gallery.length?`
     <div class="section-label">${t('beforeAfter')}</div>
     <div class="ba-strip">${gallery.map(m=>`
@@ -9502,6 +9502,11 @@ function toast(msg){
    employee needs) rather than being locked into one of a few fixed roles.
    PRESETS are just a quick-fill shortcut in the Employees form — the real
    source of truth for what an account can see is its own `tabs` array. */
+/* Photos & Video (before/after gallery) is switched off (Oct 2026, owner's
+   choice): its Admin section and the client "Before & After" strip are hidden.
+   Nothing is deleted — the stored items stay in the database, and setting this
+   to true brings the section back. */
+const GALLERY_ON=false;
 const TAB_DEFS=[
   {key:'overview',label:'Overview'},
   {key:'bookings',label:'Bookings'},
@@ -10005,6 +10010,7 @@ function showAdminForRole(){
   // Core group classes: the owner, or staff given the Classes section who work at Core.
   if(currentUser.isOwner && !allowed.includes('classes')) allowed.push('classes');
   if(!currentUser.isOwner && allowed.includes('classes') && !userBrandsAll(currentUser).includes('core')) allowed.splice(allowed.indexOf('classes'),1);
+  if(!GALLERY_ON && allowed.includes('gallery')) allowed.splice(allowed.indexOf('gallery'),1);
   currentAllowedTabs=allowed;
   document.querySelectorAll('#adminTabsRow [data-admin-tab]').forEach(btn=>{
     const ok=allowed.includes(btn.dataset.adminTab);
@@ -10107,7 +10113,7 @@ document.querySelectorAll('[data-admin-tab]').forEach(b=>{
     // Photos and video are much larger than everything else, so they are
     // fetched only when this tab is actually opened rather than on every
     // refresh.
-    if(adminTab==='gallery') pullMedia().then(ok=>{ if(ok) renderAdminGallery(); });
+    if(GALLERY_ON && adminTab==='gallery') pullMedia().then(ok=>{ if(ok) renderAdminGallery(); });
   });
 });
 document.querySelectorAll('[data-svc-brand-tab]').forEach(b=>{
@@ -13347,7 +13353,7 @@ function renderAdminEmployees(){
 function openEmployeeForm(editIndex){
   const editing=editIndex!==undefined;
   const u=editing?STORE.users[editIndex]:{name:'',tabs:['bookings'],pin:'',brands:Object.keys(BRANDS)};
-  const checkboxes=TAB_DEFS.map(t=>`
+  const checkboxes=TAB_DEFS.filter(t=>GALLERY_ON||t.key!=='gallery').map(t=>`
     <label style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:400;color:var(--ink-soft);padding:6px 0;">
       <input type="checkbox" value="${t.key}" ${u.tabs.includes(t.key)?'checked':''} class="ef-tab-cb"> ${t.label}
     </label>`).join('');
@@ -13399,6 +13405,8 @@ function openEmployeeForm(editIndex){
     const name=document.getElementById('ef_name').value.trim();
     const pin=document.getElementById('ef_pin').value.trim();
     const tabs=Array.from(document.querySelectorAll('.ef-tab-cb:checked')).map(cb=>cb.value);
+    // The hidden Photos & Video section keeps whatever this person already had.
+    if(!GALLERY_ON && editing && (STORE.users[editIndex].tabs||[]).includes('gallery') && !tabs.includes('gallery')) tabs.push('gallery');
     const brands=Array.from(document.querySelectorAll('.ef-brand-cb:checked')).map(cb=>cb.value);
     if(!name){ document.getElementById('ef_name').focus(); return; }
     if((!editing || pin) && !/^\d{6}$/.test(pin)){ toast('PIN must be exactly 6 digits.'); document.getElementById('ef_pin').focus(); return; }
