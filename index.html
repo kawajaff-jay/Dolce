@@ -3432,7 +3432,12 @@ async function pullMedia(force){
 
 // One call that brings this device fully up to date: send anything waiting,
 // then read back everything this account is allowed to see.
-let refreshing=false, lastRefreshAt=0;
+let refreshing=false, lastRefreshAt=0, lastCatalogAt=0;
+/* Data use (Supabase "egress"): the catalogue (services, products, offers, with
+   their photo links) is the heavy part and rarely changes, so the automatic
+   refreshes fetch it at most every 10 minutes. Bookings and other day-to-day
+   records still refresh every minute. A manual refresh (force) fetches all. */
+const CATALOG_REFRESH_MS=10*60*1000;
 async function refreshFromCloud(opts){
   const o=opts||{};
   if(!supa || refreshing) return false;
@@ -3441,7 +3446,11 @@ async function refreshFromCloud(opts){
   try{
     await flushOutbox();
     if(outbox.length) return false;     // still unsent — do not overwrite local
-    const okCatalog=await pullCatalog();
+    let okCatalog=false;
+    if(o.force || Date.now()-lastCatalogAt>=CATALOG_REFRESH_MS){
+      okCatalog=await pullCatalog();
+      if(okCatalog) lastCatalogAt=Date.now();
+    }
     const okOps=await pullOperational();
     lastRefreshAt=Date.now();
     return okCatalog||okOps;
@@ -3449,7 +3458,7 @@ async function refreshFromCloud(opts){
 }
 
 // Kept under its old name because it is called during start-up.
-async function loadCatalogFromSupabase(){ return pullCatalog(); }
+async function loadCatalogFromSupabase(){ const ok=await pullCatalog(); if(ok) lastCatalogAt=Date.now(); return ok; }
 
 // Send anything waiting the moment the connection comes back, and refresh
 // when someone returns to the app after it has been sitting in the background.
@@ -9923,7 +9932,7 @@ async function checkForNewWork(opts){
 }
 function startAdminLiveRefresh(){
   if(adminLiveTimer || typeof setInterval==='undefined') return;
-  adminLiveTimer=setInterval(()=>{ checkForNewWork(); }, 30000);
+  adminLiveTimer=setInterval(()=>{ checkForNewWork(); }, 60000);   // bookings: every minute while Admin is on screen
 }
 if(typeof window!=='undefined'){
   // Coming back to the window is the other moment worth checking.
