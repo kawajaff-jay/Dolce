@@ -2538,7 +2538,6 @@ try{
 // is still what a person actually needs to know to log in).
 const EMP_EMAIL_DOMAIN='@staff.dolce-app.internal';
 function empEmail(slug){ return 'emp-'+slug+EMP_EMAIL_DOMAIN; }
-function empPassword(pin){ return 'dolcepin-'+pin; }
 function randomSlug(){ return (crypto.randomUUID?crypto.randomUUID():('s'+Date.now()+Math.random().toString(36).slice(2))).slice(0,18); }
 
 /* ============================ CLOUD SYNC ============================
@@ -9833,16 +9832,10 @@ async function staffAuthenticate(u,entered){
     } else if(sv.status===401){
       const left=Number(sv.data.left);
       return {ok:false,error:'That PIN isn\'t right.'+(left>0&&left<=3?` ${left} ${left===1?'try':'tries'} left before this login is locked for 15 minutes.`:' Please try again.')};
-    } else if(sv.status===404 || sv.status===0){
-      // 404: the secure sign-in server is not set up yet. 0: the browser could
-      // not reach it at all — a server that does not exist answers without the
-      // headers a browser needs, which looks the same as no internet. Either
-      // way fall back to the direct sign-in (works until each account has
-      // switched to the secure password).
-      try{ ({data,error}=await supa.auth.signInWithPassword({email:empEmail(u.loginSlug),password:empPassword(entered)})); }
-      catch(e){ return {ok:false,error:'No connection — check the internet and try again.'}; }
-      if(sv.status===0 && (error||!data||!data.user) && !/fetch|network/i.test(String(error&&error.message)))
-        return {ok:false,error:'The sign-in server could not be reached, or the PIN is wrong. Please try again in a moment.'};
+    } else if(sv.status===0){
+      // Staff sign in ONLY through the secure sign-in server (staff-auth). The old
+      // direct sign-in was removed (Oct 2026): every account now has a secure password.
+      return {ok:false,error:'No connection — check the internet and try again.'};
     } else {
       return {ok:false,error:'Sign-in is not available right now (server '+sv.status+'). Please try again shortly.'};
     }
@@ -13424,10 +13417,6 @@ function openEmployeeForm(editIndex){
         if(pinChangedForSelf || pinChangedForOther){
           const sv=await callStaffAuth({action:'set_pin',pin,target_id:u.id},await staffToken());
           if(sv.status===200){ /* PIN saved on the server only */ }
-          else if(sv.status===404 && pinChangedForSelf){
-            const{error:pwErr}=await supa.auth.updateUser({password:empPassword(pin)});
-            if(pwErr) toast('Saved, but the PIN change failed: '+pwErr.message);
-          }
           else if(sv.status===403) toast(`${name} was updated, but only an owner can change someone else's PIN.`);
           else toast(`${name} was updated, but the PIN change failed (${sv.data.error||sv.status}). Try again.`);
         }
@@ -13445,10 +13434,7 @@ function openEmployeeForm(editIndex){
       let slug=randomSlug(), signUpData=null, signUpErr=null;
       const sv=await callStaffAuth({action:'create_staff',pin},await staffToken());
       if(sv.status===200 && sv.data.id){ slug=sv.data.slug; signUpData={user:{id:sv.data.id}}; }
-      else if(sv.status===404){
-        const tempClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:false}});
-        ({data:signUpData,error:signUpErr}=await tempClient.auth.signUp({email:empEmail(slug),password:empPassword(pin)}));
-      } else {
+      else {
         signUpErr={message:sv.status===403?'only an owner can add staff logins':(sv.data.error||('server '+sv.status))};
       }
       if(signUpErr || !signUpData || !signUpData.user){
