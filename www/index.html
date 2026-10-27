@@ -2454,12 +2454,9 @@ function defaultStore(){
     // / Core). Bookings, Products, Services, Offers and Photos & Video are
     // all filtered to only these brands for that account; Overview and
     // Employees stay account-wide. Owner-style accounts get all three.
-    users:[
-      {id:'u1',name:'Kawa',tabs:['overview','bookings','products','services','offers','gallery','employees','reports','purchases'],brands:['dolce','polished','core'],pin:'1234'},
-      {id:'u2',name:'Sara',tabs:['bookings'],brands:['dolce'],pin:'1111'},
-      {id:'u3',name:'Aya',tabs:['bookings','gallery'],brands:['polished'],pin:'2222'},
-      {id:'u4',name:'Diyar',tabs:['bookings','gallery'],brands:['core'],pin:'3333'},
-    ],
+    // Staff come only from the server (secure sign-in). The old built-in demo
+    // accounts (Sara, Aya, Diyar…) were removed: they could never sign in.
+    users:[],
   };
 }
 
@@ -3344,7 +3341,7 @@ async function pullCatalog(){
         // stale, dead login card lingers on this device forever alongside
         // the real one.
         STORE.users=STORE.users.filter(u=>{
-          if(!u.loginSlug) return true;              // legacy local-only demo account
+          if(!u.loginSlug) return false;             // old built-in demo account (no real login) — never shown
           const fresh=freshBySlug.get(u.loginSlug);
           return fresh && fresh.id===u.id;
         });
