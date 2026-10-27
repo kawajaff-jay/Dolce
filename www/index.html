@@ -2240,6 +2240,18 @@ function esc(v){
     .replace(/"/g,'&quot;')
     .replace(/'/g,'&#39;');
 }
+/* Picture addresses that come from the database are only ever used as pictures:
+   https / data:image / blob / same-folder paths. Anything else (javascript:,
+   quotes or brackets that could break out of an attribute) becomes empty. */
+function safeImgUrl(u){
+  const v=String(u==null?'':u).trim();
+  if(!v) return '';
+  if(!/^(https:\/\/|data:image\/|blob:|\.?\/|[A-Za-z0-9_-]+\/)/i.test(v)) return '';
+  if(/^data:/i.test(v)) return /^data:image\/[a-z+.-]+;base64,[A-Za-z0-9+\/=\s]+$/i.test(v)?v.replace(/\s+/g,''):'';
+  return /["'()\\<>\s]/.test(v)?'':v;
+}
+function cssBg(u){ const v=safeImgUrl(u); return v?`background-image:url("${v}")`:''; }
+function safeSrc(u){ return attr(safeImgUrl(u)); }
 
 
 /* ---------- Service descriptions: plain text in, tidy layout out ----------
@@ -3482,13 +3494,13 @@ function resequenceBrandServices(brand){
 }
 function swStyle(item,brand){
   const img=(item&&item.image)||STORE.brandImages[brand];
-  return img
-    ? `background-image:url('${img}')`
+  return img&&safeImgUrl(img)
+    ? cssBg(img)
     : `--sc1:${BRANDS[brand].c1};--sc2:${BRANDS[brand].c2}`;
 }
 function brandPhotoStyle(brand){
   const img=STORE.brandImages[brand];
-  return img ? `background-image:url('${img}')` : '';
+  return img ? cssBg(img) : '';
 }
 /* IDs have to be unique across DEVICES now, not just within one list. If the
    front desk and the owner both add a product while one of them is offline,
@@ -4219,7 +4231,7 @@ function renderServices(){
   }).join('');
   const daily=core&&currentCat===DAILY_CAT;
   const list=daily?'':svcList(currentBrand).filter(s=>currentCat==='All'||s.cat===currentCat).map(s=>`
-    <div class="svc-row" data-svc="${s.id}">
+    <div class="svc-row" data-svc="${attr(String(s.id))}">
       ${mediaHtml(s.image||STORE.brandImages[currentBrand]||'','thumbnail',{cls:'swatch',fallback:brandFallback(currentBrand),alt:s.n})}
       <div class="info"><div class="n">${esc(s.n)}</div><div class="m">${esc(fmtDur(s.dur))} · ${esc(s.cat)}</div></div>
       <div class="price">${priceHtml(s)}</div><div class="chev">›</div>
@@ -4305,7 +4317,7 @@ function renderDetail(){
     <div class="section-label">${t('beforeAfter')}</div>
     <div class="ba-strip">${gallery.map(m=>`
       <div class="ba-item">
-        <div class="th ${m.type==='video'?'video':''}" style="background-image:url('${m.dataUrl}')" data-media="${m.id}"></div>
+        <div class="th ${m.type==='video'?'video':''}" style="${cssBg(m.dataUrl)}" data-media="${attr(String(m.id))}"></div>
         <div class="cap">${esc(m.note||'')}</div>
       </div>`).join('')}</div>` : '';
   return `
@@ -6428,7 +6440,13 @@ function presetKey(p){ return MEDIA_ALIASES[p]||p; }
 function mediaMeta(url){
   if(!url) return null;
   const m=(STORE.imageFocus||{})[imgKey(url)];
-  return (m && typeof m.x==='number') ? m : null;
+  if(!(m && typeof m.x==='number')) return null;
+  // Framing values go into style attributes: keep only known shapes.
+  const out={...m};
+  if(out.fit!==undefined && !['cover','contain'].includes(out.fit)) delete out.fit;
+  if(out.bg!==undefined && !/^(#[0-9a-f]{3,8}|rgba?\([\d\s.,%]+\)|var\(--[a-z0-9-]+(,\s*#[0-9a-f]{3,8})?\)|transparent)$/i.test(String(out.bg))) delete out.bg;
+  ['x','y','z','pad'].forEach(k=>{ if(out[k]!==undefined && !Number.isFinite(Number(out[k]))) delete out[k]; });
+  return out;
 }
 function rememberMeta(url,meta){
   if(!url) return;
@@ -7492,7 +7510,7 @@ function render(){
         ? `<div class="title lux-shop-head"><h1 class="lux-h1">${t('navShop')}</h1><div class="lux-tagline" dir="ltr">Beauty<i>·</i>Aesthetics<i>·</i>Movement</div></div>`
         : currentScreen==='product'
         ? `<div class="title"></div>`
-        : `<div class="title">${title}${small?`<small>${small}</small>`:''}</div>`}
+        : `<div class="title">${esc(title)}${small?`<small>${esc(small)}</small>`:''}</div>`}
       ${['shop','product'].includes(currentScreen)?basketBtnHtml():''}
     </div>
     <div class="screen-body ${navDirection==='back'?'enter-back':navDirection==='none'?'':'enter'}">${bodyHtml()}</div>
@@ -10123,7 +10141,7 @@ function renderAdminProducts(){
       : (stock<=LOW_STOCK ? `<span class="status-badge Requested">${stock} left — low</span>` : `${stock}`);
     return `
     <tr>
-      <td><span class="swdot" style="${p.image?`background-image:url('${p.image}')`:`background:linear-gradient(140deg,${BRANDS[p.brand].c1},${BRANDS[p.brand].c2})`}"></span>${esc(p.n)}${p.active===false?' <span class="status-badge Cancelled">Hidden</span>':''}${p.category?`<div style="font-size:12px;color:var(--muted);margin-top:2px;">${esc(p.category)}${normOptions(p.options).length?' · '+normOptions(p.options).map(o=>esc(o.name)).join(', '):''}</div>`:''}</td>
+      <td><span class="swdot" style="${p.image&&safeImgUrl(p.image)?cssBg(p.image):`background:linear-gradient(140deg,${BRANDS[p.brand].c1},${BRANDS[p.brand].c2})`}"></span>${esc(p.n)}${p.active===false?' <span class="status-badge Cancelled">Hidden</span>':''}${p.category?`<div style="font-size:12px;color:var(--muted);margin-top:2px;">${esc(p.category)}${normOptions(p.options).length?' · '+normOptions(p.options).map(o=>esc(o.name)).join(', '):''}</div>`:''}</td>
       <td><span class="brand-tag" style="background:${brandColor[p.brand]}">${BRANDS[p.brand].name}</span></td>
       <td>${priceHtml(p)}</td>
       <td>${stockHtml}</td>
@@ -10277,7 +10295,7 @@ function renderAdminOffers(){
     const i=STORE.offers.indexOf(o);
     return `
     <tr>
-      <td><span class="swdot" style="${o.image?`background-image:url('${o.image}')`:`background:linear-gradient(140deg,${BRANDS[o.brand].c1},${BRANDS[o.brand].c2})`}"></span>${esc(o.t)}</td>
+      <td><span class="swdot" style="${o.image&&safeImgUrl(o.image)?cssBg(o.image):`background:linear-gradient(140deg,${BRANDS[o.brand].c1},${BRANDS[o.brand].c2})`}"></span>${esc(o.t)}</td>
       <td><span class="brand-tag" style="background:${brandColor[o.brand]}">${BRANDS[o.brand].name}</span></td>
       <td>${esc(o.s)}<div style="margin-top:5px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
         <span class="status-badge ${offerStatus(o)[1]}">${offerStatus(o)[0]}</span>
@@ -10434,7 +10452,7 @@ function renderAdminServices(){
   }
   rows.innerHTML=list.map((s,i)=>`
     <tr>
-      <td><span class="swdot" style="${s.image?`background-image:url('${s.image}')`:`background:linear-gradient(140deg,${BRANDS[svcBrandTab].c1},${BRANDS[svcBrandTab].c2})`}"></span>${esc(s.n)}</td>
+      <td><span class="swdot" style="${s.image&&safeImgUrl(s.image)?cssBg(s.image):`background:linear-gradient(140deg,${BRANDS[svcBrandTab].c1},${BRANDS[svcBrandTab].c2})`}"></span>${esc(s.n)}</td>
       <td>${esc(s.cat)}</td>
       <td>${esc(fmtDur(s.dur,true))}</td>
       <td>${priceHtml(s)}</td>
@@ -10651,8 +10669,8 @@ function openLightbox(mediaId){
   const m=STORE.media.find(x=>x.id===mediaId); if(!m) return;
   const body=document.getElementById('lbBody');
   body.innerHTML = m.type==='video'
-    ? `<video src="${m.dataUrl}" controls autoplay playsinline></video>`
-    : `<img src="${m.dataUrl}" alt="${esc(m.note||'')}">`;
+    ? `<video src="${safeSrc(m.dataUrl)}" controls autoplay playsinline></video>`
+    : `<img src="${safeSrc(m.dataUrl)}" alt="${esc(m.note||'')}">`;
   // textContent, not innerHTML — so this must NOT be escaped, or the caption
   // would literally read "Men&#39;s Cut" on screen.
   document.getElementById('lbCap').textContent = `${BRANDS[m.brand].name}${m.note?' — '+m.note:''}`;
@@ -10711,7 +10729,7 @@ function renderAdminGallery(){
     const i=STORE.media.indexOf(m);
     const svcName=m.serviceId ? (svcList(m.brand).find(s=>s.id===m.serviceId)||{}).n : 'General';
     return `<div class="gcard">
-      <div class="thumb ${m.type==='video'?'video':''}" style="background-image:url('${m.dataUrl}')"></div>
+      <div class="thumb ${m.type==='video'?'video':''}" style="${cssBg(m.dataUrl)}"></div>
       <div class="meta">
         <div class="note">${esc(m.note||'(no caption)')}</div>
         <div class="badges">
@@ -12077,7 +12095,7 @@ async function pullNotifications(force){
 function notifWhen(iso){ const d=new Date(iso); return isNaN(d)?'':d.toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}); }
 function notifStatusHtml(n){
   const map={sent:['ok','Sent'],failed:['bad','Failed'],scheduled:['wait','Scheduled'],sending:['wait','Sending…'],cancelled:['off','Cancelled'],skipped:['off',n.sent_via==='manual'?'Opened by hand':'Not sent']};
-  const [cls,txt]=map[n.status]||['off',n.status];
+  const [cls,txt]=map[n.status]||['off',esc(n.status)];
   const extra=n.status==='sent'?` · ${esc(n.sent_via)} · ${esc(notifWhen(n.sent_at))}`
     :n.status==='scheduled'?` · ${esc(notifWhen(n.scheduled_at))}`:'';
   return `<span class="nt-badge ${cls}">${txt}</span><span class="nt-extra">${extra}</span>`;
@@ -13870,9 +13888,9 @@ function exportAllDataPdf(){
   const sections=exportSectionsForCurrentUser();
   const html=`<p><b>Scope:</b> ${currentReportScopeText()} &nbsp;&nbsp; <b>Generated:</b> ${reportDateDefault()}</p>`+
     sections.map(sec=>`
-    <h3>${sec.title}</h3>
-    <table><thead><tr>${sec.head.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
-    <tbody>${sec.rows.length?sec.rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="${sec.head.length}">None</td></tr>`}</tbody></table>
+    <h3>${esc(sec.title)}</h3>
+    <table><thead><tr>${sec.head.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead>
+    <tbody>${sec.rows.length?sec.rows.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="${sec.head.length}">None</td></tr>`}</tbody></table>
   `).join('');
   printReport(`Full Data Export — ${reportDateDefault()}`,html);
 }
@@ -14007,7 +14025,7 @@ function renderBrandPhotos(){
     <div class="bp-grid">
       ${Object.keys(BRANDS).map(b=>`
         <div class="bp-card">
-          <div class="thumb" style="${STORE.brandImages[b]?`background-image:url('${STORE.brandImages[b]}')`:`background:linear-gradient(140deg,${BRANDS[b].c1},${BRANDS[b].c2})`}"></div>
+          <div class="thumb" style="${safeImgUrl(STORE.brandImages[b])?cssBg(STORE.brandImages[b]):`background:linear-gradient(140deg,${BRANDS[b].c1},${BRANDS[b].c2})`}"></div>
           <div class="nm">${BRANDS[b].name} <span>— ${BRANDS[b].sub}</span></div>
           <div class="cap">Shows on the welcome screen and homepage — no photo yet falls back to a colour card.</div>
           <div class="upload-drop"><input type="file" accept="image/*" data-brand-photo="${b}"></div>
@@ -14121,7 +14139,7 @@ function applyBrandImages(){
   Object.keys(BRANDS).forEach(b=>{
     const img=STORE.brandImages[b];
     document.querySelectorAll('.hero-cards .hc.'+b).forEach(el=>{
-      el.style.backgroundImage = img ? `url('${img}')` : '';
+      el.style.backgroundImage = safeImgUrl(img) ? `url("${safeImgUrl(img)}")` : '';
     });
   });
 }
