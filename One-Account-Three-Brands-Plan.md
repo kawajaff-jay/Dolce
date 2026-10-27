@@ -248,3 +248,11 @@ Mindbody stays CORE's main system. In the client app, **no CORE service ever ope
 - Opening WhatsApp or Mindbody records nothing in Dolce+: no reservation, no package credit, no penalty. Cancellations and penalties are handled by CORE in Mindbody.
 - CORE's reception WhatsApp number is set in Admin → Classes (until then the placeholder is used).
 - The in-app Mindbody booking work (`mindbody-book`) is kept but stays switched off.
+
+## Staff activity (owners see who is online) — 27 Oct 2026
+
+While a staff member has Admin open and on screen, the app tells the database once a minute that they are still there; "Log out" closes the session. **Owners only** see:
+- **Overview → "Staff online now"**: who has Admin open right now, with their device.
+- **Employees → Activity**: "Online now" or "Last seen …" for each person, and a **History** button with their last 40 sessions (start, end, length, device, logged out or closed).
+
+Stored per session: who, start, last seen, end, how it ended, and a short device label ("Mac · Chrome", "iPhone app"). No location and no IP address. Staff can only start/update/close their own sessions; nobody can write rows directly. Database: `supabase_migration_staff_activity.sql` (table `staff_sessions` + 5 functions). Staff should be told this is recorded.

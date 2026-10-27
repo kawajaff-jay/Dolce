@@ -201,6 +201,10 @@
   .adm-li .w span{font-size:12.5px;color:var(--muted);}
   .adm-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px;}
   .adm-empty{font-size:14px;color:var(--muted);padding:18px 4px;text-align:center;}
+  .act-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#c9bfae;margin-right:6px;vertical-align:middle;}
+  .act-dot.on{background:#3b9a5a;box-shadow:0 0 0 3px rgba(59,154,90,.18);}
+  .act-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+  .act-chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-size:13.5px;background:var(--card);}
   .adm-note{font-size:13px;border-radius:10px;padding:9px 12px;margin-bottom:14px;}
   .adm-note.load{background:#f8f1e4;color:var(--ink-soft);}
   .adm-note.err{background:#f8e6e1;color:#8a3226;}
@@ -1959,6 +1963,7 @@
 
     <div class="admin-panel active" id="adminOverview">
       <div id="ovToday"></div>
+      <div id="ovStaff"></div>
       <div class="adm-sub-h">Last 30 days</div>
       <div class="stat-row">
         <div class="stat"><div class="lbl">Bookings · last 30 days</div><div class="val" id="stBookings">—</div><div class="sub" id="stBookingsSub"></div></div>
@@ -2085,7 +2090,7 @@
       <div id="employeeFormWrap"></div>
       <div class="admin-table-wrap">
         <table class="admin-table">
-          <thead><tr><th>Name</th><th>Role</th><th>Department</th><th>Sign-in</th><th></th></tr></thead>
+          <thead><tr><th>Name</th><th>Role</th><th>Department</th><th>Sign-in</th><th>Activity</th><th></th></tr></thead>
           <tbody id="employeeRows"></tbody>
         </table>
       </div>
@@ -9653,6 +9658,7 @@ function renderOverviewToday(){
     const k=b.dataset.ovGo; if(!k||!currentAllowedTabs.includes(k)) return;
     const t=document.querySelector(`#adminTabsRow [data-admin-tab="${k}"]`); if(t) t.click();
   }));
+  renderStaffOnline();
 }
 function shortDay(label){
   const iso=toIsoDate(label); if(!iso) return label||'—';
@@ -9943,9 +9949,99 @@ async function checkForNewWork(opts){
   rerenderEverything();
   return true;
 }
+/* ---------------- Staff activity (owners see who is online) ----------------
+   While Admin is open and on screen, the app tells the database once a minute
+   that this person is still here. "Log out" closes the session. Owners see
+   "Online now" on Overview, and per person last seen + history in Employees.
+   Stored: who, start, last seen, end, device label. No location, no IP.
+   Needs supabase_migration_staff_activity.sql; without it nothing is shown. */
+const STAFF_SESSION={id:null,busy:false};
+let STAFF_ACT={rows:[],at:0,loading:false,missing:false};
+function staffDeviceLabel(){
+  const ua=navigator.userAgent||'';
+  if(typeof isNativeApp==='function' && isNativeApp()) return /iPad/.test(ua)?'iPad app':/Android/.test(ua)?'Android app':'iPhone app';
+  const os=/iPhone/.test(ua)?'iPhone':/iPad/.test(ua)?'iPad':/Android/.test(ua)?'Android':/Mac/.test(ua)?'Mac':/Windows/.test(ua)?'Windows':'Computer';
+  const br=/Edg\//.test(ua)?'Edge':/Chrome\//.test(ua)?'Chrome':/Firefox\//.test(ua)?'Firefox':/Safari\//.test(ua)?'Safari':'Browser';
+  return os+' · '+br;
+}
+async function staffSessionStart(){
+  if(!supa||!currentUser||STAFF_SESSION.busy) return;
+  STAFF_SESSION.busy=true;
+  try{ const {data,error}=await supa.rpc('staff_session_start',{p_device:staffDeviceLabel()}); if(!error && data) STAFF_SESSION.id=data; }catch(e){}
+  STAFF_SESSION.busy=false;
+}
+async function staffSessionPing(){
+  if(!supa||!currentUser) return;
+  if(!STAFF_SESSION.id) return staffSessionStart();
+  try{ const {data,error}=await supa.rpc('staff_session_ping',{p_id:STAFF_SESSION.id}); if(!error && data===false){ STAFF_SESSION.id=null; staffSessionStart(); } }catch(e){}
+}
+async function staffSessionEnd(){
+  const id=STAFF_SESSION.id; STAFF_SESSION.id=null;
+  if(!supa||!id) return;
+  try{ await supa.rpc('staff_session_end',{p_id:id}); }catch(e){}
+}
+if(typeof document!=='undefined') document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible' && currentUser) staffSessionPing(); });
+async function loadStaffActivity(force){
+  if(!supa||!currentUser||!currentUser.isOwner||STAFF_ACT.loading) return false;
+  if(!force && Date.now()-STAFF_ACT.at<55000) return false;
+  STAFF_ACT.loading=true;
+  try{
+    const {data,error}=await supa.rpc('staff_activity_summary');
+    if(error){ STAFF_ACT.missing=/function|schema cache|does not exist/i.test(error.message||''); }
+    else { STAFF_ACT.rows=data||[]; STAFF_ACT.missing=false; }
+  }catch(e){}
+  STAFF_ACT.loading=false; STAFF_ACT.at=Date.now(); return true;
+}
+function actWhen(iso){
+  if(!iso) return '';
+  const d=new Date(iso), now=new Date();
+  const time=d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Baghdad'});
+  const day=d.toLocaleDateString('en-GB',{day:'numeric',month:'short',timeZone:'Asia/Baghdad'});
+  const today=now.toLocaleDateString('en-GB',{day:'numeric',month:'short',timeZone:'Asia/Baghdad'});
+  return day===today?`today ${time}`:`${day} ${time}`;
+}
+function staffActivityCell(u){
+  if(!currentUser||!currentUser.isOwner) return '<span style="color:var(--muted);">—</span>';
+  const r=STAFF_ACT.rows.find(x=>String(x.user_id)===String(u.id));
+  const hist=`<button class="btn btn-ghost btn-sm" style="margin-top:6px;" data-act-hist="${attr(String(u.id))}">History</button>`;
+  if(!r||!r.last_seen) return `<span style="color:var(--muted);">${STAFF_ACT.at?'No activity yet':'…'}</span>`;
+  return r.online
+    ? `<span><span class="act-dot on"></span><b>Online now</b></span><div style="font-size:12.5px;color:var(--muted);">${esc(r.device||'')}</div>${hist}`
+    : `<span><span class="act-dot"></span>Last seen ${esc(actWhen(r.last_seen))}</span><div style="font-size:12.5px;color:var(--muted);">${esc(r.device||'')}</div>${hist}`;
+}
+function renderStaffOnline(){
+  const wrap=document.getElementById('ovStaff'); if(!wrap) return;
+  if(!currentUser||!currentUser.isOwner||!supa){ wrap.innerHTML=''; return; }
+  if(Date.now()-STAFF_ACT.at>55000 && !STAFF_ACT.loading) loadStaffActivity().then(ch=>{ if(ch) renderStaffOnline(); });
+  if(STAFF_ACT.missing){ wrap.innerHTML=''; return; }
+  const on=STAFF_ACT.rows.filter(r=>r.online);
+  wrap.innerHTML=`<section class="adm-card" style="margin:0 0 18px;">
+      <h3>Staff online now · ${on.length}</h3><p class="adm-cap">People with Admin open right now (updated every minute). Full history in Employees.</p>
+      <div class="act-chips">${on.length?on.map(r=>`<span class="act-chip"><span class="act-dot on"></span>${esc(r.name)}<span style="color:var(--muted);font-size:12px;">· ${esc(r.device||'')}</span></span>`).join('')
+        :`<span style="color:var(--muted);font-size:14px;">${STAFF_ACT.at?'Nobody else is online.':'Loading…'}</span>`}</div>
+    </section>`;
+}
+async function openStaffHistory(uid){
+  const host=document.getElementById('employeeFormWrap'); if(!host||!supa) return;
+  const u=STORE.users.find(x=>String(x.id)===String(uid));
+  host.innerHTML=`<div class="admin-form" style="display:block;"><b>Activity · ${esc(u?u.name:'')}</b><div style="margin-top:8px;color:var(--muted);">Loading…</div></div>`;
+  let rows=[]; try{ const {data,error}=await supa.rpc('staff_activity_history',{p_user:uid,p_limit:40}); if(!error) rows=data||[]; }catch(e){}
+  const dur=(a,b)=>{ const m=Math.max(0,Math.round((new Date(b)-new Date(a))/60000)); return m<60?`${m} min`:`${Math.floor(m/60)} h ${m%60} min`; };
+  host.innerHTML=`<div class="admin-form" style="display:block;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><b>Activity · ${esc(u?u.name:'')}</b><button class="btn btn-ghost btn-sm" id="actClose">Close</button></div>
+      <div class="rem-meta" style="margin:4px 0 10px;">Last 40 Admin sessions (Erbil time). A session without "Log out" ends when Admin was last open on screen.</div>
+      <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Started</th><th>Ended</th><th>Length</th><th>Device</th></tr></thead><tbody>
+      ${rows.length?rows.map(r=>`<tr><td>${esc(actWhen(r.started_at))}</td>
+        <td>${r.online?'<span><span class="act-dot on"></span>Online now</span>':esc(actWhen(r.ended_at||r.last_seen_at))+(r.end_reason==='logout'?' · logged out':' · closed')}</td>
+        <td>${esc(dur(r.started_at,r.online?new Date().toISOString():(r.ended_at||r.last_seen_at)))}</td><td>${esc(r.device||'')}</td></tr>`).join('')
+        :'<tr><td colspan="4" style="color:var(--muted);">No activity recorded yet.</td></tr>'}
+      </tbody></table></div></div>`;
+  const c=document.getElementById('actClose'); if(c) c.addEventListener('click',()=>{ host.innerHTML=''; });
+}
 function startAdminLiveRefresh(){
+  if(!STAFF_SESSION.id && !STAFF_SESSION.busy) staffSessionStart();
   if(adminLiveTimer || typeof setInterval==='undefined') return;
-  adminLiveTimer=setInterval(()=>{ checkForNewWork(); }, 60000);   // bookings: every minute while Admin is on screen
+  adminLiveTimer=setInterval(()=>{ checkForNewWork(); if(!document.hidden) staffSessionPing(); }, 60000);   // bookings: every minute while Admin is on screen
 }
 if(typeof window!=='undefined'){
   // Coming back to the window is the other moment worth checking.
@@ -9988,6 +10084,7 @@ function showAdminForRole(){
     toast(adminBrandView?`Showing ${BRANDS[adminBrandView].name} only.`:'Showing all your brands.');
   });
   document.getElementById('logoutBtn').addEventListener('click',async()=>{
+    await staffSessionEnd();
     if(supa){ try{ await supa.auth.signOut(); }catch(e){} }
     currentUser=null;
     try{ localStorage.removeItem(CUR_USER_KEY); localStorage.removeItem(CUR_PROFILE_KEY); }catch(e){}
@@ -13321,12 +13418,15 @@ function renderAdminEmployees(){
       <td><span class="role-pill">${accessLabel(u.tabs)}</span></td>
       <td>${brandsLabel(u.brands)}</td>
       <td>${u.securePinAt?'<span style="color:#3b6e4a;">Secure ✓</span>':(supa?'<span style="color:var(--muted);">Waiting for first sign-in on the new screen</span>':'—')}</td>
+      <td>${staffActivityCell(u)}</td>
       <td><div class="rowbtns">
         <button class="btn btn-ghost btn-sm" data-edit-emp="${i}">Edit</button>
         <button class="btn btn-danger btn-sm" data-del-emp="${i}">Delete</button>
       </div></td>
     </tr>`).join('');
   rows.querySelectorAll('[data-edit-emp]').forEach(b=>b.addEventListener('click',()=>openEmployeeForm(parseInt(b.dataset.editEmp))));
+  rows.querySelectorAll('[data-act-hist]').forEach(b=>b.addEventListener('click',()=>openStaffHistory(b.dataset.actHist)));
+  if(currentUser && currentUser.isOwner) loadStaffActivity().then(ch=>{ if(ch && adminTab==='employees') renderAdminEmployees(); });
   rows.querySelectorAll('[data-del-emp]').forEach(b=>b.addEventListener('click',async()=>{
     const i=parseInt(b.dataset.delEmp); const u=STORE.users[i];
     if(!u){ renderAdminEmployees(); return; }
