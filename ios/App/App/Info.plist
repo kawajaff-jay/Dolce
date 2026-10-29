@@ -66,5 +66,11 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>NSCameraUsageDescription</key>
+	<string>Dolce+ uses the camera only when you choose to take a photo to add.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Dolce+ opens your photos only when you choose a picture to add.</string>
 </dict>
 </plist>

@@ -15,3 +15,11 @@ supabase.min.js
 *.dump
 backups/
 data-export/
+
+# Apple Wallet certificates and private keys — never in Git.
+# Keep them in ~/DolceWalletKeys (outside this folder).
+*.p12
+*.pem
+*.key
+*.cer
+*.certSigningRequest

@@ -4434,7 +4434,7 @@ function renderClientAuth(){
         message us and our team will take care of it.
       </div>
       <a class="wa-btn" href="https://wa.me/${wa}" target="_blank" rel="noopener">💬 Message us on WhatsApp</a>
-      ${isNativeApp()?`<button class="pv-open" id="previewMemberBtn">Preview a member profile</button>`:''}
+      ${SHOW_PREVIEW_MEMBER&&isNativeApp()?`<button class="pv-open" id="previewMemberBtn">Preview a member profile</button>`:''}
     `;
   }
   const byEmail=clientLoginMethod()==='email';
@@ -4493,7 +4493,7 @@ function renderClientAuth(){
     <button class="primary-btn" id="authSendCode">${t('sendCodeEmail')}</button>
     <p class="cl-note">${t('emailPrivacy')}</p>
     ${startGate?`<div class="cl-or"><span>${t('orWord')}</span></div><button class="cl-guest" id="authGuest">${t('continueGuest')}</button>`:''}
-    ${isNativeApp()&&!startGate?`<button class="pv-open" id="previewMemberBtn">Preview a member profile</button>`:''}
+    ${SHOW_PREVIEW_MEMBER&&isNativeApp()&&!startGate?`<button class="pv-open" id="previewMemberBtn">Preview a member profile</button>`:''}
   </section>`;
   }
   return `<section class="cl-auth">
@@ -4506,7 +4506,7 @@ function renderClientAuth(){
     <button class="wa-btn" id="authSendCode">${t('sendCode')}</button>
     <p class="cl-note">${t('loginPrivacy')}</p>
     ${startGate?`<div class="cl-or"><span>${t('orWord')}</span></div><button class="cl-guest" id="authGuest">${t('continueGuest')}</button>`:''}
-    ${isNativeApp()&&!startGate?`<button class="pv-open" id="previewMemberBtn">Preview a member profile</button>`:''}
+    ${SHOW_PREVIEW_MEMBER&&isNativeApp()&&!startGate?`<button class="pv-open" id="previewMemberBtn">Preview a member profile</button>`:''}
   </section>`;
 }
 
@@ -5744,10 +5744,13 @@ screenEl.addEventListener('scroll',()=>{
    sample points, rewards and bookings. It is clearly labelled Preview, lives
    only on this device, and never reads or writes client records, STORE or
    Supabase. "Exit preview" returns everything to normal. */
+// Off for the App Store build: a reviewer could take the sample member for fake data.
+// Set to true again only for an event build.
+const SHOW_PREVIEW_MEMBER=false;
 const PREVIEW_KEY='odc_preview_member';
 let previewMember=(()=>{ try{ return localStorage.getItem(PREVIEW_KEY)==='1'; }catch(e){ return false; } })();
 function isNativeApp(){ return document.body.classList.contains('native-app'); }
-function previewActive(){ return previewMember && !clientIn(); }
+function previewActive(){ return SHOW_PREVIEW_MEMBER && previewMember && !clientIn(); }
 function setPreviewMember(on){
   previewMember=!!on;
   try{ on?localStorage.setItem(PREVIEW_KEY,'1'):localStorage.removeItem(PREVIEW_KEY); }catch(e){}
