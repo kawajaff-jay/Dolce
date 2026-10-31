@@ -2177,6 +2177,7 @@
         <div id="waTemplatesWrap"></div>
         <div id="notifSettingsWrap" class="span2"></div>
         <div id="brandPhotosWrap" class="span2"></div>
+        <div id="photoMoveWrap" class="span2"></div>
       </div>
       <div class="adm-empty" id="settingsEmpty" style="display:none;">There are no settings you can change with this account.</div>
     </div>
@@ -9590,7 +9591,7 @@ function shortRole(u){
   return 'Staff';
 }
 function updateSettingsEmpty(){
-  const ids=['currencySettingsWrap','clientLoginWrap','hoursWrap','waTemplatesWrap','notifSettingsWrap','brandPhotosWrap'];
+  const ids=['currencySettingsWrap','clientLoginWrap','hoursWrap','waTemplatesWrap','notifSettingsWrap','brandPhotosWrap','photoMoveWrap'];
   const any=ids.some(id=>{ const el=document.getElementById(id); return el&&el.innerHTML.trim(); });
   const e=document.getElementById('settingsEmpty'); if(e) e.style.display=any?'none':'';
 }
@@ -10139,7 +10140,7 @@ function showAdminForRole(){
   });
   if(!canSeeBrand(currentUser,svcBrandTab)) svcBrandTab=userBrands(currentUser)[0];
   document.querySelectorAll('#svcBrandTabs [data-svc-brand-tab]').forEach(x=>x.classList.toggle('active',x.dataset.svcBrandTab===svcBrandTab));
-  renderAdminProducts(); renderAdminServices(); renderAdminOffers(); renderAdminGallery(); renderAdminBookings(); renderBrandPhotos(); renderCurrencySettings(); renderClientLoginSetting(); renderWaTemplates(); renderNotifSettings(); renderHoursAdmin(); renderAdminEmployees(); renderAdminPurchases(); renderAdminReports(); renderAdminLoyalty(); renderOverviewStats(); pullLoyaltyIssued(); updateSettingsEmpty(); updateAdmMenuLabel(); if(adminTab==='clients') renderAdminClients(); if(adminTab==='orders') renderAdminOrders();
+  renderAdminProducts(); renderAdminServices(); renderAdminOffers(); renderAdminGallery(); renderAdminBookings(); renderBrandPhotos(); renderPhotoMove(); renderCurrencySettings(); renderClientLoginSetting(); renderWaTemplates(); renderNotifSettings(); renderHoursAdmin(); renderAdminEmployees(); renderAdminPurchases(); renderAdminReports(); renderAdminLoyalty(); renderOverviewStats(); pullLoyaltyIssued(); updateSettingsEmpty(); updateAdmMenuLabel(); if(adminTab==='clients') renderAdminClients(); if(adminTab==='orders') renderAdminOrders();
   if(adminTab==='classes'){ renderAdminClasses(); pullClasses().then(()=>{ if(adminTab==='classes') renderAdminClasses(); }); }
   if(currentUser.isOwner) pullNotifications(true).then(ok=>{ if(ok){ renderNotifSettings(); updateSettingsEmpty(); } });
 }
@@ -14149,6 +14150,96 @@ function renderCurrencySettings(){
       renderAdminBookings(); renderAdminPurchases(); renderAdminReports();
     }
   });
+}
+/* ---------------- Move photos stored inside the database to photo storage ----------------
+   Older product / service / offer photos were saved as text (base64) inside
+   their database rows, so every catalogue load downloads them again. This
+   owner-only, one-off tool copies each one into the public `media` bucket,
+   checks the new copy opens, and only then points the item at it. Before
+   anything changes it downloads a backup file with every original photo, so
+   nothing is lost. Framing (focus / zoom / fit) is carried over. A photo
+   that fails to copy is simply left where it was. */
+let photoMoveBusy=false, photoMoveMsg='';
+const isDataImg=(u)=>typeof u==='string'&&u.startsWith('data:image/');
+function dbPhotoItems(){
+  const out=[];
+  const cnt=(x)=>new Set([x.image,...(Array.isArray(x.images)?x.images:[])].filter(isDataImg)).size;   // the same photo twice = one copy
+  (STORE.products||[]).forEach(p=>{ const n=cnt(p); if(n) out.push({kind:'products',id:p.id,brand:null,n,label:p.n}); });
+  Object.keys(STORE.services||{}).forEach(b=>(STORE.services[b]||[]).forEach(x=>{ const n=cnt(x); if(n) out.push({kind:'services',id:x.id,brand:b,n,label:x.n}); }));
+  (STORE.offers||[]).forEach(o=>{ if(isDataImg(o.image)) out.push({kind:'offers',id:o.id,brand:null,n:1,label:o.t}); });
+  return out;
+}
+function findPhotoItem(it){
+  if(it.kind==='products') return (STORE.products||[]).find(x=>x.id===it.id);
+  if(it.kind==='services') return ((STORE.services||{})[it.brand]||[]).find(x=>x.id===it.id);
+  return (STORE.offers||[]).find(x=>x.id===it.id);
+}
+function photoLoads(url){
+  return new Promise(res=>{ const im=new Image(); const t=setTimeout(()=>res(false),20000);
+    im.onload=()=>{ clearTimeout(t); res(im.naturalWidth>0); }; im.onerror=()=>{ clearTimeout(t); res(false); }; im.src=url; });
+}
+async function copyPhotoToStorage(u,folder){
+  try{
+    const blob=await (await fetch(u)).blob();
+    const url=await uploadMediaBlob(blob,folder,blob.type||'image/jpeg');
+    if(!url || !(await photoLoads(url))) return null;
+    const m=(STORE.imageFocus||{})[imgKey(u)];
+    if(m){ if(!STORE.imageFocus) STORE.imageFocus={}; STORE.imageFocus[imgKey(url)]={...m}; }
+    return url;
+  }catch(e){ console.warn('[photo move]',e); return null; }
+}
+function renderPhotoMove(){
+  const wrap=document.getElementById('photoMoveWrap'); if(!wrap) return;
+  if(!currentUser||!currentUser.isOwner||!supa){ wrap.innerHTML=''; return; }
+  const items=dbPhotoItems(); const total=items.reduce((a,x)=>a+x.n,0);
+  if(!total && !photoMoveMsg){ wrap.innerHTML=''; updateSettingsEmpty(); return; }
+  wrap.innerHTML=`<section class="adm-card">
+    <h3>Photos stored inside the database</h3>
+    <p class="adm-cap">${total?`${total} photo${total===1?'':'s'} on ${items.length} item${items.length===1?'':'s'} (${['products','services','offers'].map(k=>{ const n=items.filter(x=>x.kind===k).length; return n?`${n} ${k}`:''; }).filter(Boolean).join(', ')}) are saved as text in the database, which makes the app slower to load. Moving them to photo storage keeps every photo exactly the same.`:'All photos are in photo storage.'}</p>
+    ${photoMoveMsg?`<div class="adm-note${/could not|failed/i.test(photoMoveMsg)?' err':''}" style="margin:10px 0;">${esc(photoMoveMsg)}</div>`:''}
+    ${total?`<p class="adm-cap" style="margin-top:6px;">A backup file with every original photo downloads first. Keep this page open until it says Done.</p>
+    <button class="btn btn-primary" id="photoMoveGo" ${photoMoveBusy?'disabled':''}>${photoMoveBusy?'Moving…':`Move ${total} photo${total===1?'':'s'} to storage`}</button>`:''}
+  </section>`;
+  const go=document.getElementById('photoMoveGo');
+  if(go) go.onclick=runPhotoMove;
+  updateSettingsEmpty();
+}
+async function runPhotoMove(){
+  if(photoMoveBusy||!currentUser||!currentUser.isOwner) return;
+  if(!(await isStaffSignedIn())){ toast('Please sign in again first.'); return; }
+  const items=dbPhotoItems(); if(!items.length) return;
+  photoMoveBusy=true;
+  // 1. Backup of every original photo, before anything changes.
+  const backup=items.map(it=>{ const x=findPhotoItem(it)||{}; return {kind:it.kind,id:it.id,brand:it.brand,name:it.label,image:x.image||'',images:x.images||[]}; });
+  try{ downloadTextFile(`dolce-photos-backup-${isoOf(new Date())}.json`,JSON.stringify({made:new Date().toISOString(),items:backup}),'application/json'); }catch(e){}
+  let moved=0, failed=0, done=0; const total=items.reduce((a,x)=>a+x.n,0);
+  const folder={products:'product',services:'service',offers:'offer'};
+  for(const it of items){
+    const x0=findPhotoItem(it); if(!x0){ done+=it.n; continue; }
+    const oldImage=x0.image, oldImages=Array.isArray(x0.images)?x0.images.slice():[];
+    const map={};
+    for(const u of [oldImage,...oldImages]){
+      if(!isDataImg(u)||map[u]!==undefined) continue;
+      photoMoveMsg=`Moving photo ${Math.min(done+1,total)} of ${total} — ${it.label||''}`; renderPhotoMove();
+      const url=await copyPhotoToStorage(u,folder[it.kind]);
+      map[u]=url; done++; if(url) moved++; else failed++;
+    }
+    // Re-find after the waits: a refresh may have replaced the lists meanwhile.
+    const x=findPhotoItem(it); if(!x) continue;
+    let changed=false;
+    if(isDataImg(x.image)&&map[x.image]){ x.image=map[x.image]; changed=true; }
+    if(Array.isArray(x.images)){ const ni=x.images.map(u=>isDataImg(u)&&map[u]?map[u]:u); if(ni.some((u,i)=>u!==x.images[i])){ x.images=ni; changed=true; } }
+    if(changed){
+      if(it.kind==='products') cloudSave('products',x.id,null,{withStock:false});
+      else if(it.kind==='services') cloudSave('services',x.id,it.brand);
+      else cloudSave('offers',x.id);
+    }
+  }
+  saveStore(); cloudSave('settings','image_focus');
+  photoMoveBusy=false;
+  photoMoveMsg=failed?`Moved ${moved} of ${total}. ${failed} could not be copied and were left as they were — you can try again.`:`Done — ${moved} photo${moved===1?'':'s'} moved to storage. The backup file is in your Downloads.`;
+  renderPhotoMove(); try{ renderAdminProducts(); renderAdminServices(); renderAdminOffers(); }catch(e){}
+  toast(failed?'Some photos could not be moved.':'Photos moved to storage.');
 }
 function renderBrandPhotos(){
   const wrap=document.getElementById('brandPhotosWrap'); if(!wrap) return;
