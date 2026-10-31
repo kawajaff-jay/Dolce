@@ -5752,8 +5752,8 @@ screenEl.addEventListener('scroll',()=>{
 // Off for the App Store build: a reviewer could take the sample member for fake data.
 // Set to true again only for an event build.
 const SHOW_PREVIEW_MEMBER=false;
-// Public privacy policy page (repo root, served by GitHub Pages). Linked from login + Profile.
-const PRIVACY_URL='https://kawajaff-jay.github.io/Dolce/privacy.html';
+// Public privacy policy page (GitHub org dolce-plus, repo dolce-plus.github.io). Linked from login + Profile.
+const PRIVACY_URL='https://dolce-plus.github.io/privacy.html';
 function privacyLinkHtml(){ return `<p class="cl-note cl-privacy"><a href="${PRIVACY_URL}" target="_blank" rel="noopener">${t('privacyPolicy')}</a></p>`; }
 const PREVIEW_KEY='odc_preview_member';
 let previewMember=(()=>{ try{ return localStorage.getItem(PREVIEW_KEY)==='1'; }catch(e){ return false; } })();
