@@ -1792,6 +1792,8 @@
   .cl-move{display:grid;gap:8px;margin:0 0 14px;}
   .cl-guest{display:block;width:100%;padding:15px 18px;border-radius:999px;border:1px solid rgba(28,26,22,.22);background:transparent;color:var(--ink);font:inherit;font-size:15px;font-weight:600;cursor:pointer;}
   .cl-guest:active{background:rgba(28,26,22,.05);}
+  .cl-privacy{text-align:center;margin-top:10px;}
+  .cl-privacy a{color:inherit;text-decoration:underline;text-underline-offset:3px;}
 
   /* Phone number with country picker */
   .ph-field{display:flex;gap:8px;align-items:stretch;margin-bottom:14px;}
@@ -3873,6 +3875,7 @@ Object.assign(I18N.en,{
   welcomeBack:'Welcome back,',accountCreated:'Your account is ready. Welcome,',
   oneAccount:'One account · Dolce · Polished · Core',account:'Account',logOut:'Log out',
   deleteAccount:'Delete my account',deleteConfirm:'Tap again to permanently delete your account',
+  privacyPolicy:'Privacy Policy',
   deleteNote:'Removes your login, name, number and points. Past appointments stay in our diary as business records.',
   deleted:'Your account has been deleted.',loggedOut:'Logged out.',past:'Past',member:'Member',
   loginPrivacy:'We only use your number to log you in and to contact you about your appointments.',
@@ -3913,6 +3916,7 @@ Object.assign(I18N.ar,{
   welcomeBack:'أهلاً بعودتك،',accountCreated:'حسابك جاهز. أهلاً بك،',
   oneAccount:'حساب واحد · Dolce · Polished · Core',account:'الحساب',logOut:'تسجيل الخروج',
   deleteAccount:'حذف حسابي',deleteConfirm:'اضغط مرة أخرى لحذف حسابك نهائياً',
+  privacyPolicy:'سياسة الخصوصية',
   deleteNote:'يحذف تسجيل دخولك واسمك ورقمك ونقاطك. تبقى مواعيدك السابقة في سجلاتنا كسجلات عمل.',
   deleted:'تم حذف حسابك.',loggedOut:'تم تسجيل الخروج.',past:'السابقة',member:'عضو',
   loginPrivacy:'نستخدم رقمك فقط لتسجيل دخولك وللتواصل معك بخصوص مواعيدك.',
@@ -3953,6 +3957,7 @@ Object.assign(I18N.ku,{
   welcomeBack:'بەخێربێیتەوە،',accountCreated:'هەژمارەکەت ئامادەیە. بەخێربێیت،',
   oneAccount:'یەک هەژمار · Dolce · Polished · Core',account:'هەژمار',logOut:'چوونەدەرەوە',
   deleteAccount:'سڕینەوەی هەژمارەکەم',deleteConfirm:'دووبارە دابگرە بۆ سڕینەوەی هەمیشەیی هەژمارەکەت',
+  privacyPolicy:'سیاسەتی تایبەتمەندی',
   deleteNote:'چوونەژوورەوە، ناو، ژمارە و خاڵەکانت دەسڕێتەوە. کاتە پێشووەکانت وەک تۆماری کار لەلامان دەمێننەوە.',
   deleted:'هەژمارەکەت سڕایەوە.',loggedOut:'چوویتە دەرەوە.',past:'پێشوو',member:'ئەندام',
   loginPrivacy:'ژمارەکەت تەنها بۆ چوونەژوورەوە و پەیوەندیکردن سەبارەت بە کاتەکانت بەکاردەهێنین.',
@@ -4491,7 +4496,7 @@ function renderClientAuth(){
     <label class="cl-label" for="authEmailInput">${t('emailLabel')}</label>
     <input class="cl-input" id="authEmailInput" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" dir="ltr" placeholder="name@example.com" value="${attr(authEmail)}">
     <button class="primary-btn" id="authSendCode">${t('sendCodeEmail')}</button>
-    <p class="cl-note">${t('emailPrivacy')}</p>
+    <p class="cl-note">${t('emailPrivacy')}</p>${privacyLinkHtml()}
     ${startGate?`<div class="cl-or"><span>${t('orWord')}</span></div><button class="cl-guest" id="authGuest">${t('continueGuest')}</button>`:''}
     ${SHOW_PREVIEW_MEMBER&&isNativeApp()&&!startGate?`<button class="pv-open" id="previewMemberBtn">Preview a member profile</button>`:''}
   </section>`;
@@ -4504,7 +4509,7 @@ function renderClientAuth(){
     <label class="cl-label" for="authPhoneInput">${t('phoneLabel')}</label>
     ${phoneFieldHtml('authPhoneInput',authPhone,'cl-input')}
     <button class="wa-btn" id="authSendCode">${t('sendCode')}</button>
-    <p class="cl-note">${t('loginPrivacy')}</p>
+    <p class="cl-note">${t('loginPrivacy')}</p>${privacyLinkHtml()}
     ${startGate?`<div class="cl-or"><span>${t('orWord')}</span></div><button class="cl-guest" id="authGuest">${t('continueGuest')}</button>`:''}
     ${SHOW_PREVIEW_MEMBER&&isNativeApp()&&!startGate?`<button class="pv-open" id="previewMemberBtn">Preview a member profile</button>`:''}
   </section>`;
@@ -5747,6 +5752,9 @@ screenEl.addEventListener('scroll',()=>{
 // Off for the App Store build: a reviewer could take the sample member for fake data.
 // Set to true again only for an event build.
 const SHOW_PREVIEW_MEMBER=false;
+// Public privacy policy page (repo root, served by GitHub Pages). Linked from login + Profile.
+const PRIVACY_URL='https://kawajaff-jay.github.io/Dolce/privacy.html';
+function privacyLinkHtml(){ return `<p class="cl-note cl-privacy"><a href="${PRIVACY_URL}" target="_blank" rel="noopener">${t('privacyPolicy')}</a></p>`; }
 const PREVIEW_KEY='odc_preview_member';
 let previewMember=(()=>{ try{ return localStorage.getItem(PREVIEW_KEY)==='1'; }catch(e){ return false; } })();
 function isNativeApp(){ return document.body.classList.contains('native-app'); }
@@ -5858,6 +5866,7 @@ function renderProfile(){
       <button class="ghost-btn" id="clientLogout">${t('logOut')}</button>
       <button class="cl-danger${deleteArmed?' armed':''}" id="clientDelete">${deleteArmed?t('deleteConfirm'):t('deleteAccount')}</button>
       <p class="cl-note">${t('deleteNote')}</p>
+      ${privacyLinkHtml()}
     </section>`;
 }
 
