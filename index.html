@@ -186,6 +186,7 @@
   .adm-card h3{margin:0 0 2px;font-family:inherit;font-size:15px;font-weight:600;color:var(--ink);}
   .adm-card .adm-cap{font-size:13px;color:var(--muted);margin:0 0 12px;}
   .adm-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:18px;}
+  .adm-kpis.adm-kpis4{grid-template-columns:repeat(4,minmax(0,1fr));}
   .adm-kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--adm-r);box-shadow:var(--adm-shadow);padding:16px 18px;text-align:left;cursor:pointer;font:inherit;color:inherit;transition:border-color .15s;}
   .adm-kpi:hover{border-color:var(--adm-outline);}
   .adm-kpi .k-l{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
@@ -326,6 +327,7 @@
     #adminView .admin-tabs.adm-side.open{display:flex;}
     .adm-grid2{grid-template-columns:1fr;}
     .adm-kpis{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
+    .adm-kpis.adm-kpis4{grid-template-columns:repeat(2,minmax(0,1fr));}
     .adm-kpi{padding:12px;}
     .adm-kpi .k-l{font-size:11px;letter-spacing:.03em;}
     .adm-kpi .k-v{font-size:26px;}
@@ -2187,9 +2189,6 @@
 
   <div id="printArea"></div>
 
-  <footer class="proto-footer">
-    <span data-i18n="footerNote">Prototype for demonstration — content, prices and translations are placeholders to be replaced with real data.</span>
-  </footer>
 </div>
 <div class="toast" id="toast"></div>
 
@@ -9470,7 +9469,7 @@ function renderOverviewStats(){
   for(let i=5;i>=0;i--){
     const d0=new Date(today.getFullYear(),today.getMonth()-i,1), d1=new Date(today.getFullYear(),today.getMonth()-i+1,0);
     const f=iso(d0), u=iso(d1);
-    const v=bkRev(bks.filter(x=>x.d>=f&&x.d<=u))+saleRev(f,u);
+    const v=Math.max(0,bkRev(bks.filter(x=>x.d>=f&&x.d<=u))+saleRev(f,u)-orderRefunds(f,u));
     months.push({m:d0.toLocaleDateString('en-US',{month:'short'}),y:d0.getFullYear(),v:Math.round(v)});
   }
   const max=Math.max(...months.map(x=>x.v));
@@ -9626,6 +9625,10 @@ function renderOverviewToday(){
   const now=Date.now(), next=today.find(b=>b.status!=='Completed' && startOf(b)>=now-15*60000);
   const dot=(b)=>`<span class="adm-dot" style="background:${ADMIN_BRAND_DOT[b]||'#bba891'}"></span>`;
   const canBookings=currentAllowedTabs.includes('bookings');
+  // Shop orders placed in the app that still need someone (Pending / Confirmed).
+  const canOrders=currentAllowedTabs.includes('orders');
+  const openOrders=canOrders?(STORE.orders||[]).filter(o=>see(o.brand)&&(o.status==='Pending'||o.status==='Confirmed')):[];
+  const newOrders=openOrders.filter(o=>o.status==='Pending').length;
   let note='';
   if(typeof lastSyncError!=='undefined' && lastSyncError) note=`<div class="adm-note err">Couldn't reach the shared database just now — showing what was last saved on this device. It will catch up automatically.</div>`;
   else if(supa && !lastRefreshAt) note=`<div class="adm-note load">Loading the latest bookings…</div>`;
@@ -9636,13 +9639,15 @@ function renderOverviewToday(){
   wrap.innerHTML=`
     <h2 class="adm-page-title">Today · ${esc(dateTxt)}</h2>
     ${note}
-    <div class="adm-kpis">
+    <div class="adm-kpis${canOrders?' adm-kpis4':''}">
       <button class="adm-kpi" data-ov-go="bookings"><div class="k-l">Today's bookings</div><div class="k-v">${today.length}</div>
         <div class="k-s">${today.length?`${done} completed${next?` · next ${esc(next.time)}`:''}`:'Nothing booked for today'}</div></button>
       <button class="adm-kpi ${pending.length?'warn':''}" data-ov-go="bookings"><div class="k-l">Waiting for confirmation</div><div class="k-v">${pending.length}</div>
         <div class="k-s">${pending.length?'Requests to confirm or decline':'All requests handled'}</div></button>
       <button class="adm-kpi ${low.length?'warn':''}" data-ov-go="${canProducts?'products':''}"><div class="k-l">Low-stock products</div><div class="k-v">${low.length}</div>
         <div class="k-s">${low.length?`${low.filter(p=>numOr0(p.stock)<=0).length} out of stock`:`Everything above ${ADMIN_LOW_STOCK} in stock`}</div></button>
+      ${canOrders?`<button class="adm-kpi ${openOrders.length?'warn':''}" data-ov-go="orders"><div class="k-l">Shop orders to handle</div><div class="k-v">${openOrders.length}</div>
+        <div class="k-s">${openOrders.length?`${newOrders} new · ${openOrders.length-newOrders} accepted`:'No orders waiting'}</div></button>`:''}
     </div>
     <div class="adm-grid2">
       <section class="adm-card">
@@ -10181,7 +10186,7 @@ document.querySelectorAll('[data-mode-btn]').forEach(b=>{
     try{ history.replaceState(history.state,'',appMode==='admin'?'#admin':location.pathname+location.search); }catch(e){}
   });
 });
-// Direct link to the Admin App: https://kawajaff-jay.github.io/Dolce/#admin
+// Direct link to the Admin App: <site>/#admin  (e.g. https://dolce-plus.github.io/Dolce/#admin)
 // (not in the installed phone app, which is client-only).
 if(location.hash==='#admin' && !(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())){
   window.addEventListener('load',()=>{ const b=document.querySelector('[data-mode-btn="admin"]'); if(b) b.click(); });
@@ -13797,59 +13802,69 @@ function renderAdminReports(){
   const targetFmt=reportDateToFmt(dateInput.value);
   const rows=STORE.bookings.filter(bk=>canSeeBrand(currentUser,bk.brand) && bk.date===targetFmt);
   const tbody=document.getElementById('reportRows');
+  // Refunds come off: a visit's refund from that visit's line, a shop refund on the day it was given.
+  const refundOf=(bk)=>Math.max(0,Number(bk.refundedUsd)||0);
+  const netOf=(bk)=>{ const p=bookingPrice(bk); return p===null?null:Math.max(0,p-refundOf(bk)); };
+  const priceCell=(bk)=>{ const p=bookingPrice(bk); if(p===null) return '—'; const r=refundOf(bk);
+    return r?`${fmtMoney(netOf(bk))} <span style="color:var(--muted);font-size:12px;">(${fmtMoney(p)} − ${fmtMoney(r)} refunded)</span>`:fmtMoney(p); };
   tbody.innerHTML = rows.length ? rows.map(bk=>{
-    const price=bookingPrice(bk);
     return `<tr>
       <td>${esc(bk.clientName)}</td>
       <td><span class="brand-tag" style="background:${brandColor[bk.brand]}">${BRANDS[bk.brand].name}</span></td>
       <td>${esc(bk.serviceName)}</td>
       <td>${esc(bk.time)}</td>
       <td><span class="status-badge ${esc(bk.status)}">${esc(bk.status)}</span></td>
-      <td>${price===null?'—':fmtMoney(price)}</td>
+      <td>${priceCell(bk)}</td>
     </tr>`;
   }).join('') : `<tr><td colspan="6"><div class="admin-empty">No bookings on this date${scopeText==='All brands'?'':' for your department'}.</div></td></tr>`;
 
   const counted=rows.filter(bk=>bk.status!=='Cancelled');
   const byBrand={};
-  counted.forEach(bk=>{ const p=bookingPrice(bk)||0; byBrand[bk.brand]=(byBrand[bk.brand]||0)+p; });
+  counted.forEach(bk=>{ const p=netOf(bk)||0; byBrand[bk.brand]=(byBrand[bk.brand]||0)+p; });
   const visibleBrands=Object.keys(BRANDS).filter(b=>canSeeBrand(currentUser,b));
   const bookingGrand=Object.values(byBrand).reduce((a,b)=>a+b,0);
 
   const sales=productSalesForDate(targetFmt);
   const salesByBrand={};
   sales.forEach(ps=>{ salesByBrand[ps.brand]=(salesByBrand[ps.brand]||0)+ps.total; });
+  const shopRefunds=[];
+  (STORE.orders||[]).filter(o=>canSeeBrand(currentUser,o.brand)).forEach(o=>(o.refunds||[]).forEach(f=>{
+    if(String(f.at||'').slice(0,10)===dateInput.value) shopRefunds.push({o,f}); }));
+  shopRefunds.forEach(({o,f})=>{ salesByBrand[o.brand]=(salesByBrand[o.brand]||0)-(Number(f.amount)||0); });
+  const shopRefundTotal=shopRefunds.reduce((a,x)=>a+(Number(x.f.amount)||0),0);
   const salesGrand=Object.values(salesByBrand).reduce((a,b)=>a+b,0);
 
   const combinedByBrand={}; visibleBrands.forEach(b=>{ combinedByBrand[b]=(byBrand[b]||0)+(salesByBrand[b]||0); });
   const grand=bookingGrand+salesGrand;
 
   const totalsEl=document.getElementById('reportTotals');
-  totalsEl.innerHTML = (rows.length||sales.length) ? `
+  totalsEl.innerHTML = (rows.length||sales.length||shopRefunds.length) ? `
     <div style="display:flex;gap:22px;flex-wrap:wrap;align-items:baseline;">
       ${visibleBrands.map(b=>`<div><b>${BRANDS[b].name}:</b> ${fmtMoney(Math.round(combinedByBrand[b]||0))}</div>`).join('')}
       <div style="font-weight:700;">Total: ${fmtMoney(Math.round(grand))}</div>
-      <div style="color:var(--muted);">(bookings ${fmtMoney(Math.round(bookingGrand))} + product sales ${fmtMoney(Math.round(salesGrand))} · ${counted.length} of ${rows.length} bookings counted, cancelled excluded · ${sales.length} product sale${sales.length===1?'':'s'})</div>
+      <div style="color:var(--muted);">(bookings ${fmtMoney(Math.round(bookingGrand))} + product sales ${fmtMoney(Math.round(salesGrand+shopRefundTotal))}${shopRefunds.length?` − shop refunds ${fmtMoney(Math.round(shopRefundTotal))}`:''} · ${counted.length} of ${rows.length} bookings counted, cancelled excluded · ${sales.length} product sale${sales.length===1?'':'s'} · visit refunds already taken off each line)</div>
     </div>` : '';
 
   document.getElementById('repToday').onclick=()=>{ dateInput.value=reportDateDefault(); renderAdminReports(); };
   dateInput.onchange=renderAdminReports;
 
   document.getElementById('repExportCsv').onclick=()=>{
-    const head=['Client','Brand','Service','Time','Status','Price'];
-    const body=rows.map(bk=>{ const p=bookingPrice(bk); return [bk.clientName,BRANDS[bk.brand].name,bk.serviceName,bk.time,bk.status,p===null?'':p]; });
+    const head=['Client','Brand','Service','Time','Status','Price','Refunded','Net'];
+    const body=rows.map(bk=>{ const p=bookingPrice(bk); return [bk.clientName,BRANDS[bk.brand].name,bk.serviceName,bk.time,bk.status,p===null?'':p,refundOf(bk)||'',p===null?'':netOf(bk)]; });
+    const refundLines=shopRefunds.length?[[],['Shop refunds given on this date'],['Order','Brand','Amount','Reason'],...shopRefunds.map(({o,f})=>[o.ref||o.id,BRANDS[o.brand]?BRANDS[o.brand].name:o.brand,f.amount,f.reason])]:[];
     const salesHead=[[],['Product sales'],['Product','Brand','Qty','Unit Price','Total','Client']];
     const salesBody=sales.map(ps=>[ps.n,BRANDS[ps.brand].name,ps.qty,ps.unitPrice,ps.total,ps.clientName]);
-    const totalLines=[[],['Totals by brand (bookings + product sales, excludes cancelled)'],...visibleBrands.map(b=>[BRANDS[b].name,(combinedByBrand[b]||0).toFixed(0)]),['Grand total',grand.toFixed(0)]];
-    const csv=[['Daily Report',targetFmt,scopeText],head,...body,...salesHead,...salesBody,...totalLines].map(r=>r.map(csvEscape).join(',')).join('\r\n');
+    const totalLines=[[],['Totals by brand (bookings + product sales, excludes cancelled, refunds taken off)'],...visibleBrands.map(b=>[BRANDS[b].name,(combinedByBrand[b]||0).toFixed(0)]),['Grand total',grand.toFixed(0)]];
+    const csv=[['Daily Report',targetFmt,scopeText],head,...body,...salesHead,...salesBody,...refundLines,...totalLines].map(r=>r.map(csvEscape).join(',')).join('\r\n');
     downloadTextFile(`daily-report-${dateInput.value}.csv`,csv,'text/csv');
   };
   document.getElementById('repExportPdf').onclick=()=>{
     const html=`
       <p><b>Date:</b> ${targetFmt} &nbsp;&nbsp; <b>Scope:</b> ${scopeText}</p>
       <table><thead><tr><th>Client</th><th>Brand</th><th>Service</th><th>Time</th><th>Status</th><th>Price</th></tr></thead>
-      <tbody>${rows.map(bk=>{ const p=bookingPrice(bk); return `<tr><td>${esc(bk.clientName)}</td><td>${BRANDS[bk.brand].name}</td><td>${esc(bk.serviceName)}</td><td>${esc(bk.time)}</td><td>${esc(bk.status)}</td><td>${p===null?'—':'$'+p}</td></tr>`; }).join('')}</tbody></table>
+      <tbody>${rows.map(bk=>{ const p=bookingPrice(bk); return `<tr><td>${esc(bk.clientName)}</td><td>${BRANDS[bk.brand].name}</td><td>${esc(bk.serviceName)}</td><td>${esc(bk.time)}</td><td>${esc(bk.status)}</td><td>${p===null?'—':'$'+netOf(bk)+(refundOf(bk)?` (−$${refundOf(bk)} refunded)`:'')}</td></tr>`; }).join('')}</tbody></table>
       ${sales.length?`<h3>Product sales</h3><table><thead><tr><th>Product</th><th>Brand</th><th>Qty</th><th>Unit Price</th><th>Total</th><th>Client</th></tr></thead><tbody>${sales.map(ps=>`<tr><td>${esc(ps.n)}</td><td>${BRANDS[ps.brand].name}</td><td>${ps.qty}</td><td>$${ps.unitPrice}</td><td>$${ps.total}</td><td>${esc(ps.clientName)}</td></tr>`).join('')}</tbody></table>`:''}
-      <p style="margin-top:14px;"><b>Totals (bookings + product sales, excl. cancelled):</b> ${visibleBrands.map(b=>`${BRANDS[b].name} $${(combinedByBrand[b]||0).toFixed(0)}`).join(' &middot; ')} — <b>Grand total $${grand.toFixed(0)}</b></p>`;
+      <p style="margin-top:14px;"><b>Totals (bookings + product sales, excl. cancelled, refunds taken off):</b> ${visibleBrands.map(b=>`${BRANDS[b].name} $${(combinedByBrand[b]||0).toFixed(0)}`).join(' &middot; ')} — <b>Grand total $${grand.toFixed(0)}</b></p>`;
     printReport(`Daily Report — ${targetFmt}`,html);
   };
 
